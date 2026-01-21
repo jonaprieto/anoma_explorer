@@ -6,7 +6,6 @@ defmodule AnomaExplorer.Repo.Migrations.CreateContractSettings do
       add :category, :string, null: false
       add :network, :string, null: false
       add :address, :string, null: false
-      add :label, :string
       add :active, :boolean, default: true, null: false
 
       timestamps(type: :utc_datetime)

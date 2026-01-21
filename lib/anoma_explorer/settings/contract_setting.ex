@@ -14,14 +14,13 @@ defmodule AnomaExplorer.Settings.ContractSetting do
     field :category, :string
     field :network, :string
     field :address, :string
-    field :label, :string
     field :active, :boolean, default: true
 
     timestamps(type: :utc_datetime)
   end
 
   @required_fields ~w(category network address)a
-  @optional_fields ~w(label active)a
+  @optional_fields ~w(active)a
 
   @doc """
   Creates a changeset for contract settings.

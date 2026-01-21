@@ -150,7 +150,6 @@ defmodule AnomaExplorerWeb.SettingsLive do
                 <tr>
                   <th>Network</th>
                   <th>Address</th>
-                  <th>Label</th>
                   <th>Status</th>
                   <th class="w-24">Actions</th>
                 </tr>
@@ -167,9 +166,6 @@ defmodule AnomaExplorerWeb.SettingsLive do
                       <span class="font-mono text-sm" title={setting.address}>
                         {truncate_address(setting.address)}
                       </span>
-                    </td>
-                    <td class="text-base-content/70">
-                      {setting.label || "-"}
                     </td>
                     <td>
                       <span class={status_badge_class(setting.active)}>
@@ -198,7 +194,7 @@ defmodule AnomaExplorerWeb.SettingsLive do
                 <% end %>
                 <%= if Map.get(@settings, category, []) == [] do %>
                   <tr>
-                    <td colspan="5" class="text-center text-base-content/50 py-8">
+                    <td colspan="4" class="text-center text-base-content/50 py-8">
                       No settings for this category
                     </td>
                   </tr>
@@ -234,13 +230,6 @@ defmodule AnomaExplorerWeb.SettingsLive do
             />
 
             <.input field={@form[:address]} type="text" label="Contract Address" placeholder="0x..." />
-
-            <.input
-              field={@form[:label]}
-              type="text"
-              label="Label (optional)"
-              placeholder="e.g., Main Protocol"
-            />
 
             <.input field={@form[:active]} type="checkbox" label="Active" />
 
