@@ -5,7 +5,9 @@ defmodule AnomaExplorer.ConfigTest do
 
   describe "validate_contract_address/1" do
     test "accepts valid lowercase address" do
-      assert {:ok, "0x" <> rest} = Config.validate_contract_address("0x742d35cc6634c0532925a3b844bc9e7595f0ab12")
+      assert {:ok, "0x" <> rest} =
+               Config.validate_contract_address("0x742d35cc6634c0532925a3b844bc9e7595f0ab12")
+
       assert String.length(rest) == 40
     end
 
@@ -20,16 +22,21 @@ defmodule AnomaExplorer.ConfigTest do
     end
 
     test "rejects address without 0x prefix" do
-      assert {:error, _} = Config.validate_contract_address("742d35cc6634c0532925a3b844bc9e7595f0ab12")
+      assert {:error, _} =
+               Config.validate_contract_address("742d35cc6634c0532925a3b844bc9e7595f0ab12")
     end
 
     test "rejects address with wrong length" do
-      assert {:error, _} = Config.validate_contract_address("0x742d35cc6634c0532925a3b844bc9e7595f0ab")
-      assert {:error, _} = Config.validate_contract_address("0x742d35cc6634c0532925a3b844bc9e7595f0ab1234")
+      assert {:error, _} =
+               Config.validate_contract_address("0x742d35cc6634c0532925a3b844bc9e7595f0ab")
+
+      assert {:error, _} =
+               Config.validate_contract_address("0x742d35cc6634c0532925a3b844bc9e7595f0ab1234")
     end
 
     test "rejects address with non-hex characters" do
-      assert {:error, _} = Config.validate_contract_address("0x742d35cc6634c0532925a3b844bc9e7595f0abzz")
+      assert {:error, _} =
+               Config.validate_contract_address("0x742d35cc6634c0532925a3b844bc9e7595f0abzz")
     end
 
     test "rejects nil" do
@@ -57,7 +64,11 @@ defmodule AnomaExplorer.ConfigTest do
     end
 
     test "validates known networks" do
-      {:ok, networks} = Config.parse_networks("eth-mainnet,arb-mainnet,polygon-mainnet,base-mainnet,optimism-mainnet")
+      {:ok, networks} =
+        Config.parse_networks(
+          "eth-mainnet,arb-mainnet,polygon-mainnet,base-mainnet,optimism-mainnet"
+        )
+
       assert length(networks) == 5
     end
 

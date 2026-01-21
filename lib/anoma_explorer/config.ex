@@ -62,7 +62,9 @@ defmodule AnomaExplorer.Config do
   defp extract_hex_part("0x" <> hex), do: {:ok, hex}
 
   defp validate_hex_length(hex) when byte_size(hex) == 40, do: :ok
-  defp validate_hex_length(_), do: {:error, "CONTRACT_ADDRESS must have exactly 40 hex characters after 0x"}
+
+  defp validate_hex_length(_),
+    do: {:error, "CONTRACT_ADDRESS must have exactly 40 hex characters after 0x"}
 
   defp validate_hex_chars(hex) do
     if Regex.match?(~r/^[0-9a-f]+$/, hex) do
@@ -104,7 +106,8 @@ defmodule AnomaExplorer.Config do
     if Enum.empty?(invalid) do
       :ok
     else
-      {:error, "Unknown networks: #{Enum.join(invalid, ", ")}. Supported: #{Enum.join(@supported_networks, ", ")}"}
+      {:error,
+       "Unknown networks: #{Enum.join(invalid, ", ")}. Supported: #{Enum.join(@supported_networks, ", ")}"}
     end
   end
 

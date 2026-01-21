@@ -9,34 +9,37 @@ defmodule AnomaExplorerWeb.ActivityLiveTest do
 
   setup do
     # Create some test activities
-    {:ok, a1} = Activity.create_activity(%{
-      network: "eth-mainnet",
-      contract_address: @contract,
-      kind: "log",
-      tx_hash: "0xtx1",
-      block_number: 100,
-      log_index: 0,
-      raw: %{}
-    })
+    {:ok, a1} =
+      Activity.create_activity(%{
+        network: "eth-mainnet",
+        contract_address: @contract,
+        kind: "log",
+        tx_hash: "0xtx1",
+        block_number: 100,
+        log_index: 0,
+        raw: %{}
+      })
 
-    {:ok, a2} = Activity.create_activity(%{
-      network: "eth-mainnet",
-      contract_address: @contract,
-      kind: "tx",
-      tx_hash: "0xtx2",
-      block_number: 200,
-      raw: %{}
-    })
+    {:ok, a2} =
+      Activity.create_activity(%{
+        network: "eth-mainnet",
+        contract_address: @contract,
+        kind: "tx",
+        tx_hash: "0xtx2",
+        block_number: 200,
+        raw: %{}
+      })
 
-    {:ok, a3} = Activity.create_activity(%{
-      network: "base-mainnet",
-      contract_address: @contract,
-      kind: "log",
-      tx_hash: "0xtx3",
-      block_number: 300,
-      log_index: 1,
-      raw: %{}
-    })
+    {:ok, a3} =
+      Activity.create_activity(%{
+        network: "base-mainnet",
+        contract_address: @contract,
+        kind: "log",
+        tx_hash: "0xtx3",
+        block_number: 300,
+        log_index: 1,
+        raw: %{}
+      })
 
     %{activities: [a1, a2, a3]}
   end
@@ -79,7 +82,8 @@ defmodule AnomaExplorerWeb.ActivityLiveTest do
       {:ok, view, _html} = live(conn, ~p"/activity")
 
       # Filter by eth-mainnet
-      html = view
+      html =
+        view
         |> element("form")
         |> render_change(%{"filter" => %{"network" => "eth-mainnet"}})
 
@@ -92,7 +96,8 @@ defmodule AnomaExplorerWeb.ActivityLiveTest do
       {:ok, view, _html} = live(conn, ~p"/activity")
 
       # Filter by log
-      html = view
+      html =
+        view
         |> element("form")
         |> render_change(%{"filter" => %{"kind" => "log"}})
 
@@ -104,7 +109,8 @@ defmodule AnomaExplorerWeb.ActivityLiveTest do
     test "clears filters", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/activity?network=eth-mainnet")
 
-      html = view
+      html =
+        view
         |> element("a", "Clear filters")
         |> render_click()
 

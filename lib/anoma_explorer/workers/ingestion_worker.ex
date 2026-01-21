@@ -36,7 +36,10 @@ defmodule AnomaExplorer.Workers.IngestionWorker do
 
     case Sync.sync_logs(network, contract_address, api_key, opts) do
       {:ok, result} ->
-        Logger.info("Ingestion complete for #{network}: #{result.inserted_count} logs, last block #{result.last_block}")
+        Logger.info(
+          "Ingestion complete for #{network}: #{result.inserted_count} logs, last block #{result.last_block}"
+        )
+
         schedule_next(args, poll_interval)
         :ok
 

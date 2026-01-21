@@ -137,8 +137,8 @@ defmodule AnomaExplorerWeb.ActivityLive do
     ~H"""
     <div class="container mx-auto px-4 py-8">
       <h1 class="text-3xl font-bold mb-6">Activity Feed</h1>
-
-      <!-- Filters -->
+      
+    <!-- Filters -->
       <div class="bg-base-200 rounded-lg p-4 mb-6">
         <form phx-change="filter" class="flex flex-wrap gap-4 items-end">
           <div class="form-control">
@@ -147,8 +147,13 @@ defmodule AnomaExplorerWeb.ActivityLive do
             </label>
             <select name="filter[network]" class="select select-bordered">
               <%= for network <- @networks do %>
-                <option value={network} selected={@filters.network == network || (@filters.network == nil && network == "all")}>
-                  <%= network %>
+                <option
+                  value={network}
+                  selected={
+                    @filters.network == network || (@filters.network == nil && network == "all")
+                  }
+                >
+                  {network}
                 </option>
               <% end %>
             </select>
@@ -160,8 +165,11 @@ defmodule AnomaExplorerWeb.ActivityLive do
             </label>
             <select name="filter[kind]" class="select select-bordered">
               <%= for kind <- @kinds do %>
-                <option value={kind} selected={@filters.kind == kind || (@filters.kind == nil && kind == "all")}>
-                  <%= kind %>
+                <option
+                  value={kind}
+                  selected={@filters.kind == kind || (@filters.kind == nil && kind == "all")}
+                >
+                  {kind}
                 </option>
               <% end %>
             </select>
@@ -172,8 +180,8 @@ defmodule AnomaExplorerWeb.ActivityLive do
           </div>
         </form>
       </div>
-
-      <!-- Activity List -->
+      
+    <!-- Activity List -->
       <div class="overflow-x-auto">
         <table class="table table-zebra w-full">
           <thead>
@@ -188,28 +196,28 @@ defmodule AnomaExplorerWeb.ActivityLive do
           <tbody id="activities" phx-update="stream">
             <%= for {id, activity} <- @streams.activities do %>
               <tr id={id}>
-                <td class="font-mono"><%= activity.block_number %></td>
+                <td class="font-mono">{activity.block_number}</td>
                 <td>
-                  <span class="badge badge-primary badge-sm"><%= activity.network %></span>
+                  <span class="badge badge-primary badge-sm">{activity.network}</span>
                 </td>
                 <td>
                   <span class={["badge badge-sm", kind_badge_class(activity.kind)]}>
-                    <%= activity.kind %>
+                    {activity.kind}
                   </span>
                 </td>
                 <td class="font-mono text-sm">
-                  <span title={activity.tx_hash}><%= truncate_hash(activity.tx_hash) %></span>
+                  <span title={activity.tx_hash}>{truncate_hash(activity.tx_hash)}</span>
                 </td>
                 <td class="text-sm text-gray-500">
-                  <%= format_time(activity.inserted_at) %>
+                  {format_time(activity.inserted_at)}
                 </td>
               </tr>
             <% end %>
           </tbody>
         </table>
       </div>
-
-      <!-- Load More -->
+      
+    <!-- Load More -->
       <div class="mt-4 text-center">
         <%= if has_more?(@streams.activities) do %>
           <button
@@ -231,12 +239,15 @@ defmodule AnomaExplorerWeb.ActivityLive do
   defp kind_badge_class(_), do: "badge-ghost"
 
   defp truncate_hash(nil), do: "-"
+
   defp truncate_hash(hash) when byte_size(hash) > 16 do
     String.slice(hash, 0, 10) <> "..." <> String.slice(hash, -6, 6)
   end
+
   defp truncate_hash(hash), do: hash
 
   defp format_time(nil), do: "-"
+
   defp format_time(datetime) do
     Calendar.strftime(datetime, "%Y-%m-%d %H:%M:%S")
   end

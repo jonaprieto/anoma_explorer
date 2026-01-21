@@ -16,12 +16,13 @@ defmodule AnomaExplorer.AlchemyClientTest do
         {:ok, %{"jsonrpc" => "2.0", "id" => 1, "result" => "0xbebc20"}}
       end)
 
-      assert {:ok, 12500000} = Alchemy.get_block_number("eth-mainnet", "test_key")
+      assert {:ok, 12_500_000} = Alchemy.get_block_number("eth-mainnet", "test_key")
     end
 
     test "returns error on RPC error" do
       expect(AnomaExplorer.HTTPClientMock, :post, fn _url, _body, _headers ->
-        {:ok, %{"jsonrpc" => "2.0", "id" => 1, "error" => %{"code" => -32600, "message" => "Invalid"}}}
+        {:ok,
+         %{"jsonrpc" => "2.0", "id" => 1, "error" => %{"code" => -32600, "message" => "Invalid"}}}
       end)
 
       assert {:error, %{"code" => -32600}} = Alchemy.get_block_number("eth-mainnet", "test_key")
@@ -46,32 +47,33 @@ defmodule AnomaExplorer.AlchemyClientTest do
         assert params.toBlock == "0x100"
         assert params.address == "0xcontract"
 
-        {:ok, %{
-          "jsonrpc" => "2.0",
-          "id" => 1,
-          "result" => [
-            %{
-              "address" => "0xcontract",
-              "topics" => ["0xtopic0"],
-              "data" => "0xdata",
-              "blockNumber" => "0x64",
-              "transactionHash" => "0xtx1",
-              "transactionIndex" => "0x0",
-              "logIndex" => "0x0",
-              "removed" => false
-            },
-            %{
-              "address" => "0xcontract",
-              "topics" => ["0xtopic0", "0xtopic1"],
-              "data" => "0xdata2",
-              "blockNumber" => "0x65",
-              "transactionHash" => "0xtx2",
-              "transactionIndex" => "0x1",
-              "logIndex" => "0x3",
-              "removed" => false
-            }
-          ]
-        }}
+        {:ok,
+         %{
+           "jsonrpc" => "2.0",
+           "id" => 1,
+           "result" => [
+             %{
+               "address" => "0xcontract",
+               "topics" => ["0xtopic0"],
+               "data" => "0xdata",
+               "blockNumber" => "0x64",
+               "transactionHash" => "0xtx1",
+               "transactionIndex" => "0x0",
+               "logIndex" => "0x0",
+               "removed" => false
+             },
+             %{
+               "address" => "0xcontract",
+               "topics" => ["0xtopic0", "0xtopic1"],
+               "data" => "0xdata2",
+               "blockNumber" => "0x65",
+               "transactionHash" => "0xtx2",
+               "transactionIndex" => "0x1",
+               "logIndex" => "0x3",
+               "removed" => false
+             }
+           ]
+         }}
       end)
 
       assert {:ok, logs} = Alchemy.get_logs("polygon-mainnet", "test_key", "0xcontract", 1, 256)
@@ -107,30 +109,41 @@ defmodule AnomaExplorer.AlchemyClientTest do
         assert String.contains?(url, "base-mainnet.g.alchemy.com")
         assert body.method == "alchemy_getAssetTransfers"
 
-        {:ok, %{
-          "jsonrpc" => "2.0",
-          "id" => 1,
-          "result" => %{
-            "transfers" => [
-              %{
-                "blockNum" => "0xbebc20",
-                "hash" => "0xtx1",
-                "from" => "0xsender",
-                "to" => "0xreceiver",
-                "value" => 1.5,
-                "asset" => "ETH",
-                "category" => "external",
-                "rawContract" => %{"value" => "0x14d1120d7b160000", "address" => nil, "decimal" => "0x12"},
-                "metadata" => %{"blockTimestamp" => "2024-01-15T10:30:00.000Z"}
-              }
-            ],
-            "pageKey" => "next_page_token"
-          }
-        }}
+        {:ok,
+         %{
+           "jsonrpc" => "2.0",
+           "id" => 1,
+           "result" => %{
+             "transfers" => [
+               %{
+                 "blockNum" => "0xbebc20",
+                 "hash" => "0xtx1",
+                 "from" => "0xsender",
+                 "to" => "0xreceiver",
+                 "value" => 1.5,
+                 "asset" => "ETH",
+                 "category" => "external",
+                 "rawContract" => %{
+                   "value" => "0x14d1120d7b160000",
+                   "address" => nil,
+                   "decimal" => "0x12"
+                 },
+                 "metadata" => %{"blockTimestamp" => "2024-01-15T10:30:00.000Z"}
+               }
+             ],
+             "pageKey" => "next_page_token"
+           }
+         }}
       end)
 
       assert {:ok, transfers, page_key} =
-               Alchemy.get_asset_transfers("base-mainnet", "test_key", "0xcontract", 1, 12500000)
+               Alchemy.get_asset_transfers(
+                 "base-mainnet",
+                 "test_key",
+                 "0xcontract",
+                 1,
+                 12_500_000
+               )
 
       assert length(transfers) == 1
       assert page_key == "next_page_token"
@@ -138,7 +151,7 @@ defmodule AnomaExplorer.AlchemyClientTest do
       [transfer] = transfers
       assert transfer.network == "base-mainnet"
       assert transfer.kind == "transfer"
-      assert transfer.block_number == 12500000
+      assert transfer.block_number == 12_500_000
       assert transfer.from == "0xsender"
       assert transfer.to == "0xreceiver"
     end
@@ -148,15 +161,18 @@ defmodule AnomaExplorer.AlchemyClientTest do
         [params] = body.params
         assert params.pageKey == "my_page_key"
 
-        {:ok, %{
-          "jsonrpc" => "2.0",
-          "id" => 1,
-          "result" => %{"transfers" => [], "pageKey" => nil}
-        }}
+        {:ok,
+         %{
+           "jsonrpc" => "2.0",
+           "id" => 1,
+           "result" => %{"transfers" => [], "pageKey" => nil}
+         }}
       end)
 
       assert {:ok, [], nil} =
-               Alchemy.get_asset_transfers("eth-mainnet", "test_key", "0xcontract", 1, 100, page_key: "my_page_key")
+               Alchemy.get_asset_transfers("eth-mainnet", "test_key", "0xcontract", 1, 100,
+                 page_key: "my_page_key"
+               )
     end
   end
 end

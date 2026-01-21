@@ -72,6 +72,7 @@ defmodule AnomaExplorerWeb.AnalyticsLive do
   defp maybe_add_network(opts, network), do: Keyword.put(opts, :network, network)
 
   defp parse_days(nil), do: @default_days
+
   defp parse_days(days) when is_binary(days) do
     case Integer.parse(days) do
       {n, _} when n > 0 and n <= 365 -> n
@@ -98,7 +99,7 @@ defmodule AnomaExplorerWeb.AnalyticsLive do
               <option value="">All Networks</option>
               <%= for network <- @networks do %>
                 <option value={network} selected={@selected_network == network}>
-                  <%= network %>
+                  {network}
                 </option>
               <% end %>
             </select>
@@ -114,31 +115,31 @@ defmodule AnomaExplorerWeb.AnalyticsLive do
           </form>
         </div>
       </div>
-
-      <!-- Summary Stats Cards -->
+      
+    <!-- Summary Stats Cards -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <.stat_card title="Total Activities" value={@summary.total_count} />
         <.stat_card title="Active Networks" value={@summary.networks_active} />
         <.stat_card title="Activity Types" value={@summary.kinds_used} />
         <.stat_card title="Avg per Day" value={Float.round(@summary.avg_per_day, 1)} />
       </div>
-
-      <!-- Charts Section -->
+      
+    <!-- Charts Section -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <!-- Daily Activity Chart -->
         <div class="bg-white rounded-lg shadow p-4">
           <h2 class="text-lg font-semibold mb-4">Daily Activity</h2>
           <.bar_chart data={@daily_counts} />
         </div>
-
-        <!-- Activity by Kind -->
+        
+    <!-- Activity by Kind -->
         <div class="bg-white rounded-lg shadow p-4">
           <h2 class="text-lg font-semibold mb-4">Activity by Type</h2>
           <.horizontal_bar_chart data={@by_kind} />
         </div>
       </div>
-
-      <!-- Network Distribution -->
+      
+    <!-- Network Distribution -->
       <div class="bg-white rounded-lg shadow p-4">
         <h2 class="text-lg font-semibold mb-4">Activity by Network</h2>
         <.horizontal_bar_chart data={@by_network} />
@@ -151,8 +152,8 @@ defmodule AnomaExplorerWeb.AnalyticsLive do
   defp stat_card(assigns) do
     ~H"""
     <div class="bg-white rounded-lg shadow p-4">
-      <p class="text-sm text-gray-500"><%= @title %></p>
-      <p class="text-2xl font-bold"><%= @value %></p>
+      <p class="text-sm text-gray-500">{@title}</p>
+      <p class="text-2xl font-bold">{@value}</p>
     </div>
     """
   end
@@ -169,7 +170,7 @@ defmodule AnomaExplorerWeb.AnalyticsLive do
       <% else %>
         <%= for item <- @data do %>
           <div class="flex items-center gap-2 text-xs">
-            <span class="w-16 text-gray-500 text-right"><%= format_date(item.date) %></span>
+            <span class="w-16 text-gray-500 text-right">{format_date(item.date)}</span>
             <div class="flex-1 bg-gray-100 rounded h-4">
               <div
                 class="bg-blue-500 h-4 rounded"
@@ -177,7 +178,7 @@ defmodule AnomaExplorerWeb.AnalyticsLive do
               >
               </div>
             </div>
-            <span class="w-8 text-right"><%= item.count %></span>
+            <span class="w-8 text-right">{item.count}</span>
           </div>
         <% end %>
       <% end %>
@@ -198,13 +199,13 @@ defmodule AnomaExplorerWeb.AnalyticsLive do
       <% else %>
         <%= for {label, count} <- @data do %>
           <div class="flex items-center gap-2">
-            <span class="w-32 text-sm font-medium truncate"><%= label %></span>
+            <span class="w-32 text-sm font-medium truncate">{label}</span>
             <div class="flex-1 bg-gray-100 rounded h-6">
               <div
                 class="bg-green-500 h-6 rounded flex items-center justify-end pr-2"
                 style={"width: #{bar_width(count, @max_count)}%"}
               >
-                <span class="text-xs text-white font-medium"><%= count %></span>
+                <span class="text-xs text-white font-medium">{count}</span>
               </div>
             </div>
           </div>

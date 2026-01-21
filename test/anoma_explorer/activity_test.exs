@@ -9,7 +9,7 @@ defmodule AnomaExplorer.ActivityTest do
     contract_address: "0x742d35cc6634c0532925a3b844bc9e7595f0ab12",
     kind: "log",
     tx_hash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-    block_number: 12345678,
+    block_number: 12_345_678,
     log_index: 0,
     raw: %{"test" => "data"}
   }
@@ -83,7 +83,7 @@ defmodule AnomaExplorer.ActivityTest do
       assert {:ok, activity} = Activity.create_activity(@valid_attrs)
       assert activity.network == "eth-mainnet"
       assert activity.kind == "log"
-      assert activity.block_number == 12345678
+      assert activity.block_number == 12_345_678
     end
 
     test "returns error for invalid attrs" do
@@ -122,14 +122,14 @@ defmodule AnomaExplorer.ActivityTest do
   describe "upsert_activity/1" do
     test "inserts new activity" do
       assert {:ok, activity} = Activity.upsert_activity(@valid_attrs)
-      assert activity.block_number == 12345678
+      assert activity.block_number == 12_345_678
     end
 
     test "updates existing activity on conflict" do
       assert {:ok, _} = Activity.create_activity(@valid_attrs)
-      updated_attrs = Map.put(@valid_attrs, :block_number, 99999999)
+      updated_attrs = Map.put(@valid_attrs, :block_number, 99_999_999)
       assert {:ok, activity} = Activity.upsert_activity(updated_attrs)
-      assert activity.block_number == 99999999
+      assert activity.block_number == 99_999_999
     end
   end
 
@@ -138,8 +138,17 @@ defmodule AnomaExplorer.ActivityTest do
       # Create activities in different networks and blocks
       {:ok, a1} = Activity.create_activity(%{@valid_attrs | block_number: 100, log_index: 0})
       {:ok, a2} = Activity.create_activity(%{@valid_attrs | block_number: 200, log_index: 1})
-      {:ok, a3} = Activity.create_activity(%{@valid_attrs | block_number: 300, log_index: 2, network: "polygon-mainnet"})
-      {:ok, a4} = Activity.create_activity(%{@valid_attrs | block_number: 400, log_index: 3, kind: "tx"})
+
+      {:ok, a3} =
+        Activity.create_activity(%{
+          @valid_attrs
+          | block_number: 300,
+            log_index: 2,
+            network: "polygon-mainnet"
+        })
+
+      {:ok, a4} =
+        Activity.create_activity(%{@valid_attrs | block_number: 400, log_index: 3, kind: "tx"})
 
       %{activities: [a1, a2, a3, a4]}
     end

@@ -27,32 +27,33 @@ defmodule AnomaExplorer.Ingestion.SyncTest do
         [params] = body.params
         assert params.address == @contract
 
-        {:ok, %{
-          "jsonrpc" => "2.0",
-          "id" => 1,
-          "result" => [
-            %{
-              "address" => @contract,
-              "topics" => ["0xtopic0"],
-              "data" => "0xdata",
-              "blockNumber" => "0x50",
-              "transactionHash" => "0xtx1",
-              "transactionIndex" => "0x0",
-              "logIndex" => "0x0",
-              "removed" => false
-            },
-            %{
-              "address" => @contract,
-              "topics" => ["0xtopic1"],
-              "data" => "0xdata2",
-              "blockNumber" => "0x60",
-              "transactionHash" => "0xtx2",
-              "transactionIndex" => "0x1",
-              "logIndex" => "0x1",
-              "removed" => false
-            }
-          ]
-        }}
+        {:ok,
+         %{
+           "jsonrpc" => "2.0",
+           "id" => 1,
+           "result" => [
+             %{
+               "address" => @contract,
+               "topics" => ["0xtopic0"],
+               "data" => "0xdata",
+               "blockNumber" => "0x50",
+               "transactionHash" => "0xtx1",
+               "transactionIndex" => "0x0",
+               "logIndex" => "0x0",
+               "removed" => false
+             },
+             %{
+               "address" => @contract,
+               "topics" => ["0xtopic1"],
+               "data" => "0xdata2",
+               "blockNumber" => "0x60",
+               "transactionHash" => "0xtx2",
+               "transactionIndex" => "0x1",
+               "logIndex" => "0x1",
+               "removed" => false
+             }
+           ]
+         }}
       end)
 
       {:ok, state} = Ingestion.get_or_create_state(@network, @contract)
@@ -61,7 +62,8 @@ defmodule AnomaExplorer.Ingestion.SyncTest do
       {:ok, result} = Sync.sync_logs(@network, @contract, @api_key, chunk_size: 256)
 
       assert result.inserted_count == 2
-      assert result.last_block == 256  # 0x100 = 256
+      # 0x100 = 256
+      assert result.last_block == 256
 
       # Verify activities were inserted
       activities = Activity.list_activities(network: @network)
@@ -75,22 +77,26 @@ defmodule AnomaExplorer.Ingestion.SyncTest do
     test "resumes from last seen block" do
       # Create initial state with last_seen_block_logs
       {:ok, _state} = Ingestion.get_or_create_state(@network, @contract)
-      {:ok, _state} = Ingestion.update_state(
-        Ingestion.get_state(@network, @contract),
-        %{last_seen_block_logs: 100}
-      )
+
+      {:ok, _state} =
+        Ingestion.update_state(
+          Ingestion.get_state(@network, @contract),
+          %{last_seen_block_logs: 100}
+        )
 
       # Mock: get current block number
       expect(AnomaExplorer.HTTPClientMock, :post, fn _url, body, _headers ->
         assert body.method == "eth_blockNumber"
-        {:ok, %{"jsonrpc" => "2.0", "id" => 1, "result" => "0xc8"}}  # 200
+        # 200
+        {:ok, %{"jsonrpc" => "2.0", "id" => 1, "result" => "0xc8"}}
       end)
 
       # Mock: get logs - should start from block 101
       expect(AnomaExplorer.HTTPClientMock, :post, fn _url, body, _headers ->
         [params] = body.params
         # Should start from last_seen + 1
-        assert params.fromBlock == "0x65"  # 101
+        # 101
+        assert params.fromBlock == "0x65"
         {:ok, %{"jsonrpc" => "2.0", "id" => 1, "result" => []}}
       end)
 
@@ -125,10 +131,11 @@ defmodule AnomaExplorer.Ingestion.SyncTest do
       assert result1.inserted_count == 1
 
       # Reset state to re-sync same range
-      {:ok, _} = Ingestion.update_state(
-        Ingestion.get_state(@network, @contract),
-        %{last_seen_block_logs: nil}
-      )
+      {:ok, _} =
+        Ingestion.update_state(
+          Ingestion.get_state(@network, @contract),
+          %{last_seen_block_logs: nil}
+        )
 
       # Second sync with same data
       expect(AnomaExplorer.HTTPClientMock, :post, fn _url, _body, _headers ->
@@ -169,7 +176,8 @@ defmodule AnomaExplorer.Ingestion.SyncTest do
       end)
 
       expect(AnomaExplorer.HTTPClientMock, :post, fn _url, _body, _headers ->
-        {:ok, %{"jsonrpc" => "2.0", "id" => 1, "error" => %{"code" => -32600, "message" => "Invalid"}}}
+        {:ok,
+         %{"jsonrpc" => "2.0", "id" => 1, "error" => %{"code" => -32600, "message" => "Invalid"}}}
       end)
 
       {:error, _reason} = Sync.sync_logs(@network, @contract, @api_key, chunk_size: 256)
@@ -184,7 +192,8 @@ defmodule AnomaExplorer.Ingestion.SyncTest do
     test "uses backfill_blocks when no start_block and no state" do
       expect(AnomaExplorer.HTTPClientMock, :post, fn _url, body, _headers ->
         assert body.method == "eth_blockNumber"
-        {:ok, %{"jsonrpc" => "2.0", "id" => 1, "result" => "0xc350"}}  # 50000
+        # 50000
+        {:ok, %{"jsonrpc" => "2.0", "id" => 1, "result" => "0xc350"}}
       end)
 
       expect(AnomaExplorer.HTTPClientMock, :post, fn _url, body, _headers ->
@@ -194,7 +203,8 @@ defmodule AnomaExplorer.Ingestion.SyncTest do
         {:ok, %{"jsonrpc" => "2.0", "id" => 1, "result" => []}}
       end)
 
-      {:ok, result} = Sync.sync_logs(@network, @contract, @api_key, backfill_blocks: 1000, chunk_size: 5000)
+      {:ok, result} =
+        Sync.sync_logs(@network, @contract, @api_key, backfill_blocks: 1000, chunk_size: 5000)
 
       assert result.last_block == 50000
     end

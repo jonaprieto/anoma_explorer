@@ -56,7 +56,8 @@ defmodule AnomaExplorerWeb.AnalyticsLiveTest do
     test "filters by network", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/analytics")
 
-      html = view
+      html =
+        view
         |> element("form[phx-change=change_network]")
         |> render_change(%{"network" => "eth-mainnet"})
 
@@ -67,7 +68,8 @@ defmodule AnomaExplorerWeb.AnalyticsLiveTest do
     test "changes time period", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/analytics")
 
-      html = view
+      html =
+        view
         |> element("form[phx-change=change_days]")
         |> render_change(%{"days" => "7"})
 

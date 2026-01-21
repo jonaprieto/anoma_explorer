@@ -23,7 +23,9 @@ defmodule AnomaExplorer.RateLimiter do
   """
   @spec acquire(String.t()) :: :ok | {:error, :rate_limited}
   def acquire(key \\ "default") do
-    max_requests = Application.get_env(:anoma_explorer, :max_req_per_second, @default_max_requests)
+    max_requests =
+      Application.get_env(:anoma_explorer, :max_req_per_second, @default_max_requests)
+
     now = System.system_time(:second)
 
     case :ets.lookup(@table_name, key) do
@@ -74,7 +76,9 @@ defmodule AnomaExplorer.RateLimiter do
   """
   @spec status(String.t()) :: {integer(), integer()}
   def status(key \\ "default") do
-    max_requests = Application.get_env(:anoma_explorer, :max_req_per_second, @default_max_requests)
+    max_requests =
+      Application.get_env(:anoma_explorer, :max_req_per_second, @default_max_requests)
+
     now = System.system_time(:second)
 
     case :ets.lookup(@table_name, key) do

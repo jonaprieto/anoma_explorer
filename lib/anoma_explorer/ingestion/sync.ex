@@ -36,7 +36,6 @@ defmodule AnomaExplorer.Ingestion.Sync do
 
     with {:ok, current_block} <- Alchemy.get_block_number(network, api_key),
          {:ok, state} <- Ingestion.get_or_create_state(network, contract_address) do
-
       from_block = calculate_from_block(state, start_block_opt, current_block, backfill_blocks)
       to_block = current_block
 
@@ -44,7 +43,15 @@ defmodule AnomaExplorer.Ingestion.Sync do
         Logger.info("No new blocks to sync for #{network}/#{contract_address}")
         {:ok, %{inserted_count: 0, last_block: current_block}}
       else
-        sync_log_range(network, contract_address, api_key, from_block, to_block, chunk_size, state)
+        sync_log_range(
+          network,
+          contract_address,
+          api_key,
+          from_block,
+          to_block,
+          chunk_size,
+          state
+        )
       end
     end
   end
@@ -67,9 +74,19 @@ defmodule AnomaExplorer.Ingestion.Sync do
     end
   end
 
-  defp sync_log_range(network, contract_address, api_key, from_block, to_block, _chunk_size, state) do
+  defp sync_log_range(
+         network,
+         contract_address,
+         api_key,
+         from_block,
+         to_block,
+         _chunk_size,
+         state
+       ) do
     # Note: chunk_size is available for future chunking implementation
-    Logger.info("Syncing logs for #{network}/#{contract_address} from #{from_block} to #{to_block}")
+    Logger.info(
+      "Syncing logs for #{network}/#{contract_address} from #{from_block} to #{to_block}"
+    )
 
     # For simplicity in MVP, fetch all in one chunk if range is small enough
     # In production, would chunk this
@@ -114,12 +131,16 @@ defmodule AnomaExplorer.Ingestion.Sync do
         if Enum.empty?(activities) do
           {:ok, 0}
         else
-          {count, _} = Repo.insert_all(
-            ContractActivity,
-            activities,
-            on_conflict: {:replace, [:updated_at]},
-            conflict_target: {:unsafe_fragment, "(network, contract_address, kind, tx_hash, log_index) WHERE log_index IS NOT NULL"}
-          )
+          {count, _} =
+            Repo.insert_all(
+              ContractActivity,
+              activities,
+              on_conflict: {:replace, [:updated_at]},
+              conflict_target:
+                {:unsafe_fragment,
+                 "(network, contract_address, kind, tx_hash, log_index) WHERE log_index IS NOT NULL"}
+            )
+
           {:ok, count}
         end
       end)
@@ -132,11 +153,14 @@ defmodule AnomaExplorer.Ingestion.Sync do
         # Broadcast new activities for realtime updates
         if count > 0 do
           # Build activity structs for broadcasting
-          broadcast_activities = Enum.map(activities, fn attrs ->
-            struct(ContractActivity, attrs)
-          end)
+          broadcast_activities =
+            Enum.map(activities, fn attrs ->
+              struct(ContractActivity, attrs)
+            end)
+
           Broadcaster.broadcast_new_activities(broadcast_activities)
         end
+
         count
 
       {:error, _step, reason, _changes} ->
@@ -159,7 +183,6 @@ defmodule AnomaExplorer.Ingestion.Sync do
 
     with {:ok, current_block} <- Alchemy.get_block_number(network, api_key),
          {:ok, state} <- Ingestion.get_or_create_state(network, contract_address) do
-
       from_block = calculate_from_block_tx(state, start_block_opt, current_block, backfill_blocks)
       to_block = current_block
 
@@ -167,7 +190,15 @@ defmodule AnomaExplorer.Ingestion.Sync do
         Logger.info("No new blocks to sync transfers for #{network}/#{contract_address}")
         {:ok, %{inserted_count: 0, last_block: current_block}}
       else
-        sync_transfer_range(network, contract_address, api_key, from_block, to_block, max_count, state)
+        sync_transfer_range(
+          network,
+          contract_address,
+          api_key,
+          from_block,
+          to_block,
+          max_count,
+          state
+        )
       end
     end
   end
@@ -180,8 +211,18 @@ defmodule AnomaExplorer.Ingestion.Sync do
     end
   end
 
-  defp sync_transfer_range(network, contract_address, api_key, from_block, to_block, max_count, state) do
-    Logger.info("Syncing transfers for #{network}/#{contract_address} from #{from_block} to #{to_block}")
+  defp sync_transfer_range(
+         network,
+         contract_address,
+         api_key,
+         from_block,
+         to_block,
+         max_count,
+         state
+       ) do
+    Logger.info(
+      "Syncing transfers for #{network}/#{contract_address} from #{from_block} to #{to_block}"
+    )
 
     case fetch_all_transfers(network, api_key, contract_address, from_block, to_block, max_count) do
       {:ok, transfers} ->
@@ -195,18 +236,53 @@ defmodule AnomaExplorer.Ingestion.Sync do
   end
 
   defp fetch_all_transfers(network, api_key, contract_address, from_block, to_block, max_count) do
-    fetch_transfers_page(network, api_key, contract_address, from_block, to_block, max_count, nil, [])
+    fetch_transfers_page(
+      network,
+      api_key,
+      contract_address,
+      from_block,
+      to_block,
+      max_count,
+      nil,
+      []
+    )
   end
 
-  defp fetch_transfers_page(network, api_key, contract_address, from_block, to_block, max_count, page_key, acc) do
-    opts = if page_key, do: [max_count: max_count, page_key: page_key], else: [max_count: max_count]
+  defp fetch_transfers_page(
+         network,
+         api_key,
+         contract_address,
+         from_block,
+         to_block,
+         max_count,
+         page_key,
+         acc
+       ) do
+    opts =
+      if page_key, do: [max_count: max_count, page_key: page_key], else: [max_count: max_count]
 
-    case Alchemy.get_asset_transfers(network, api_key, contract_address, from_block, to_block, opts) do
+    case Alchemy.get_asset_transfers(
+           network,
+           api_key,
+           contract_address,
+           from_block,
+           to_block,
+           opts
+         ) do
       {:ok, transfers, nil} ->
         {:ok, acc ++ transfers}
 
       {:ok, transfers, next_page_key} ->
-        fetch_transfers_page(network, api_key, contract_address, from_block, to_block, max_count, next_page_key, acc ++ transfers)
+        fetch_transfers_page(
+          network,
+          api_key,
+          contract_address,
+          from_block,
+          to_block,
+          max_count,
+          next_page_key,
+          acc ++ transfers
+        )
 
       {:error, reason} ->
         {:error, reason}
@@ -240,12 +316,16 @@ defmodule AnomaExplorer.Ingestion.Sync do
         if Enum.empty?(activities) do
           {:ok, 0}
         else
-          {count, _} = Repo.insert_all(
-            ContractActivity,
-            activities,
-            on_conflict: {:replace, [:updated_at]},
-            conflict_target: {:unsafe_fragment, "(network, contract_address, kind, tx_hash) WHERE log_index IS NULL"}
-          )
+          {count, _} =
+            Repo.insert_all(
+              ContractActivity,
+              activities,
+              on_conflict: {:replace, [:updated_at]},
+              conflict_target:
+                {:unsafe_fragment,
+                 "(network, contract_address, kind, tx_hash) WHERE log_index IS NULL"}
+            )
+
           {:ok, count}
         end
       end)

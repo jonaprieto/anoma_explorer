@@ -10,7 +10,11 @@ defmodule AnomaExplorer.Alchemy do
 
   alias AnomaExplorer.Config
 
-  @http_client Application.compile_env(:anoma_explorer, :http_client, AnomaExplorer.HTTPClient.FinchClient)
+  @http_client Application.compile_env(
+                 :anoma_explorer,
+                 :http_client,
+                 AnomaExplorer.HTTPClient.FinchClient
+               )
 
   # Public API
 
@@ -31,7 +35,13 @@ defmodule AnomaExplorer.Alchemy do
   @doc """
   Fetches logs for a contract within a block range.
   """
-  @spec get_logs(String.t(), String.t(), String.t(), integer() | String.t(), integer() | String.t()) ::
+  @spec get_logs(
+          String.t(),
+          String.t(),
+          String.t(),
+          integer() | String.t(),
+          integer() | String.t()
+        ) ::
           {:ok, [map()]} | {:error, term()}
   def get_logs(network, api_key, contract_address, from_block, to_block) do
     url = Config.network_rpc_url(network, api_key)
@@ -58,7 +68,14 @@ defmodule AnomaExplorer.Alchemy do
   @doc """
   Fetches asset transfers for a contract within a block range.
   """
-  @spec get_asset_transfers(String.t(), String.t(), String.t(), integer() | String.t(), integer() | String.t(), keyword()) ::
+  @spec get_asset_transfers(
+          String.t(),
+          String.t(),
+          String.t(),
+          integer() | String.t(),
+          integer() | String.t(),
+          keyword()
+        ) ::
           {:ok, [map()], String.t() | nil} | {:error, term()}
   def get_asset_transfers(network, api_key, contract_address, from_block, to_block, opts \\ []) do
     url = Config.network_rpc_url(network, api_key)
@@ -124,19 +141,23 @@ defmodule AnomaExplorer.Alchemy do
   """
   @spec parse_hex(String.t() | nil) :: integer() | nil
   def parse_hex(nil), do: nil
+
   def parse_hex("0x" <> hex) do
     case Integer.parse(hex, 16) do
       {int, ""} -> int
       _ -> nil
     end
   end
+
   def parse_hex(_), do: nil
 
   @doc """
   Converts a block number to hex string.
   """
   @spec to_hex_block(integer() | String.t()) :: String.t()
-  def to_hex_block(block) when is_integer(block), do: "0x" <> String.downcase(Integer.to_string(block, 16))
+  def to_hex_block(block) when is_integer(block),
+    do: "0x" <> String.downcase(Integer.to_string(block, 16))
+
   def to_hex_block(block) when is_binary(block), do: block
 
   @doc """
@@ -188,6 +209,7 @@ defmodule AnomaExplorer.Alchemy do
       int -> Decimal.new(int)
     end
   end
+
   defp parse_value(_), do: nil
 
   defp parse_timestamp(%{"metadata" => %{"blockTimestamp" => ts}}) when is_binary(ts) do
@@ -196,5 +218,6 @@ defmodule AnomaExplorer.Alchemy do
       _ -> nil
     end
   end
+
   defp parse_timestamp(_), do: nil
 end

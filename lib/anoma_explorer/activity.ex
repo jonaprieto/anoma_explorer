@@ -30,7 +30,8 @@ defmodule AnomaExplorer.Activity do
 
     conflict_target =
       if attrs[:log_index] || attrs["log_index"] do
-        {:unsafe_fragment, "(network, contract_address, kind, tx_hash, log_index) WHERE log_index IS NOT NULL"}
+        {:unsafe_fragment,
+         "(network, contract_address, kind, tx_hash, log_index) WHERE log_index IS NOT NULL"}
       else
         {:unsafe_fragment, "(network, contract_address, kind, tx_hash) WHERE log_index IS NULL"}
       end
@@ -63,7 +64,9 @@ defmodule AnomaExplorer.Activity do
         ContractActivity,
         entries,
         on_conflict: {:replace_all_except, [:id, :inserted_at]},
-        conflict_target: {:unsafe_fragment, "(network, contract_address, kind, tx_hash, log_index) WHERE log_index IS NOT NULL"}
+        conflict_target:
+          {:unsafe_fragment,
+           "(network, contract_address, kind, tx_hash, log_index) WHERE log_index IS NOT NULL"}
       )
 
     {:ok, count}

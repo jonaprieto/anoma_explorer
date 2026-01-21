@@ -33,18 +33,18 @@ defmodule AnomaExplorer.Repo.Migrations.CreateContractActivity do
 
     # Unique index for tx/transfer kinds (log_index is NULL)
     create unique_index(
-      :contract_activity,
-      [:network, :contract_address, :kind, :tx_hash],
-      where: "log_index IS NULL",
-      name: :contract_activity_tx_transfer_unique_idx
-    )
+             :contract_activity,
+             [:network, :contract_address, :kind, :tx_hash],
+             where: "log_index IS NULL",
+             name: :contract_activity_tx_transfer_unique_idx
+           )
 
     # Unique index for log kind (includes log_index)
     create unique_index(
-      :contract_activity,
-      [:network, :contract_address, :kind, :tx_hash, :log_index],
-      where: "log_index IS NOT NULL",
-      name: :contract_activity_log_unique_idx
-    )
+             :contract_activity,
+             [:network, :contract_address, :kind, :tx_hash, :log_index],
+             where: "log_index IS NOT NULL",
+             name: :contract_activity_log_unique_idx
+           )
   end
 end

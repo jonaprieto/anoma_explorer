@@ -48,7 +48,7 @@ defmodule AnomaExplorer.AlchemyTest do
     end
 
     test "parses large number" do
-      assert Alchemy.parse_hex("0xbebc20") == 12500000
+      assert Alchemy.parse_hex("0xbebc20") == 12_500_000
     end
 
     test "returns nil for nil input" do
@@ -77,13 +77,14 @@ defmodule AnomaExplorer.AlchemyTest do
         "removed" => false
       }
 
-      parsed = Alchemy.parse_log(raw_log, "eth-mainnet", "0x742d35cc6634c0532925a3b844bc9e7595f0ab12")
+      parsed =
+        Alchemy.parse_log(raw_log, "eth-mainnet", "0x742d35cc6634c0532925a3b844bc9e7595f0ab12")
 
       assert parsed.network == "eth-mainnet"
       assert parsed.contract_address == "0x742d35cc6634c0532925a3b844bc9e7595f0ab12"
       assert parsed.kind == "log"
       assert parsed.tx_hash == "0xabc123"
-      assert parsed.block_number == 12500000
+      assert parsed.block_number == 12_500_000
       assert parsed.log_index == 2
       assert parsed.tx_index == 5
       assert parsed.topic0 == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
@@ -104,7 +105,8 @@ defmodule AnomaExplorer.AlchemyTest do
         "removed" => false
       }
 
-      parsed = Alchemy.parse_log(raw_log, "eth-mainnet", "0x742d35cc6634c0532925a3b844bc9e7595f0ab12")
+      parsed =
+        Alchemy.parse_log(raw_log, "eth-mainnet", "0x742d35cc6634c0532925a3b844bc9e7595f0ab12")
 
       assert parsed.topic0 == nil
       assert parsed.topics == []
@@ -137,7 +139,7 @@ defmodule AnomaExplorer.AlchemyTest do
       assert parsed.contract_address == "0xcontract"
       assert parsed.kind == "transfer"
       assert parsed.tx_hash == "0xtx123"
-      assert parsed.block_number == 12500000
+      assert parsed.block_number == 12_500_000
       assert parsed.from == "0xsender"
       assert parsed.to == "0xreceiver"
       assert parsed.raw == raw_transfer
@@ -171,7 +173,7 @@ defmodule AnomaExplorer.AlchemyTest do
 
   describe "to_hex_block/1" do
     test "converts integer to hex" do
-      assert Alchemy.to_hex_block(12500000) == "0xbebc20"
+      assert Alchemy.to_hex_block(12_500_000) == "0xbebc20"
     end
 
     test "converts zero" do

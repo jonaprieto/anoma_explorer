@@ -104,8 +104,12 @@ defmodule H do
     contract = System.get_env("CONTRACT_ADDRESS")
 
     cond do
-      is_nil(api_key) -> {:error, "ALCHEMY_API_KEY not set"}
-      is_nil(contract) -> {:error, "CONTRACT_ADDRESS not set"}
+      is_nil(api_key) ->
+        {:error, "ALCHEMY_API_KEY not set"}
+
+      is_nil(contract) ->
+        {:error, "CONTRACT_ADDRESS not set"}
+
       true ->
         AnomaExplorer.Ingestion.Sync.sync_logs(network, contract, api_key)
     end

@@ -49,12 +49,13 @@ defmodule AnomaExplorer.Workers.IngestionWorkerTest do
 
   describe "new/1 job creation" do
     test "creates a job changeset with correct args" do
-      job_changeset = IngestionWorker.new(%{
-        "network" => @network,
-        "contract_address" => @contract,
-        "api_key" => "test_key",
-        "poll_interval" => 20
-      })
+      job_changeset =
+        IngestionWorker.new(%{
+          "network" => @network,
+          "contract_address" => @contract,
+          "api_key" => "test_key",
+          "poll_interval" => 20
+        })
 
       assert job_changeset.valid?
       assert job_changeset.changes.args["network"] == @network
@@ -77,12 +78,13 @@ defmodule AnomaExplorer.Workers.IngestionWorkerTest do
 
       # With inline mode, jobs are executed immediately
       # We just verify the insert returns successfully
-      result = IngestionWorker.enqueue_for_network(
-        @network,
-        @contract,
-        "test_key",
-        poll_interval: 20
-      )
+      result =
+        IngestionWorker.enqueue_for_network(
+          @network,
+          @contract,
+          "test_key",
+          poll_interval: 20
+        )
 
       assert {:ok, %Oban.Job{}} = result
     end
@@ -106,10 +108,11 @@ defmodule AnomaExplorer.Workers.IngestionWorkerTest do
 
       # All should succeed
       assert length(results) == 3
+
       assert Enum.all?(results, fn
-        {:ok, %Oban.Job{}} -> true
-        _ -> false
-      end)
+               {:ok, %Oban.Job{}} -> true
+               _ -> false
+             end)
     end
   end
 end

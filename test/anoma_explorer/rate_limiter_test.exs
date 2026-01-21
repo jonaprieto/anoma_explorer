@@ -35,6 +35,7 @@ defmodule AnomaExplorer.RateLimiterTest do
       for _ <- 1..5 do
         assert :ok = RateLimiter.acquire(key1)
       end
+
       assert {:error, :rate_limited} = RateLimiter.acquire(key1)
 
       # key2 should still be available
