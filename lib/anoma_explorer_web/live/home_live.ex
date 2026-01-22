@@ -10,6 +10,8 @@ defmodule AnomaExplorerWeb.HomeLive do
   alias AnomaExplorer.Indexer.Networks
   alias AnomaExplorer.Utils.Formatting
 
+  alias AnomaExplorerWeb.Live.Helpers.SharedHandlers
+
   @refresh_interval 30_000
 
   @impl true
@@ -60,13 +62,12 @@ defmodule AnomaExplorerWeb.HomeLive do
 
   @impl true
   def handle_event("show_chain_info", %{"chain-id" => chain_id}, socket) do
-    chain_id = String.to_integer(chain_id)
-    {:noreply, assign(socket, :selected_chain, Networks.chain_info(chain_id))}
+    {:noreply, SharedHandlers.handle_show_chain_info(socket, chain_id)}
   end
 
   @impl true
   def handle_event("close_chain_modal", _params, socket) do
-    {:noreply, assign(socket, :selected_chain, nil)}
+    {:noreply, SharedHandlers.handle_close_chain_modal(socket)}
   end
 
   @impl true
@@ -75,27 +76,19 @@ defmodule AnomaExplorerWeb.HomeLive do
         %{"tx-id" => tx_id, "tags" => tags_json, "logic-refs" => logic_refs_json},
         socket
       ) do
-    tags = Jason.decode!(tags_json)
-    logic_refs = Jason.decode!(logic_refs_json)
-
-    {:noreply,
-     assign(socket, :selected_resources, %{tx_id: tx_id, tags: tags, logic_refs: logic_refs})}
+    {:noreply, SharedHandlers.handle_show_resources(socket, tx_id, tags_json, logic_refs_json)}
   end
 
   @impl true
   def handle_event("close_resources_modal", _params, socket) do
-    {:noreply, assign(socket, :selected_resources, nil)}
+    {:noreply, SharedHandlers.handle_close_resources_modal(socket)}
   end
 
   @impl true
   def handle_event("global_search", %{"query" => query}, socket) do
-    query = String.trim(query)
-
-    if query != "" do
-      # Default search: look for transactions by hash
-      {:noreply, push_navigate(socket, to: "/transactions?search=#{URI.encode_www_form(query)}")}
-    else
-      {:noreply, socket}
+    case SharedHandlers.handle_global_search(query) do
+      {:navigate, path} -> {:noreply, push_navigate(socket, to: path)}
+      :noop -> {:noreply, socket}
     end
   end
 

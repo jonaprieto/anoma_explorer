@@ -10,6 +10,9 @@ defmodule AnomaExplorerWeb.ResourcesLive do
   alias AnomaExplorer.Indexer.Networks
   alias AnomaExplorer.Utils.Formatting
 
+  alias AnomaExplorerWeb.Live.Helpers.SharedHandlers
+  import AnomaExplorerWeb.Live.Helpers.FilterHelpers
+
   @page_size 20
 
   @default_filters %{
@@ -124,24 +127,20 @@ defmodule AnomaExplorerWeb.ResourcesLive do
 
   @impl true
   def handle_event("global_search", %{"query" => query}, socket) do
-    query = String.trim(query)
-
-    if query != "" do
-      {:noreply, push_navigate(socket, to: "/transactions?search=#{URI.encode_www_form(query)}")}
-    else
-      {:noreply, socket}
+    case SharedHandlers.handle_global_search(query) do
+      {:navigate, path} -> {:noreply, push_navigate(socket, to: path)}
+      :noop -> {:noreply, socket}
     end
   end
 
   @impl true
   def handle_event("show_chain_info", %{"chain-id" => chain_id}, socket) do
-    chain_id = String.to_integer(chain_id)
-    {:noreply, assign(socket, :selected_chain, Networks.chain_info(chain_id))}
+    {:noreply, SharedHandlers.handle_show_chain_info(socket, chain_id)}
   end
 
   @impl true
   def handle_event("close_chain_modal", _params, socket) do
-    {:noreply, assign(socket, :selected_chain, nil)}
+    {:noreply, SharedHandlers.handle_close_chain_modal(socket)}
   end
 
   defp load_resources(socket) do
@@ -183,36 +182,10 @@ defmodule AnomaExplorerWeb.ResourcesLive do
     end
   end
 
-  defp maybe_add_filter(opts, _key, nil), do: opts
-  defp maybe_add_filter(opts, _key, ""), do: opts
-  defp maybe_add_filter(opts, key, value), do: Keyword.put(opts, key, value)
-
-  defp maybe_add_bool_filter(opts, _key, nil), do: opts
-  defp maybe_add_bool_filter(opts, _key, ""), do: opts
-  defp maybe_add_bool_filter(opts, key, "true"), do: Keyword.put(opts, key, true)
-  defp maybe_add_bool_filter(opts, key, "false"), do: Keyword.put(opts, key, false)
-  defp maybe_add_bool_filter(opts, _key, _), do: opts
-
-  defp maybe_add_int_filter(opts, _key, nil), do: opts
-  defp maybe_add_int_filter(opts, _key, ""), do: opts
-
-  defp maybe_add_int_filter(opts, key, value) when is_binary(value) do
-    case Integer.parse(value) do
-      {int, _} -> Keyword.put(opts, key, int)
-      :error -> opts
-    end
-  end
-
-  defp maybe_add_int_filter(opts, key, value) when is_integer(value) do
-    Keyword.put(opts, key, value)
-  end
-
   defp format_error(reason), do: Formatting.format_error(reason)
 
-  defp active_filter_count(filters) do
-    filters
-    |> Map.delete("is_consumed")
-    |> Enum.count(fn {_k, v} -> v != "" and not is_nil(v) end)
+  defp resource_active_filter_count(filters) do
+    active_filter_count(filters, exclude: ["is_consumed"])
   end
 
   @impl true
@@ -256,7 +229,7 @@ defmodule AnomaExplorerWeb.ResourcesLive do
           <.filter_header
             filters={@filters}
             show_filters={@show_filters}
-            filter_count={active_filter_count(@filters)}
+            filter_count={resource_active_filter_count(@filters)}
           />
           <.filter_form
             :if={@show_filters}

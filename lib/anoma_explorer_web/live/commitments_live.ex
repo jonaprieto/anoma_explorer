@@ -10,6 +10,9 @@ defmodule AnomaExplorerWeb.CommitmentsLive do
   alias AnomaExplorer.Indexer.Networks
   alias AnomaExplorer.Utils.Formatting
 
+  alias AnomaExplorerWeb.Live.Helpers.SharedHandlers
+  import AnomaExplorerWeb.Live.Helpers.FilterHelpers
+
   @default_filters %{
     "root" => "",
     "tx_hash" => "",
@@ -112,24 +115,20 @@ defmodule AnomaExplorerWeb.CommitmentsLive do
 
   @impl true
   def handle_event("global_search", %{"query" => query}, socket) do
-    query = String.trim(query)
-
-    if query != "" do
-      {:noreply, push_navigate(socket, to: "/transactions?search=#{URI.encode_www_form(query)}")}
-    else
-      {:noreply, socket}
+    case SharedHandlers.handle_global_search(query) do
+      {:navigate, path} -> {:noreply, push_navigate(socket, to: path)}
+      :noop -> {:noreply, socket}
     end
   end
 
   @impl true
   def handle_event("show_chain_info", %{"chain-id" => chain_id}, socket) do
-    chain_id = String.to_integer(chain_id)
-    {:noreply, assign(socket, :selected_chain, Networks.chain_info(chain_id))}
+    {:noreply, SharedHandlers.handle_show_chain_info(socket, chain_id)}
   end
 
   @impl true
   def handle_event("close_chain_modal", _params, socket) do
-    {:noreply, assign(socket, :selected_chain, nil)}
+    {:noreply, SharedHandlers.handle_close_chain_modal(socket)}
   end
 
   defp load_commitments(socket) do
@@ -168,29 +167,6 @@ defmodule AnomaExplorerWeb.CommitmentsLive do
     end
   end
 
-  defp maybe_add_filter(opts, _key, nil), do: opts
-  defp maybe_add_filter(opts, _key, ""), do: opts
-  defp maybe_add_filter(opts, key, value), do: Keyword.put(opts, key, value)
-
-  defp maybe_add_int_filter(opts, _key, nil), do: opts
-  defp maybe_add_int_filter(opts, _key, ""), do: opts
-
-  defp maybe_add_int_filter(opts, key, value) when is_binary(value) do
-    case Integer.parse(value) do
-      {int, _} -> Keyword.put(opts, key, int)
-      :error -> opts
-    end
-  end
-
-  defp maybe_add_int_filter(opts, key, value) when is_integer(value) do
-    Keyword.put(opts, key, value)
-  end
-
-  defp active_filter_count(filters) do
-    filters
-    |> Map.values()
-    |> Enum.count(&(&1 != "" and &1 != nil))
-  end
 
   @impl true
   def render(assigns) do

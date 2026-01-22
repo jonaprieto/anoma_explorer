@@ -10,6 +10,9 @@ defmodule AnomaExplorerWeb.TransactionsLive do
   alias AnomaExplorer.Indexer.Networks
   alias AnomaExplorer.Utils.Formatting
 
+  alias AnomaExplorerWeb.Live.Helpers.SharedHandlers
+  import AnomaExplorerWeb.Live.Helpers.FilterHelpers
+
   @page_size 20
 
   @default_filters %{
@@ -142,27 +145,22 @@ defmodule AnomaExplorerWeb.TransactionsLive do
         %{"tx-id" => tx_id, "tags" => tags_json, "logic-refs" => logic_refs_json},
         socket
       ) do
-    tags = Jason.decode!(tags_json)
-    logic_refs = Jason.decode!(logic_refs_json)
-
-    {:noreply,
-     assign(socket, :selected_resources, %{tx_id: tx_id, tags: tags, logic_refs: logic_refs})}
+    {:noreply, SharedHandlers.handle_show_resources(socket, tx_id, tags_json, logic_refs_json)}
   end
 
   @impl true
   def handle_event("close_resources_modal", _params, socket) do
-    {:noreply, assign(socket, :selected_resources, nil)}
+    {:noreply, SharedHandlers.handle_close_resources_modal(socket)}
   end
 
   @impl true
   def handle_event("show_chain_info", %{"chain-id" => chain_id}, socket) do
-    chain_id = String.to_integer(chain_id)
-    {:noreply, assign(socket, :selected_chain, Networks.chain_info(chain_id))}
+    {:noreply, SharedHandlers.handle_show_chain_info(socket, chain_id)}
   end
 
   @impl true
   def handle_event("close_chain_modal", _params, socket) do
-    {:noreply, assign(socket, :selected_chain, nil)}
+    {:noreply, SharedHandlers.handle_close_chain_modal(socket)}
   end
 
   defp load_transactions(socket) do
@@ -202,29 +200,7 @@ defmodule AnomaExplorerWeb.TransactionsLive do
     end
   end
 
-  defp maybe_add_filter(opts, _key, nil), do: opts
-  defp maybe_add_filter(opts, _key, ""), do: opts
-  defp maybe_add_filter(opts, key, value), do: Keyword.put(opts, key, value)
-
-  defp maybe_add_int_filter(opts, _key, nil), do: opts
-  defp maybe_add_int_filter(opts, _key, ""), do: opts
-
-  defp maybe_add_int_filter(opts, key, value) when is_binary(value) do
-    case Integer.parse(value) do
-      {int, _} -> Keyword.put(opts, key, int)
-      :error -> opts
-    end
-  end
-
-  defp maybe_add_int_filter(opts, key, value) when is_integer(value) do
-    Keyword.put(opts, key, value)
-  end
-
   defp format_error(reason), do: Formatting.format_error(reason)
-
-  defp active_filter_count(filters) do
-    Enum.count(filters, fn {_k, v} -> v != "" and not is_nil(v) end)
-  end
 
   @impl true
   def render(assigns) do
