@@ -371,13 +371,6 @@ ProtocolAdapter.TransactionExecuted.handler(
           decodingError: undefined,
           transaction_id: txId,
           logicRef: logicRef || undefined,
-          labelRef: undefined,
-          valueRef: undefined,
-          nullifierKeyCommitment: undefined,
-          nonce: undefined,
-          randSeed: undefined,
-          quantity: undefined,
-          ephemeral: undefined,
           logicInput_id: logicInput_id,
           consumedInComplianceUnit_id: consumedInComplianceUnit_id,
           createdInComplianceUnit_id: createdInComplianceUnit_id,
@@ -586,22 +579,15 @@ ProtocolAdapter.ResourcePayload.handler(
     const existingResource = await context.Resource.get(resourceId);
 
     if (existingResource) {
-      // Update existing resource with decoded data (preserve isConsumed if already set)
+      // Update existing resource with blob data (preserve isConsumed if already set)
       const updatedResource: Resource = {
         ...existingResource,
         blobIndex: Number(event.params.index),
         rawBlob: event.params.blob,
         decodingStatus: decoded.status,
         decodingError: decoded.error || undefined,
-        logicRef: decoded.resource?.logicRef || existingResource.logicRef,
-        labelRef: decoded.resource?.labelRef || undefined,
-        valueRef: decoded.resource?.valueRef || undefined,
-        nullifierKeyCommitment:
-          decoded.resource?.nullifierKeyCommitment || undefined,
-        nonce: decoded.resource?.nonce || undefined,
-        randSeed: decoded.resource?.randSeed || undefined,
-        quantity: decoded.resource?.quantity || undefined,
-        ephemeral: decoded.resource?.ephemeral ?? undefined,
+        // logicRef comes from TransactionExecuted, not from blob decoding
+        logicRef: existingResource.logicRef,
       };
       context.Resource.set(updatedResource);
     } else {
@@ -610,7 +596,7 @@ ProtocolAdapter.ResourcePayload.handler(
       const resourceEntity: Resource = {
         id: resourceId,
         tag: event.params.tag,
-        index: 0, // Placeholder
+        index: 0, // Placeholder - will be set by TransactionExecuted
         blobIndex: Number(event.params.index),
         isConsumed: false, // Placeholder - will be set correctly by TransactionExecuted
         blockNumber: event.block.number,
@@ -619,15 +605,7 @@ ProtocolAdapter.ResourcePayload.handler(
         decodingStatus: decoded.status,
         decodingError: decoded.error || undefined,
         transaction_id: txId,
-        logicRef: decoded.resource?.logicRef || undefined,
-        labelRef: decoded.resource?.labelRef || undefined,
-        valueRef: decoded.resource?.valueRef || undefined,
-        nullifierKeyCommitment:
-          decoded.resource?.nullifierKeyCommitment || undefined,
-        nonce: decoded.resource?.nonce || undefined,
-        randSeed: decoded.resource?.randSeed || undefined,
-        quantity: decoded.resource?.quantity || undefined,
-        ephemeral: decoded.resource?.ephemeral ?? undefined,
+        logicRef: undefined, // Will be set by TransactionExecuted
         logicInput_id: undefined,
         consumedInComplianceUnit_id: undefined,
         createdInComplianceUnit_id: undefined,
