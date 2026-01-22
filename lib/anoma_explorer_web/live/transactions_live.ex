@@ -333,6 +333,8 @@ defmodule AnomaExplorerWeb.TransactionsLive do
             name="filters[block_min]"
             value={@filters["block_min"]}
             placeholder="Min block"
+            min="0"
+            max={if @filters["block_max"] != "", do: @filters["block_max"], else: nil}
             class="input input-bordered input-sm w-full"
           />
         </div>
@@ -346,6 +348,7 @@ defmodule AnomaExplorerWeb.TransactionsLive do
             name="filters[block_max]"
             value={@filters["block_max"]}
             placeholder="Max block"
+            min={if @filters["block_min"] != "", do: @filters["block_min"], else: "0"}
             class="input input-bordered input-sm w-full"
           />
         </div>
