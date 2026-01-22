@@ -48,7 +48,15 @@ defmodule AnomaExplorerWeb.Router do
     get "/settings", PageController, :settings_redirect
     live "/settings/contracts", SettingsLive, :index
     live "/settings/networks", NetworksLive, :index
-    live "/settings/api-keys", ApiKeysLive, :index
     live "/settings/indexer", IndexerLive, :index
+  end
+
+  # Environment/API Keys page - only available in dev/test
+  if Application.compile_env(:anoma_explorer, :env) != :prod do
+    scope "/settings", AnomaExplorerWeb do
+      pipe_through :browser
+
+      live "/api-keys", ApiKeysLive, :index
+    end
   end
 end

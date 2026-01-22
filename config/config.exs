@@ -9,7 +9,8 @@ import Config
 
 config :anoma_explorer,
   ecto_repos: [AnomaExplorer.Repo],
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime],
+  env: config_env()
 
 # Configure the endpoint
 config :anoma_explorer, AnomaExplorerWeb.Endpoint,

@@ -155,14 +155,16 @@ defmodule AnomaExplorerWeb.Layouts do
               <span>Networks</span>
             </a>
 
-            <a
-              href="/settings/api-keys"
-              class={nav_class(@current_path, "/settings/api-keys")}
-              title="Environment"
-            >
-              <.icon name="hero-cog-6-tooth" class="w-5 h-5" />
-              <span>Environment</span>
-            </a>
+            <%= if show_dev_tools?() do %>
+              <a
+                href="/settings/api-keys"
+                class={nav_class(@current_path, "/settings/api-keys")}
+                title="Environment"
+              >
+                <.icon name="hero-cog-6-tooth" class="w-5 h-5" />
+                <span>Environment</span>
+              </a>
+            <% end %>
 
             <a
               href="/settings/indexer"
@@ -238,6 +240,10 @@ defmodule AnomaExplorerWeb.Layouts do
 
   defp app_version do
     Application.spec(:anoma_explorer, :vsn) |> to_string()
+  end
+
+  defp show_dev_tools? do
+    Application.get_env(:anoma_explorer, :env) != :prod
   end
 
   @doc """
