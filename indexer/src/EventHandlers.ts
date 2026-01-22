@@ -542,7 +542,7 @@ ProtocolAdapter.ActionExecuted.handler(
           id: logicInputId,
           index: liIndex,
           tag: li.tag,
-          verifyingKey: li.verifyingKey,
+          logicRef: li.verifyingKey, // verifyingKey in PA-EVM is the logicRef
           isConsumed: isConsumed,
           proof: li.proof || undefined,
           resourcePayloadCount: li.appData.resourcePayload.length,

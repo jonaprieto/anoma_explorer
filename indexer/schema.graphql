@@ -89,7 +89,7 @@ type LogicInput {
   index: Int!
 
   tag: String!
-  verifyingKey: String!
+  logicRef: String! # The logic verifying key (same as verifyingKey in PA-EVM)
   isConsumed: Boolean!
   proof: String
 
