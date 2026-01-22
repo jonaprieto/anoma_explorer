@@ -85,26 +85,26 @@ IO.puts("Seeding Networks...")
 # Active status is computed at runtime based on indexer config
 networks = [
   %{
-    name: "eth-mainnet",
-    display_name: "Ethereum",
-    chain_id: 1,
-    explorer_url: "https://etherscan.io",
+    name: "arb-mainnet",
+    display_name: "Arbitrum One",
+    chain_id: 42161,
+    explorer_url: "https://arbiscan.io",
     is_testnet: false,
     active: true
   },
   %{
-    name: "eth-sepolia",
-    display_name: "Sepolia",
-    chain_id: 11_155_111,
-    explorer_url: "https://sepolia.etherscan.io",
-    is_testnet: true,
+    name: "base-mainnet",
+    display_name: "Base",
+    chain_id: 8453,
+    explorer_url: "https://basescan.org",
+    is_testnet: false,
     active: true
   },
   %{
-    name: "arb-mainnet",
-    display_name: "Arbitrum One",
-    chain_id: 42150,
-    explorer_url: "https://arbiscan.io",
+    name: "op-mainnet",
+    display_name: "Optimism",
+    chain_id: 10,
+    explorer_url: "https://optimistic.etherscan.io",
     is_testnet: false,
     active: true
   }
@@ -134,9 +134,9 @@ IO.puts("  Protocol ID: #{protocol_adapter.id}")
 
 # Contract addresses must match indexer/config.yaml
 protocol_adapter_v1 = [
-  {"eth-mainnet", "0xdd4f4F0875Da48EF6d8F32ACB890EC81F435Ff3a"},
-  {"eth-sepolia", "0xc63336a48D0f60faD70ed027dFB256908bBD5e37"},
-  {"arb-mainnet", "0x212f275c6dD4829cd84ABDF767b0Df4A9CB9ef60"}
+  {"arb-mainnet", "0x9ED43C229480659bF6B6607C46d7B96c6D760cBB"},
+  {"base-mainnet", "0x9ED43C229480659bF6B6607C46d7B96c6D760cBB"},
+  {"op-mainnet", "0x9ED43C229480659bF6B6607C46d7B96c6D760cBB"}
 ]
 
 IO.puts("Seeding Protocol Adapter v1.0 addresses...")

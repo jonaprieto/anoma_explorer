@@ -20,17 +20,17 @@ networks:
     contracts:
     - name: ProtocolAdapter
       address:
-        - "0x9ED43C229480659bF6B6607C46d7B96c6D760cBB"
+        - "0x9ed43c229480659bf6b6607c46d7b96c6d760cbb"
   - id: 8453
     start_block: 0
     contracts:
     - name: ProtocolAdapter
       address:
-        - "0x9ED43C229480659bF6B6607C46d7B96c6D760cBB"
+        - "0x9ed43c229480659bf6b6607c46d7b96c6d760cbb"
   - id: 10
     start_block: 0
     contracts:
     - name: ProtocolAdapter
       address:
-        - "0x9ED43C229480659bF6B6607C46d7B96c6D760cBB"
+        - "0x9ed43c229480659bf6b6607c46d7b96c6d760cbb"
 unordered_multichain_mode: true
