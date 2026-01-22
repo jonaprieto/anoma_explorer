@@ -330,14 +330,14 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
 
   defp render_field_value("txHash", value, chain_id, _indent)
        when is_binary(value) and not is_nil(chain_id) do
-    link = "/transactions/#{chain_id}_#{value}_transaction"
+    link = "/transactions/#{chain_id}_#{value}"
     render_linked_string(value, link)
   end
 
-  defp render_field_value("logicRef", value, chain_id, _indent)
-       when is_binary(value) and not is_nil(chain_id) do
-    link = "/logics/#{chain_id}_#{value}_logic"
-    render_linked_string(value, link)
+  defp render_field_value("logicRef", value, _chain_id, indent) when is_binary(value) do
+    # logicRef alone isn't enough to form a valid logic URL (needs txHash + actionTreeRoot + index)
+    # So we just render it as a plain string
+    render_value(value, nil, indent)
   end
 
   defp render_field_value("blockNumber", value, chain_id, _indent)
