@@ -18,19 +18,18 @@ defmodule AnomaExplorerWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-
-    # LiveView routes
-    live "/activity", ActivityLive, :index
-    live "/analytics", AnalyticsLive, :index
-
-    # Settings routes
-    live "/settings", SettingsLive, :index
-    live "/settings/new", SettingsLive, :new
-    live "/settings/:id/edit", SettingsLive, :edit
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", AnomaExplorerWeb do
-  #   pipe_through :api
-  # end
+  # GraphQL API
+  scope "/api" do
+    pipe_through :api
+
+    forward "/graphql", Absinthe.Plug, schema: AnomaExplorerWeb.Schema
+
+    if Mix.env() == :dev do
+      forward "/graphiql", Absinthe.Plug.GraphiQL,
+        schema: AnomaExplorerWeb.Schema,
+        interface: :playground
+    end
+  end
 end

@@ -27,21 +27,24 @@ defmodule AnomaExplorerWeb.Layouts do
         <div class="flex flex-col h-full">
           <!-- Logo -->
           <div class="p-6 border-b border-base-300">
-            <a href="/" class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <span class="text-xl font-bold text-primary-content">A</span>
-              </div>
-              <div>
-                <span class="text-lg font-semibold text-base-content">Anoma</span>
-                <span class="text-lg font-light text-base-content/70">Explorer</span>
-              </div>
-            </a>
+            <div class="flex items-center justify-between">
+              <a href="/" class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+                  <span class="text-xl font-bold text-primary-content">A</span>
+                </div>
+                <div>
+                  <span class="text-lg font-semibold text-base-content">Anoma</span>
+                  <span class="text-lg font-light text-base-content/70">Explorer</span>
+                </div>
+              </a>
+              <.theme_toggle />
+            </div>
           </div>
           
     <!-- Navigation -->
           <nav class="flex-1 py-6">
             <div class="px-4 mb-2">
-              <span class="text-xs font-medium text-base-content/40 uppercase tracking-wider">
+              <span class="text-xs font-medium text-base-content/60 uppercase tracking-wider">
                 Overview
               </span>
             </div>
@@ -50,42 +53,12 @@ defmodule AnomaExplorerWeb.Layouts do
               <.icon name="hero-home" class="w-5 h-5" />
               <span>Dashboard</span>
             </a>
-
-            <a href="/activity" class={nav_class(@current_path, "/activity")}>
-              <.icon name="hero-queue-list" class="w-5 h-5" />
-              <span>Activity Feed</span>
-            </a>
-
-            <a href="/analytics" class={nav_class(@current_path, "/analytics")}>
-              <.icon name="hero-chart-bar" class="w-5 h-5" />
-              <span>Analytics</span>
-            </a>
-
-            <a href="/settings" class={nav_class(@current_path, "/settings")}>
-              <.icon name="hero-cog-6-tooth" class="w-5 h-5" />
-              <span>Settings</span>
-            </a>
-
-            <div class="px-4 mt-8 mb-2">
-              <span class="text-xs font-medium text-base-content/40 uppercase tracking-wider">
-                Networks
-              </span>
-            </div>
-
-            <div class="px-4 py-2 space-y-2">
-              <.network_status network="Ethereum" status="active" />
-              <.network_status network="Base" status="active" />
-              <.network_status network="Optimism" status="active" />
-              <.network_status network="Arbitrum" status="active" />
-              <.network_status network="Polygon" status="active" />
-            </div>
           </nav>
           
     <!-- Footer -->
           <div class="p-4 border-t border-base-300">
-            <div class="flex items-center justify-between">
-              <span class="text-xs text-base-content/50">Theme</span>
-              <.theme_toggle />
+            <div class="text-xs text-base-content/60">
+              v{app_version()}
             </div>
           </div>
         </div>
@@ -113,21 +86,8 @@ defmodule AnomaExplorerWeb.Layouts do
     end
   end
 
-  attr :network, :string, required: true
-  attr :status, :string, default: "active"
-
-  defp network_status(assigns) do
-    ~H"""
-    <div class="flex items-center justify-between text-sm">
-      <span class="text-base-content/70">{@network}</span>
-      <span class={[
-        "w-2 h-2 rounded-full",
-        @status == "active" && "bg-success",
-        @status == "inactive" && "bg-base-content/30"
-      ]}>
-      </span>
-    </div>
-    """
+  defp app_version do
+    Application.spec(:anoma_explorer, :vsn) |> to_string()
   end
 
   @doc """
