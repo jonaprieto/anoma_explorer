@@ -35,9 +35,9 @@ defmodule AnomaExplorerWeb.SettingsLive do
     <Layouts.app flash={@flash} current_path="/settings/contracts">
       <div class="page-header">
         <div>
-          <h1 class="page-title">Settings</h1>
+          <h1 class="page-title">Contracts</h1>
           <p class="text-sm text-base-content/70 mt-1">
-            Manage categories and contract addresses
+            Manage contract categories and addresses
           </p>
         </div>
         <button phx-click="new_protocol" class="btn btn-primary btn-sm">

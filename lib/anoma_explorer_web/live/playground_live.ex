@@ -476,13 +476,13 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
       <div phx-hook="GraphQLEditor" id="query-editor-wrapper" class="flex flex-col flex-1 min-h-0">
         <div class="relative flex-1 min-h-0 rounded-xl overflow-hidden shadow-inner">
           <pre
-            class="highlight-layer absolute inset-0 p-4 m-0 overflow-auto pointer-events-none bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+            class="highlight-layer absolute inset-0 p-4 m-0 overflow-auto pointer-events-none bg-base-100 border border-base-300"
             aria-hidden="true"
-          ><code class="language-graphql text-sm !bg-transparent !p-0 leading-relaxed"><%= @query %></code></pre>
+          ><code class="language-graphql text-sm !bg-transparent !p-0 leading-relaxed text-base-content"><%= @query %></code></pre>
           <textarea
             name="query"
             form="query-form"
-            class="absolute inset-0 w-full h-full font-mono text-sm p-4 resize-none bg-transparent text-transparent caret-slate-800 dark:caret-slate-200 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/30 leading-relaxed"
+            class="absolute inset-0 w-full h-full font-mono text-sm p-4 resize-none bg-transparent text-transparent caret-base-content border border-base-300 focus:outline-none focus:ring-2 focus:ring-primary/30 leading-relaxed"
             placeholder="Enter your GraphQL query..."
             id="query-editor"
             spellcheck="false"
@@ -517,7 +517,7 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
 
       <div class="flex-1 min-h-0 overflow-hidden rounded-xl shadow-inner">
         <%= if @loading do %>
-          <div class="flex items-center justify-center h-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl">
+          <div class="flex items-center justify-center h-full bg-base-100 border border-base-300 rounded-xl">
             <div class="flex flex-col items-center gap-3">
               <span class="loading loading-spinner loading-lg text-primary"></span>
               <span class="text-sm text-base-content/60">Executing query...</span>
@@ -525,9 +525,9 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
           </div>
         <% else %>
           <%= if @error do %>
-            <div class="bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 p-4 rounded-xl border border-red-200 dark:border-red-900 h-full overflow-auto">
+            <div class="bg-error/10 text-error p-4 rounded-xl border border-error/30 h-full overflow-auto">
               <div class="flex items-start gap-3">
-                <div class="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/50 flex items-center justify-center shrink-0">
+                <div class="w-8 h-8 rounded-lg bg-error/20 flex items-center justify-center shrink-0">
                   <.icon name="hero-exclamation-triangle" class="w-4 h-4" />
                 </div>
                 <div>
@@ -540,11 +540,11 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
             <%= if @result do %>
               <pre
                 id="result-display"
-                class="bg-slate-50 dark:bg-slate-900 p-4 text-sm font-mono whitespace-pre h-full overflow-auto border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 leading-relaxed"
+                class="bg-base-100 p-4 text-sm font-mono whitespace-pre h-full overflow-auto border border-base-300 text-base-content leading-relaxed"
               ><%= render_json_with_links(@result) %></pre>
             <% else %>
-              <div class="flex flex-col items-center justify-center h-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-base-content/50">
-                <div class="w-16 h-16 rounded-2xl bg-base-200 dark:bg-slate-800 flex items-center justify-center mb-4">
+              <div class="flex flex-col items-center justify-center h-full bg-base-100 border border-base-300 rounded-xl text-base-content/50">
+                <div class="w-16 h-16 rounded-2xl bg-base-200 flex items-center justify-center mb-4">
                   <.icon name="hero-command-line" class="w-8 h-8 opacity-50" />
                 </div>
                 <p class="text-sm font-medium">No results yet</p>

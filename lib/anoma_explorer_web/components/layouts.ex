@@ -57,6 +57,12 @@ defmodule AnomaExplorerWeb.Layouts do
               <span>Dashboard</span>
             </a>
 
+            <div class="px-4 mb-2 mt-4 sidebar-section-label">
+              <span class="text-xs font-medium text-base-content/60 uppercase tracking-wider">
+                Explorer
+              </span>
+            </div>
+
             <a
               href="/transactions"
               class={nav_class(@current_path, "/transactions")}
@@ -64,11 +70,6 @@ defmodule AnomaExplorerWeb.Layouts do
             >
               <.icon name="hero-document-text" class="w-5 h-5" />
               <span>Transactions</span>
-            </a>
-
-            <a href="/resources" class={nav_class(@current_path, "/resources")} title="Resources">
-              <.icon name="hero-cube" class="w-5 h-5" />
-              <span>Resources</span>
             </a>
 
             <a href="/actions" class={nav_class(@current_path, "/actions")} title="Actions">
@@ -85,10 +86,16 @@ defmodule AnomaExplorerWeb.Layouts do
               <span>Compliances</span>
             </a>
 
-            <a href="/logics" class={nav_class(@current_path, "/logics")} title="Logic Inputs">
-              <.icon name="hero-cpu-chip" class="w-5 h-5" />
-              <span>Logics</span>
+            <a href="/resources" class={nav_class(@current_path, "/resources")} title="Resources">
+              <.icon name="hero-cube" class="w-5 h-5" />
+              <span>Resources</span>
             </a>
+
+            <div class="px-4 mb-2 mt-4 sidebar-section-label">
+              <span class="text-[10px] font-medium text-base-content/40 uppercase tracking-wider">
+                Resource Specific
+              </span>
+            </div>
 
             <a
               href="/commitments"
@@ -104,6 +111,17 @@ defmodule AnomaExplorerWeb.Layouts do
               <span>Nullifiers</span>
             </a>
 
+            <a href="/logics" class={nav_class(@current_path, "/logics")} title="Logic Inputs">
+              <.icon name="hero-cpu-chip" class="w-5 h-5" />
+              <span>Logics</span>
+            </a>
+
+            <div class="px-4 mb-2 mt-4 sidebar-section-label">
+              <span class="text-xs font-medium text-base-content/60 uppercase tracking-wider">
+                Tools
+              </span>
+            </div>
+
             <a
               href="/playground"
               class={nav_class(@current_path, "/playground")}
@@ -113,7 +131,7 @@ defmodule AnomaExplorerWeb.Layouts do
               <span>Playground</span>
             </a>
 
-            <div class="px-4 mb-2 mt-6 sidebar-section-label">
+            <div class="px-4 mb-2 mt-4 sidebar-section-label">
               <span class="text-xs font-medium text-base-content/60 uppercase tracking-wider">
                 Settings
               </span>
