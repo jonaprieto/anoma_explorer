@@ -25,8 +25,8 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 anoma_explorer-*.tar
 
-# Ignore priv directory (generated/digested assets).
-/priv/
+# Ignore generated/digested static assets, but not migrations and seeds
+/priv/static/
 
 # In case you use Node.js/npm, you want to ignore these.
 npm-debug.log

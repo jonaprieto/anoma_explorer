@@ -13,10 +13,25 @@
 alias AnomaExplorer.Repo
 alias AnomaExplorer.Settings.Protocol
 alias AnomaExplorer.Settings.ContractAddress
+alias AnomaExplorer.Settings.Network
 
 # ============================================
 # Helper Functions
 # ============================================
+
+upsert_network = fn attrs ->
+  case Repo.get_by(Network, name: attrs.name) do
+    nil ->
+      %Network{}
+      |> Network.changeset(attrs)
+      |> Repo.insert!()
+
+    network ->
+      network
+      |> Network.changeset(attrs)
+      |> Repo.update!()
+  end
+end
 
 get_or_create_protocol = fn name, description, github_url ->
   case Repo.get_by(Protocol, name: name) do
@@ -61,6 +76,48 @@ upsert_address = fn protocol_id, category, version, network, address ->
 end
 
 # ============================================
+# Seed Networks
+# ============================================
+
+IO.puts("Seeding Networks...")
+
+# Networks matching indexer/config.yaml
+# Active status is computed at runtime based on indexer config
+networks = [
+  %{
+    name: "eth-mainnet",
+    display_name: "Ethereum",
+    chain_id: 1,
+    explorer_url: "https://etherscan.io",
+    is_testnet: false,
+    active: true
+  },
+  %{
+    name: "eth-sepolia",
+    display_name: "Sepolia",
+    chain_id: 11_155_111,
+    explorer_url: "https://sepolia.etherscan.io",
+    is_testnet: true,
+    active: true
+  },
+  %{
+    name: "arb-mainnet",
+    display_name: "Arbitrum One",
+    chain_id: 42150,
+    explorer_url: "https://arbiscan.io",
+    is_testnet: false,
+    active: true
+  }
+]
+
+Enum.each(networks, fn attrs ->
+  upsert_network.(attrs)
+  IO.puts("  #{attrs.name}: #{attrs.display_name} (chain_id: #{attrs.chain_id})")
+end)
+
+IO.puts("")
+
+# ============================================
 # Seed Protocol Adapter
 # ============================================
 
@@ -93,9 +150,11 @@ end)
 # Summary
 # ============================================
 
+total_networks = length(networks)
 total_addresses = length(protocol_adapter_v1)
 IO.puts("")
 IO.puts("Done! Seeded:")
+IO.puts("  - #{total_networks} networks")
 IO.puts("  - 1 protocol (Protocol Adapter)")
 IO.puts("  - #{total_addresses} contract addresses")
 IO.puts("  - Version: v1.0")
