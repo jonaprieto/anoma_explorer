@@ -1,0 +1,203 @@
+# Anoma Protocol Adapter GraphQL Schema
+# Entities follow Anoma specification from pa-evm/contracts/src/Types.sol
+
+# ============================================
+# Core Anoma Types
+# ============================================
+
+# Transaction - The top-level transaction containing actions
+# Corresponds to: struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof; }
+type Transaction {
+  id: ID!
+  blockNumber: Int!
+  logIndex: Int!
+  txHash: String!
+  timestamp: Int!
+  chainId: Int!
+  contractAddress: String!
+
+  # From TransactionExecuted event
+  tags: [String!]!
+  logicRefs: [String!]!
+
+  # Proofs (if available from calldata decoding)
+  deltaProof: String
+  aggregationProof: String
+
+  # Relationships
+  actions: [Action!]! @derivedFrom(field: "transaction")
+  resources: [Resource!]! @derivedFrom(field: "transaction")
+}
+
+# Action - Provides context separation between non-intersecting sets of resources
+# Corresponds to: struct Action { Logic.VerifierInput[] logicVerifierInputs; Compliance.VerifierInput[] complianceVerifierInputs; }
+type Action {
+  id: ID!
+  index: Int!
+  actionTreeRoot: String!
+  tagCount: Int!
+  blockNumber: Int!
+  chainId: Int!
+  timestamp: Int!
+
+  # Relationships
+  transaction: Transaction!
+  complianceUnits: [ComplianceUnit!]! @derivedFrom(field: "action")
+  logicInputs: [LogicInput!]! @derivedFrom(field: "action")
+}
+
+# ComplianceUnit - One consumed + one created resource pair
+# Corresponds to: Compliance.VerifierInput { bytes proof; Instance instance; }
+type ComplianceUnit {
+  id: ID!
+  index: Int!
+
+  # Proof
+  proof: String
+
+  # Compliance.Instance fields
+  # ConsumedRefs
+  consumedNullifier: String!
+  consumedLogicRef: String!
+  consumedCommitmentTreeRoot: String!
+
+  # CreatedRefs
+  createdCommitment: String!
+  createdLogicRef: String!
+
+  # Delta values (secp256k1 point)
+  unitDeltaX: String!
+  unitDeltaY: String!
+
+  # Relationships
+  action: Action!
+  consumedResource: Resource
+  createdResource: Resource
+}
+
+# LogicInput - Logic verifier input for a resource
+# Corresponds to: Logic.VerifierInput { bytes32 tag; bytes32 verifyingKey; AppData appData; bytes proof; }
+type LogicInput {
+  id: ID!
+  index: Int!
+
+  tag: String!
+  verifyingKey: String!
+  isConsumed: Boolean!
+  proof: String
+
+  # AppData payload counts
+  resourcePayloadCount: Int!
+  discoveryPayloadCount: Int!
+  externalPayloadCount: Int!
+  applicationPayloadCount: Int!
+
+  # Relationships
+  action: Action!
+  resource: Resource
+}
+
+# Resource - The atomic unit of state in Anoma
+# Corresponds to: struct Resource { bytes32 logicRef; bytes32 labelRef; ... }
+type Resource {
+  id: ID!
+  tag: String!
+  index: Int!
+  isConsumed: Boolean!
+  blockNumber: Int!
+  chainId: Int!
+
+  # Resource struct fields (decoded from ResourcePayload blob)
+  logicRef: String
+  labelRef: String
+  valueRef: String
+  nullifierKeyCommitment: String
+  nonce: String
+  randSeed: String
+  quantity: BigInt
+  ephemeral: Boolean
+
+  # Raw data and decoding status
+  rawBlob: String!
+  decodingStatus: String!
+  decodingError: String
+
+  # Relationships
+  transaction: Transaction!
+  logicInput: LogicInput
+  consumedInComplianceUnit: ComplianceUnit
+  createdInComplianceUnit: ComplianceUnit
+  discoveryPayloads: [DiscoveryPayload!]! @derivedFrom(field: "resource")
+  applicationPayloads: [ApplicationPayload!]! @derivedFrom(field: "resource")
+}
+
+# ============================================
+# Payload Types (from events)
+# ============================================
+
+# DiscoveryPayload - Data with public keys for discovery
+type DiscoveryPayload {
+  id: ID!
+  tag: String!
+  index: Int!
+  blob: String!
+  deletionCriterion: Int
+  blockNumber: Int!
+  chainId: Int!
+  timestamp: Int!
+
+  resource: Resource
+}
+
+# ExternalPayload - Data for external/forwarder calls
+type ExternalPayload {
+  id: ID!
+  tag: String!
+  index: Int!
+  blob: String!
+  deletionCriterion: Int
+  blockNumber: Int!
+  chainId: Int!
+  timestamp: Int!
+}
+
+# ApplicationPayload - Application-specific data
+type ApplicationPayload {
+  id: ID!
+  tag: String!
+  index: Int!
+  blob: String!
+  deletionCriterion: Int
+  blockNumber: Int!
+  chainId: Int!
+  timestamp: Int!
+
+  resource: Resource
+}
+
+# ============================================
+# State Tracking Types
+# ============================================
+
+# CommitmentTreeRoot - Merkle tree root for resource commitments
+type CommitmentTreeRoot {
+  id: ID!
+  root: String!
+  blockNumber: Int!
+  txHash: String!
+  timestamp: Int!
+  chainId: Int!
+  index: Int!
+}
+
+# ForwarderCall - Meta-transaction execution via untrusted forwarder
+type ForwarderCall {
+  id: ID!
+  forwarderAddress: String!
+  input: String!
+  output: String!
+  blockNumber: Int!
+  txHash: String!
+  timestamp: Int!
+  chainId: Int!
+}

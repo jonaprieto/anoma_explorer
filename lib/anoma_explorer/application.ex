@@ -18,6 +18,8 @@ defmodule AnomaExplorer.Application do
       AnomaExplorer.Settings.Cache,
       # Contract monitoring manager (reacts to settings changes)
       AnomaExplorer.Settings.MonitoringManager,
+      # Indexer config watcher (regenerates config.yaml on settings changes)
+      AnomaExplorer.Indexer.ConfigWatcher,
       # Start to serve requests, typically the last entry
       AnomaExplorerWeb.Endpoint
     ]
