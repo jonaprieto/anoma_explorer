@@ -15,6 +15,7 @@
 
 import {
   ProtocolAdapter,
+  EVMTransaction,
   Transaction,
   Resource,
   Action,
@@ -227,25 +228,32 @@ ProtocolAdapter.TransactionExecuted.handler(
     // Note: event.transaction.input is available because we added "input" to field_selection
     const decoded = getDecodedTransaction(txHash, tx.input);
 
-    // Create Transaction entity (Anoma Transaction)
-    const txEntity: Transaction = {
+    // Create EVMTransaction entity (the carrier/wrapper)
+    const evmTxEntity: EVMTransaction = {
       id: txId,
-      blockNumber: event.block.number,
-      logIndex: event.logIndex,
       txHash: txHash,
+      blockNumber: event.block.number,
       timestamp: event.block.timestamp,
       chainId: event.chainId,
+      from: tx.from,
+      value: tx.value,
+      gasPrice: tx.gasPrice,
+      gas: tx.gas,
+      gasUsed: tx.gasUsed,
+    };
+
+    context.EVMTransaction.set(evmTxEntity);
+
+    // Create Transaction entity (Anoma Transaction payload)
+    const txEntity: Transaction = {
+      id: txId,
+      logIndex: event.logIndex,
       contractAddress: event.srcAddress,
       tags: event.params.tags,
       logicRefs: event.params.logicRefs,
       deltaProof: decoded?.deltaProof,
       aggregationProof: decoded?.aggregationProof,
-      // EVM transaction fields
-      from: tx.from,
-      gas: tx.gas,
-      gasPrice: tx.gasPrice,
-      gasUsed: tx.gasUsed,
-      value: tx.value,
+      evmTransaction_id: txId,
     };
 
     context.Transaction.set(txEntity);

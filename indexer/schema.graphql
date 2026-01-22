@@ -27,36 +27,50 @@ enum PayloadKind {
 }
 
 # ============================================
-# Core Anoma Types
+# EVM Types
 # ============================================
 
-# Transaction - The top-level transaction containing actions
-# Corresponds to: struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof; }
-type Transaction {
-  id: ID!
-  blockNumber: Int!
-  logIndex: Int! # EVM event log index of the TransactionExecuted event
+# EVMTransaction - The EVM transaction that carries the Anoma transaction
+# This represents the blockchain carrier/wrapper, not the Anoma payload.
+# Note: 1:1 relationship with Transaction, linked via Transaction.evmTransaction
+type EVMTransaction {
+  id: ID!  # Format: {chainId}_{txHash}
   txHash: String!
+  blockNumber: Int!
   timestamp: Int!
   chainId: Int!
-  contractAddress: String!
 
-  # EVM transaction fields
+  # EVM transaction metadata
   from: String
   value: BigInt
   gasPrice: BigInt
   gas: BigInt
   gasUsed: BigInt
+}
+
+# ============================================
+# Core Anoma Types
+# ============================================
+
+# Transaction - The Anoma transaction payload embedded in an EVM transaction
+# Corresponds to: struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof; }
+type Transaction {
+  id: ID!  # Format: {chainId}_{txHash}
+  logIndex: Int!  # EVM event log index of the TransactionExecuted event
+  contractAddress: String!
 
   # From TransactionExecuted event
   tags: [String!]!
   logicRefs: [String!]!
 
-  # Proofs (if available from calldata decoding)
+  # Proofs (from calldata decoding)
   deltaProof: String
   aggregationProof: String
 
-  # Relationships
+  # Relationship to EVM carrier
+  evmTransaction: EVMTransaction!
+
+  # Relationships (note: resources is a convenience, canonical path is via actions/complianceUnits)
   actions: [Action!]! @derivedFrom(field: "transaction")
   resources: [Resource!]! @derivedFrom(field: "transaction")
 }
