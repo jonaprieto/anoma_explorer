@@ -171,13 +171,30 @@ defmodule AnomaExplorer.ChainVerifier do
   defp maybe_add_api_key(params, key), do: Map.put(params, :apikey, key)
 
   defp http_get(url) do
-    request = Finch.build(:get, url)
+    # Ensure inets is started
+    :inets.start()
+    :ssl.start()
 
-    case Finch.request(request, AnomaExplorer.Finch, receive_timeout: 15_000) do
-      {:ok, %Finch.Response{status: status, body: body}} when status in 200..299 ->
+    http_options = [
+      timeout: 15_000,
+      connect_timeout: 10_000,
+      ssl: [
+        verify: :verify_peer,
+        cacerts: :public_key.cacerts_get(),
+        customize_hostname_check: [
+          match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
+        ]
+      ]
+    ]
+
+    options = [body_format: :binary]
+
+    case :httpc.request(:get, {to_charlist(url), []}, http_options, options) do
+      {:ok, {{_http_version, status, _reason_phrase}, _headers, body}}
+      when status in 200..299 ->
         Jason.decode(body)
 
-      {:ok, %Finch.Response{status: status, body: body}} ->
+      {:ok, {{_http_version, status, _reason_phrase}, _headers, body}} ->
         {:error, {:http_error, status, body}}
 
       {:error, reason} ->

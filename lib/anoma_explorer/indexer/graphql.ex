@@ -9,6 +9,21 @@ defmodule AnomaExplorer.Indexer.GraphQL do
   require Logger
 
   alias AnomaExplorer.Settings
+  alias AnomaExplorer.Indexer.Cache
+
+  # Default timeout values
+  @default_timeout 15_000
+  @default_connect_timeout 10_000
+  @raw_timeout 30_000
+
+  # Cache TTL for stats (10 seconds)
+  @stats_cache_ttl 10_000
+
+  # Behaviour for HTTP client (allows mocking in tests)
+  @callback post_graphql(String.t(), String.t(), integer(), integer()) ::
+              {:ok, map()} | {:error, term()}
+  @callback post_graphql_raw(String.t(), String.t(), integer(), integer()) ::
+              {:ok, map()} | {:error, term()}
 
   @type transaction :: %{
           id: String.t(),
@@ -52,9 +67,22 @@ defmodule AnomaExplorer.Indexer.GraphQL do
 
   @doc """
   Gets aggregate statistics for the dashboard.
+
+  Results are cached for 10 seconds to reduce API calls.
+  Use `get_stats(skip_cache: true)` to bypass the cache.
   """
-  @spec get_stats() :: {:ok, stats()} | {:error, term()}
-  def get_stats do
+  @spec get_stats(keyword()) :: {:ok, stats()} | {:error, term()}
+  def get_stats(opts \\ []) do
+    skip_cache = Keyword.get(opts, :skip_cache, false)
+
+    if skip_cache do
+      fetch_stats()
+    else
+      Cache.get_or_compute(:dashboard_stats, @stats_cache_ttl, &fetch_stats/0)
+    end
+  end
+
+  defp fetch_stats do
     query = """
     query {
       transactions: Transaction(limit: 1000) { id }
@@ -1089,27 +1117,7 @@ defmodule AnomaExplorer.Indexer.GraphQL do
   end
 
   defp do_raw_request(url, query) do
-    body = Jason.encode!(%{query: query})
-
-    request =
-      Finch.build(:post, url, [{"content-type", "application/json"}], body)
-
-    case Finch.request(request, AnomaExplorer.Finch, receive_timeout: 30_000) do
-      {:ok, %{status: 200, body: response_body}} ->
-        case Jason.decode(response_body) do
-          {:ok, response} ->
-            {:ok, response}
-
-          {:error, reason} ->
-            {:error, {:decode_error, reason}}
-        end
-
-      {:ok, %{status: status, body: body}} ->
-        {:error, {:http_error, status, body}}
-
-      {:error, reason} ->
-        {:error, {:connection_error, reason}}
-    end
+    http_client().post_graphql_raw(url, query, @raw_timeout, @default_connect_timeout)
   end
 
   # ============================================
@@ -1149,13 +1157,33 @@ defmodule AnomaExplorer.Indexer.GraphQL do
   end
 
   defp do_request(url, query) do
+    http_client().post_graphql(url, query, @default_timeout, @default_connect_timeout)
+  end
+
+  # Returns the HTTP client module to use (allows mocking in tests)
+  defp http_client do
+    Application.get_env(:anoma_explorer, :graphql_http_client, __MODULE__)
+  end
+
+  @doc false
+  # Default HTTP client implementation using :httpc
+  # Note: SSL options simplified for OTP 28 compatibility
+  def post_graphql(url, query, timeout, connect_timeout) do
+    :inets.start()
+    :ssl.start()
+
     body = Jason.encode!(%{query: query})
+    request = {to_charlist(url), [{~c"content-type", ~c"application/json"}], ~c"application/json", body}
 
-    request =
-      Finch.build(:post, url, [{"content-type", "application/json"}], body)
+    # Simplified SSL options for OTP 28
+    http_options = [
+      timeout: timeout,
+      connect_timeout: connect_timeout,
+      ssl: [verify: :verify_none]
+    ]
 
-    case Finch.request(request, AnomaExplorer.Finch, receive_timeout: 15_000) do
-      {:ok, %{status: 200, body: response_body}} ->
+    case :httpc.request(:post, request, http_options, [body_format: :binary]) do
+      {:ok, {{_http_version, 200, _reason}, _headers, response_body}} ->
         case Jason.decode(response_body) do
           {:ok, %{"data" => data}} ->
             {:ok, data}
@@ -1169,16 +1197,50 @@ defmodule AnomaExplorer.Indexer.GraphQL do
             {:error, {:decode_error, reason}}
         end
 
-      {:ok, %{status: status, body: response_body}} ->
+      {:ok, {{_http_version, status, _reason}, _headers, response_body}} ->
         Logger.error("GraphQL HTTP error",
           status: status,
-          body: String.slice(response_body, 0, 500)
+          body: String.slice(to_string(response_body), 0, 500)
         )
 
         {:error, {:http_error, status, response_body}}
 
       {:error, reason} ->
         Logger.error("GraphQL connection error", reason: inspect(reason))
+        {:error, {:connection_error, reason}}
+    end
+  end
+
+  @doc false
+  # Raw request for playground - returns full response without extracting data
+  def post_graphql_raw(url, query, timeout, connect_timeout) do
+    :inets.start()
+    :ssl.start()
+
+    body = Jason.encode!(%{query: query})
+    request = {to_charlist(url), [{~c"content-type", ~c"application/json"}], ~c"application/json", body}
+
+    # Simplified SSL options for OTP 28
+    http_options = [
+      timeout: timeout,
+      connect_timeout: connect_timeout,
+      ssl: [verify: :verify_none]
+    ]
+
+    case :httpc.request(:post, request, http_options, [body_format: :binary]) do
+      {:ok, {{_http_version, 200, _reason}, _headers, response_body}} ->
+        case Jason.decode(response_body) do
+          {:ok, response} ->
+            {:ok, response}
+
+          {:error, reason} ->
+            {:error, {:decode_error, reason}}
+        end
+
+      {:ok, {{_http_version, status, _reason}, _headers, response_body}} ->
+        {:error, {:http_error, status, response_body}}
+
+      {:error, reason} ->
         {:error, {:connection_error, reason}}
     end
   end

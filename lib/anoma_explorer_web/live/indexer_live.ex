@@ -113,6 +113,9 @@ defmodule AnomaExplorerWeb.IndexerLive do
   end
 
   defp test_graphql_endpoint(url) do
+    :inets.start()
+    :ssl.start()
+
     query = """
     {
       Transaction(limit: 1) { id }
@@ -120,19 +123,29 @@ defmodule AnomaExplorerWeb.IndexerLive do
     """
 
     body = Jason.encode!(%{query: query})
+    request = {to_charlist(url), [{~c"content-type", ~c"application/json"}], ~c"application/json", body}
 
-    request =
-      Finch.build(:post, url, [{"content-type", "application/json"}], body)
+    http_options = [
+      timeout: 10_000,
+      connect_timeout: 5_000,
+      ssl: [
+        verify: :verify_peer,
+        cacerts: :public_key.cacerts_get(),
+        customize_hostname_check: [
+          match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
+        ]
+      ]
+    ]
 
-    case Finch.request(request, AnomaExplorer.Finch, receive_timeout: 10_000) do
-      {:ok, %{status: 200, body: response_body}} ->
+    case :httpc.request(:post, request, http_options, [body_format: :binary]) do
+      {:ok, {{_http_version, 200, _reason}, _headers, response_body}} ->
         case Jason.decode(response_body) do
           {:ok, %{"data" => _}} -> {:ok, "Connected successfully"}
           {:ok, %{"errors" => errors}} -> {:error, "GraphQL error: #{inspect(errors)}"}
           _ -> {:error, "Invalid response format"}
         end
 
-      {:ok, %{status: status}} ->
+      {:ok, {{_http_version, status, _reason}, _headers, _body}} ->
         {:error, "HTTP #{status}"}
 
       {:error, reason} ->
