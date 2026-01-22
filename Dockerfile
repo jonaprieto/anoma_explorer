@@ -4,7 +4,7 @@
 # https://hub.docker.com/_/alpine/tags
 #
 ARG ELIXIR_VERSION=1.18.4
-ARG OTP_VERSION=28.3.1
+ARG OTP_VERSION=26.2.5
 ARG ALPINE_VERSION=3.20.8
 
 ARG BUILDER_IMAGE="docker.io/hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-alpine-${ALPINE_VERSION}"
