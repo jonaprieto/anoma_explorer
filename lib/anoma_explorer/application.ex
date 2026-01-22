@@ -14,13 +14,9 @@ defmodule AnomaExplorer.Application do
       {Phoenix.PubSub, name: AnomaExplorer.PubSub},
       # HTTP client pool
       {Finch, name: AnomaExplorer.Finch},
-      # Rate limiter for API calls
-      AnomaExplorer.RateLimiter,
       # Settings cache (must be after Repo)
       AnomaExplorer.Settings.Cache,
-      # Background job processing
-      {Oban, Application.fetch_env!(:anoma_explorer, Oban)},
-      # Contract monitoring manager (auto-starts ingestion for active addresses)
+      # Contract monitoring manager (reacts to settings changes)
       AnomaExplorer.Settings.MonitoringManager,
       # Start to serve requests, typically the last entry
       AnomaExplorerWeb.Endpoint

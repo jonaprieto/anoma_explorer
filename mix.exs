@@ -61,14 +61,8 @@ defmodule AnomaExplorer.MixProject do
       {:jason, "~> 1.4"},
       {:dns_cluster, "~> 0.2"},
       {:bandit, "~> 1.6"},
-      # Background jobs
-      {:oban, "~> 2.20"},
       # HTTP client
       {:finch, "~> 0.20"},
-      # GraphQL
-      {:absinthe, "~> 1.7"},
-      {:absinthe_plug, "~> 1.5"},
-      {:absinthe_phoenix, "~> 2.0"},
       # Testing
       {:mox, "~> 1.2", only: :test},
       # AI development tools
