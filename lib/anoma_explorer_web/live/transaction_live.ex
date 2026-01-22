@@ -97,9 +97,9 @@ defmodule AnomaExplorerWeb.TransactionLive do
       <% else %>
         <%= if @transaction do %>
           <.transaction_header tx={@transaction} />
-          <.tags_section tags={@transaction["tags"]} logic_refs={@transaction["logicRefs"]} />
           <.resources_section resources={@transaction["resources"] || []} />
           <.actions_section actions={@transaction["actions"] || []} />
+          <.tags_section tags={@transaction["tags"]} logic_refs={@transaction["logicRefs"]} />
         <% end %>
       <% end %>
 
@@ -144,7 +144,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
     <div class="stat-card mb-6">
       <h2 class="text-lg font-semibold mb-4">Overview</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
+        <div class="md:col-span-2">
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">
             Transaction Hash
           </div>
@@ -164,6 +164,16 @@ defmodule AnomaExplorerWeb.TransactionLive do
           </div>
         </div>
         <div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Timestamp</div>
+          <div class="font-mono">{format_timestamp(@tx["timestamp"])}</div>
+        </div>
+        <div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Network</div>
+          <div>
+            <.network_button chain_id={@tx["chainId"]} />
+          </div>
+        </div>
+        <div>
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Block Number</div>
           <div class="flex items-center gap-2">
             <%= if @block_url do %>
@@ -177,18 +187,8 @@ defmodule AnomaExplorerWeb.TransactionLive do
             <.copy_button text={to_string(@tx["blockNumber"])} tooltip="Copy block number" />
           </div>
         </div>
-        <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Network</div>
-          <div>
-            <.network_button chain_id={@tx["chainId"]} />
-          </div>
-        </div>
-        <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Timestamp</div>
-          <div>{format_timestamp(@tx["timestamp"])}</div>
-        </div>
         <%= if @tx["contractAddress"] do %>
-          <div class="md:col-span-2">
+          <div>
             <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">
               Contract Address
             </div>
@@ -346,7 +346,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
 
   defp actions_section(assigns) do
     ~H"""
-    <div class="stat-card">
+    <div class="stat-card mb-6">
       <h2 class="text-lg font-semibold mb-4">
         Actions <span class="badge badge-ghost ml-2">{length(@actions)}</span>
       </h2>
