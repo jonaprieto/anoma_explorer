@@ -1,0 +1,53 @@
+# Git
+.git
+.gitignore
+
+# Elixir/Phoenix
+_build/
+deps/
+*.ez
+*.beam
+
+# Generated files
+/priv/static/assets/
+
+# Node.js (if any)
+node_modules/
+
+# Test and development
+/test/
+/.elixir_ls/
+/cover/
+/doc/
+
+# IDE and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile*
+docker-compose*
+.docker/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Misc
+*.md
+LICENSE*
+Makefile
+
+# Indexer folder (separate service)
+indexer/
+
+# Logs
+*.log
+/tmp/
