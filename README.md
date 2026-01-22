@@ -1,60 +1,55 @@
 # Anoma Explorer
 
-A Phoenix/LiveView application for tracking Anoma contract activity across multiple EVM networks using Alchemy APIs.
+Anoma Explorer is a Phoenix LiveView application for visualising Anoma Protocol activity across supported EVM networks, backed by an Envio Hyperindex GraphQL indexer.
 
 ## Features
 
-- **Activity Feed**: Real-time view of contract logs, transactions, and transfers
-- **Analytics Dashboard**: Charts and statistics with filtering by network and time period
-- **Multi-Network Support**: Track contracts across Ethereum, Base, Optimism, Arbitrum, Polygon (mainnet and testnets)
-- **Background Ingestion**: Oban-powered background jobs for continuous data sync
-- **Rate Limiting**: Built-in rate limiter to stay within Alchemy API limits
+- Dashboard with aggregate statistics and recent transactions
+- Explorer views for transactions, resources, actions, compliance units, logic inputs, commitment roots, and nullifiers
+- GraphQL playground for ad-hoc queries against the configured Envio indexer
+- Settings UI for contracts, networks, API keys, and indexer configuration
+- Responsive, real-time interface built with Phoenix LiveView and Tailwind CSS
 
 ## Prerequisites
 
-- Elixir 1.17+
+- Elixir `~> 1.17` and Erlang/OTP
 - PostgreSQL
-- An [Alchemy](https://www.alchemy.com/) API key
+- Node.js (for Tailwind and esbuild assets)
+- Access to an Envio Hyperindex deployment (or compatible GraphQL endpoint)
 
 ## Setup
 
-1. Install dependencies:
+For a fresh development environment:
+
+```bash
+mix setup
+```
+
+This installs dependencies, creates and migrates the database, and builds frontend assets.
+
+To run the steps manually:
 
 ```bash
 mix deps.get
-```
-
-2. Create and migrate the database:
-
-```bash
 mix ecto.setup
-```
-
-3. Install frontend assets:
-
-```bash
 mix assets.setup
+mix assets.build
 ```
 
 ## Configuration
 
-Set the following environment variables:
+Most runtime configuration can be managed through the Settings pages in the UI. The following environment variables are relevant:
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `ALCHEMY_API_KEY` | Yes | Your Alchemy API key |
-| `CONTRACT_ADDRESS` | Yes | Contract address to track (e.g., `0x9ED43C229480659bF6B6607C46d7B96c6D760cBB`) |
-| `ALCHEMY_NETWORKS` | No | Comma-separated networks (default: `eth-mainnet,eth-sepolia,base-mainnet,base-sepolia`) |
-| `MAX_REQ_PER_SECOND` | No | Rate limit for Alchemy API (default: `5`) |
-| `POLL_INTERVAL` | No | Seconds between ingestion polls (default: `30`) |
+| Variable            | Required | Description                                               |
+|---------------------|----------|-----------------------------------------------------------|
+| `ENVIO_GRAPHQL_URL` | No       | Envio Hyperindex GraphQL endpoint for indexed data       |
+| `DATABASE_URL`      | Prod     | PostgreSQL connection URL                                |
+| `SECRET_KEY_BASE`   | Prod     | Secret key for signing and encrypting session data       |
+| `PHX_HOST`          | Prod     | Hostname used in generated URLs                          |
+| `PORT`              | No       | HTTP port for the web server (default: `4000`)           |
+| `ETHERSCAN_API_KEY` | No       | API key for contract verification and explorer features  |
 
-Example:
-
-```bash
-export ALCHEMY_API_KEY=your_api_key_here
-export CONTRACT_ADDRESS=0x9ED43C229480659bF6B6607C46d7B96c6D760cBB
-export ALCHEMY_NETWORKS=eth-mainnet,base-mainnet
-```
+`ENVIO_GRAPHQL_URL` can also be configured from the Indexer settings page (`/settings/indexer`); the value is then stored in the database.
 
 ## Running
 
@@ -70,54 +65,56 @@ Or with IEx:
 iex -S mix phx.server
 ```
 
-Visit [http://localhost:4000](http://localhost:4000) in your browser.
+Visit `http://localhost:4000` in your browser.
+
+Ensure the Envio GraphQL endpoint is configured via `ENVIO_GRAPHQL_URL` or through the Indexer settings page before exploring data.
 
 ## Routes
 
-| Path | Description |
-|------|-------------|
-| `/` | Landing page |
-| `/activity` | Activity feed with filtering |
-| `/analytics` | Analytics dashboard |
+Key routes exposed by the application:
+
+| Path                    | Description                                  |
+|-------------------------|----------------------------------------------|
+| `/`                     | Dashboard                                   |
+| `/transactions`         | Transactions list                           |
+| `/transactions/:id`     | Transaction details                         |
+| `/resources`            | Resources list                              |
+| `/resources/:id`        | Resource details                            |
+| `/actions`              | Actions list                                |
+| `/actions/:id`          | Action details                              |
+| `/compliances`          | Compliance units list                       |
+| `/compliances/:id`      | Compliance unit details                     |
+| `/logics`               | Logic inputs list                           |
+| `/logics/:id`           | Logic input details                         |
+| `/commitments`          | Commitment tree roots                       |
+| `/nullifiers`           | Nullifiers                                  |
+| `/playground`           | GraphQL playground                          |
+| `/settings/contracts`   | Managed contract addresses                  |
+| `/settings/networks`    | Network configuration                       |
+| `/settings/api-keys`    | API keys (e.g. Etherscan)                   |
+| `/settings/indexer`     | Envio indexer endpoint configuration        |
 
 ## Testing
 
-Run the test suite:
+Run the Elixir test suite:
 
 ```bash
 mix test
 ```
 
-Run with coverage:
+For a stricter, pre-commit style check:
 
 ```bash
-mix test --cover
-```
-
-## IEx Helpers
-
-The project includes helpful IEx functions in `.iex.exs`:
-
-```elixir
-# Show configured contract addresses
-H.anoma_addrs()
-
-# Run a single ingestion cycle
-H.ingest_once("eth-mainnet")
-
-# Get latest activities
-H.latest(10)
-
-# Get current block number
-H.block("eth-mainnet")
+mix precommit
 ```
 
 ## Architecture
 
-- **Alchemy Client** (`lib/anoma_explorer/alchemy.ex`): HTTP client for Alchemy APIs
-- **Sync Module** (`lib/anoma_explorer/ingestion/sync.ex`): Data ingestion with atomic cursor updates
-- **Oban Workers** (`lib/anoma_explorer/workers/`): Background job processing
-- **LiveView** (`lib/anoma_explorer_web/live/`): Real-time UI components
+- `lib/anoma_explorer/indexer/`: Envio indexer client, configuration, and GraphQL queries
+- `lib/anoma_explorer/settings/`: Persistent application settings (contracts, networks, indexer URL, API keys)
+- `lib/anoma_explorer_web/live/`: LiveView modules for dashboard, explorer pages, settings, and GraphQL playground
+- `assets/`: Frontend assets (Tailwind CSS and JavaScript)
+- `indexer/`: TypeScript project defining the Envio Hyperindex indexer (see `indexer/README.md`)
 
 ## License
 
