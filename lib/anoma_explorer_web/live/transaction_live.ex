@@ -18,7 +18,8 @@ defmodule AnomaExplorerWeb.TransactionLive do
      |> assign(:transaction, nil)
      |> assign(:loading, true)
      |> assign(:error, nil)
-     |> assign(:tx_id, id)}
+     |> assign(:tx_id, id)
+     |> assign(:selected_chain, nil)}
   end
 
   @impl true
@@ -56,6 +57,16 @@ defmodule AnomaExplorerWeb.TransactionLive do
     end
   end
 
+  def handle_event("show_chain_info", %{"chain-id" => chain_id_str}, socket) do
+    chain_id = String.to_integer(chain_id_str)
+    chain_info = Networks.chain_info(chain_id)
+    {:noreply, assign(socket, :selected_chain, chain_info)}
+  end
+
+  def handle_event("close_chain_modal", _params, socket) do
+    {:noreply, assign(socket, :selected_chain, nil)}
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -91,6 +102,8 @@ defmodule AnomaExplorerWeb.TransactionLive do
           <.actions_section actions={@transaction["actions"] || []} />
         <% end %>
       <% end %>
+
+      <.chain_info_modal chain={@selected_chain} />
     </Layouts.app>
     """
   end
@@ -162,9 +175,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
         <div>
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Network</div>
           <div>
-            <span class="badge badge-outline" title={"Chain ID: #{@tx["chainId"]}"}>
-              {Networks.name(@tx["chainId"])}
-            </span>
+            <.network_button chain_id={@tx["chainId"]} />
           </div>
         </div>
         <div>
