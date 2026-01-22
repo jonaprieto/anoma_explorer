@@ -1,133 +1,311 @@
 defmodule AnomaExplorer.Settings do
   @moduledoc """
-  Context module for managing contract settings.
+  Context module for managing protocols and contract addresses.
 
   Provides functions for CRUD operations and querying settings.
+  Supports hierarchical structure: Protocol > Category > Version > Network.
   Settings are cached in ETS for fast reads.
   """
   import Ecto.Query
 
   alias AnomaExplorer.Repo
-  alias AnomaExplorer.Settings.ContractSetting
+  alias AnomaExplorer.Settings.Protocol
+  alias AnomaExplorer.Settings.ContractAddress
   alias AnomaExplorer.Settings.Cache
 
   @pubsub AnomaExplorer.PubSub
   @topic "settings:changes"
 
   # ============================================
-  # Public API - CRUD Operations
+  # Protocol CRUD Operations
   # ============================================
 
   @doc """
-  Creates a new contract setting.
+  Creates a new protocol.
+  """
+  @spec create_protocol(map()) :: {:ok, Protocol.t()} | {:error, Ecto.Changeset.t()}
+  def create_protocol(attrs) do
+    %Protocol{}
+    |> Protocol.changeset(attrs)
+    |> Repo.insert()
+    |> tap_ok(fn p -> Cache.index_protocol(p.name, p.id) end)
+    |> tap_ok(&broadcast_change({:protocol_created, &1}))
+  end
+
+  @doc """
+  Updates an existing protocol.
+  """
+  @spec update_protocol(Protocol.t(), map()) ::
+          {:ok, Protocol.t()} | {:error, Ecto.Changeset.t()}
+  def update_protocol(%Protocol{} = protocol, attrs) do
+    old_name = protocol.name
+
+    protocol
+    |> Protocol.changeset(attrs)
+    |> Repo.update()
+    |> tap_ok(fn p ->
+      # If name changed, update cache index
+      if p.name != old_name do
+        Cache.index_protocol(p.name, p.id)
+      end
+    end)
+    |> tap_ok(&broadcast_change({:protocol_updated, &1}))
+  end
+
+  @doc """
+  Deletes a protocol.
+  Only succeeds if protocol has no contract addresses.
+  """
+  @spec delete_protocol(Protocol.t()) ::
+          {:ok, Protocol.t()} | {:error, Ecto.Changeset.t()}
+  def delete_protocol(%Protocol{} = protocol) do
+    Repo.delete(protocol)
+    |> tap_ok(&broadcast_change({:protocol_deleted, &1}))
+  end
+
+  @doc """
+  Gets a single protocol by ID.
+  """
+  @spec get_protocol(integer()) :: Protocol.t() | nil
+  def get_protocol(id), do: Repo.get(Protocol, id)
+
+  @doc """
+  Gets a single protocol by ID, raising if not found.
+  """
+  @spec get_protocol!(integer()) :: Protocol.t()
+  def get_protocol!(id), do: Repo.get!(Protocol, id)
+
+  @doc """
+  Gets a protocol by name.
+  """
+  @spec get_protocol_by_name(String.t()) :: Protocol.t() | nil
+  def get_protocol_by_name(name) do
+    Repo.get_by(Protocol, name: name)
+  end
+
+  @doc """
+  Lists all protocols.
+
+  ## Options
+    * `:active` - Filter by active status (default: nil, shows all)
+    * `:preload` - Preload associations (default: [])
+  """
+  @spec list_protocols(keyword()) :: [Protocol.t()]
+  def list_protocols(opts \\ []) do
+    Protocol
+    |> filter_by_active(opts[:active])
+    |> order_by([p], asc: p.name)
+    |> preload_if(opts[:preload])
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns a changeset for tracking protocol changes.
+  """
+  @spec change_protocol(Protocol.t(), map()) :: Ecto.Changeset.t()
+  def change_protocol(%Protocol{} = protocol, attrs \\ %{}) do
+    Protocol.changeset(protocol, attrs)
+  end
+
+  # ============================================
+  # Contract Address CRUD Operations
+  # ============================================
+
+  @doc """
+  Creates a new contract address.
   Broadcasts change to subscribers and updates cache.
   """
-  @spec create_setting(map()) :: {:ok, ContractSetting.t()} | {:error, Ecto.Changeset.t()}
-  def create_setting(attrs) do
-    %ContractSetting{}
-    |> ContractSetting.changeset(normalize_address(attrs))
+  @spec create_contract_address(map()) ::
+          {:ok, ContractAddress.t()} | {:error, Ecto.Changeset.t()}
+  def create_contract_address(attrs) do
+    %ContractAddress{}
+    |> ContractAddress.changeset(normalize_address(attrs))
     |> Repo.insert()
-    |> tap_ok(&broadcast_change/1)
     |> tap_ok(&Cache.put/1)
+    |> tap_ok(&broadcast_change({:address_created, &1}))
   end
 
   @doc """
-  Updates an existing contract setting.
+  Updates an existing contract address.
   """
-  @spec update_setting(ContractSetting.t(), map()) ::
-          {:ok, ContractSetting.t()} | {:error, Ecto.Changeset.t()}
-  def update_setting(%ContractSetting{} = setting, attrs) do
-    setting
-    |> ContractSetting.changeset(normalize_address(attrs))
+  @spec update_contract_address(ContractAddress.t(), map()) ::
+          {:ok, ContractAddress.t()} | {:error, Ecto.Changeset.t()}
+  def update_contract_address(%ContractAddress{} = address, attrs) do
+    address
+    |> ContractAddress.changeset(normalize_address(attrs))
     |> Repo.update()
-    |> tap_ok(&broadcast_change/1)
     |> tap_ok(&Cache.put/1)
+    |> tap_ok(&broadcast_change({:address_updated, &1}))
   end
 
   @doc """
-  Deletes a contract setting.
+  Deletes a contract address.
   """
-  @spec delete_setting(ContractSetting.t()) ::
-          {:ok, ContractSetting.t()} | {:error, Ecto.Changeset.t()}
-  def delete_setting(%ContractSetting{} = setting) do
-    Repo.delete(setting)
-    |> tap_ok(fn s -> Cache.delete(s.category, s.network) end)
-    |> tap_ok(&broadcast_change/1)
+  @spec delete_contract_address(ContractAddress.t()) ::
+          {:ok, ContractAddress.t()} | {:error, Ecto.Changeset.t()}
+  def delete_contract_address(%ContractAddress{} = address) do
+    Repo.delete(address)
+    |> tap_ok(fn a -> Cache.delete(a.protocol_id, a.category, a.version, a.network) end)
+    |> tap_ok(&broadcast_change({:address_deleted, &1}))
   end
 
   @doc """
-  Gets a single setting by ID.
+  Gets a single contract address by ID.
   """
-  @spec get_setting(integer()) :: ContractSetting.t() | nil
-  def get_setting(id), do: Repo.get(ContractSetting, id)
+  @spec get_contract_address(integer()) :: ContractAddress.t() | nil
+  def get_contract_address(id), do: Repo.get(ContractAddress, id)
 
   @doc """
-  Gets a single setting by ID, raising if not found.
+  Gets a single contract address by ID, raising if not found.
   """
-  @spec get_setting!(integer()) :: ContractSetting.t()
-  def get_setting!(id), do: Repo.get!(ContractSetting, id)
+  @spec get_contract_address!(integer()) :: ContractAddress.t()
+  def get_contract_address!(id), do: Repo.get!(ContractAddress, id)
+
+  @doc """
+  Lists all contract addresses with optional filters.
+
+  ## Options
+    * `:protocol_id` - Filter by protocol ID
+    * `:category` - Filter by category
+    * `:version` - Filter by version
+    * `:network` - Filter by network
+    * `:active` - Filter by active status (default: nil, shows all)
+    * `:preload` - Preload associations (default: [])
+  """
+  @spec list_contract_addresses(keyword()) :: [ContractAddress.t()]
+  def list_contract_addresses(opts \\ []) do
+    ContractAddress
+    |> filter_by_protocol_id(opts[:protocol_id])
+    |> filter_by_category(opts[:category])
+    |> filter_by_version(opts[:version])
+    |> filter_by_network(opts[:network])
+    |> filter_by_active(opts[:active])
+    |> order_by([c], asc: c.category, asc: c.version, asc: c.network)
+    |> preload_if(opts[:preload])
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns a changeset for tracking contract address changes.
+  """
+  @spec change_contract_address(ContractAddress.t(), map()) :: Ecto.Changeset.t()
+  def change_contract_address(%ContractAddress{} = address, attrs \\ %{}) do
+    ContractAddress.changeset(address, attrs)
+  end
 
   # ============================================
-  # Public API - Query Functions
+  # Query Functions
   # ============================================
 
   @doc """
-  Gets the contract address for a given category and network.
+  Gets the contract address for given protocol, category, version, and network.
   Uses cache for fast lookups.
   """
-  @spec get_address(String.t(), String.t()) :: String.t() | nil
-  def get_address(category, network) do
-    case Cache.get(category, network) do
+  @spec get_address(String.t() | integer(), String.t(), String.t(), String.t()) ::
+          String.t() | nil
+  def get_address(protocol, category, version, network) when is_binary(protocol) do
+    case Cache.get_by_protocol_name(protocol, category, version, network) do
       {:ok, address} -> address
-      :not_found -> fetch_and_cache(category, network)
+      :not_found -> fetch_and_cache_by_name(protocol, category, version, network)
+    end
+  end
+
+  def get_address(protocol_id, category, version, network) when is_integer(protocol_id) do
+    case Cache.get(protocol_id, category, version, network) do
+      {:ok, address} -> address
+      :not_found -> fetch_and_cache(protocol_id, category, version, network)
     end
   end
 
   @doc """
-  Lists all settings with optional filters.
-
-  ## Options
-    * `:category` - Filter by category
-    * `:network` - Filter by network
-    * `:active` - Filter by active status (default: nil, shows all)
+  Lists all addresses organized by protocol for UI display.
+  Returns a nested structure: %{protocol => %{category => %{version => [addresses]}}}
   """
-  @spec list_settings(keyword()) :: [ContractSetting.t()]
-  def list_settings(opts \\ []) do
-    ContractSetting
-    |> apply_filters(opts)
-    |> order_by([s], asc: s.category, asc: s.network)
-    |> Repo.all()
-  end
+  @spec list_addresses_by_protocol() :: map()
+  def list_addresses_by_protocol do
+    list_protocols(preload: [contract_addresses: from(c in ContractAddress, order_by: [c.category, c.version, c.network])])
+    |> Enum.map(fn protocol ->
+      grouped =
+        protocol.contract_addresses
+        |> Enum.group_by(& &1.category)
+        |> Enum.map(fn {category, addresses} ->
+          by_version = Enum.group_by(addresses, & &1.version)
+          {category, by_version}
+        end)
+        |> Map.new()
 
-  @doc """
-  Lists all settings grouped by category.
-  """
-  @spec list_settings_by_category() :: %{String.t() => [ContractSetting.t()]}
-  def list_settings_by_category do
-    list_settings()
-    |> Enum.group_by(& &1.category)
-  end
-
-  @doc """
-  Gets all addresses for a given category across all networks.
-  Returns a map of network => address.
-  """
-  @spec get_addresses_for_category(String.t()) :: %{String.t() => String.t()}
-  def get_addresses_for_category(category) do
-    ContractSetting
-    |> where([s], s.category == ^category and s.active == true)
-    |> select([s], {s.network, s.address})
-    |> Repo.all()
+      {protocol, grouped}
+    end)
     |> Map.new()
   end
 
   @doc """
-  Returns a changeset for tracking changes.
+  Gets all versions for a specific protocol and category.
   """
-  @spec change_setting(ContractSetting.t(), map()) :: Ecto.Changeset.t()
-  def change_setting(%ContractSetting{} = setting, attrs \\ %{}) do
-    ContractSetting.changeset(setting, attrs)
+  @spec get_versions_for_contract(integer(), String.t()) :: [String.t()]
+  def get_versions_for_contract(protocol_id, category) do
+    ContractAddress
+    |> where([c], c.protocol_id == ^protocol_id and c.category == ^category)
+    |> select([c], c.version)
+    |> distinct(true)
+    |> order_by([c], desc: c.version)
+    |> Repo.all()
   end
+
+  @doc """
+  Gets all active addresses for a given protocol and category across all versions and networks.
+  """
+  @spec get_active_addresses(integer(), String.t()) :: [ContractAddress.t()]
+  def get_active_addresses(protocol_id, category) do
+    list_contract_addresses(protocol_id: protocol_id, category: category, active: true)
+  end
+
+  @doc """
+  Lists all active contract addresses.
+  """
+  @spec list_active_addresses() :: [ContractAddress.t()]
+  def list_active_addresses do
+    list_contract_addresses(active: true, preload: [:protocol])
+  end
+
+  # ============================================
+  # Legacy API (for backwards compatibility during migration)
+  # ============================================
+
+  @doc """
+  Legacy function - lists settings by category.
+  Maintained for backwards compatibility with existing LiveView.
+  """
+  @spec list_settings_by_category() :: map()
+  def list_settings_by_category do
+    list_contract_addresses()
+    |> Enum.group_by(& &1.category)
+  end
+
+  @doc """
+  Legacy function - gets a setting by ID.
+  """
+  def get_setting!(id), do: get_contract_address!(id)
+
+  @doc """
+  Legacy function - creates a setting.
+  """
+  def create_setting(attrs), do: create_contract_address(attrs)
+
+  @doc """
+  Legacy function - updates a setting.
+  """
+  def update_setting(setting, attrs), do: update_contract_address(setting, attrs)
+
+  @doc """
+  Legacy function - deletes a setting.
+  """
+  def delete_setting(setting), do: delete_contract_address(setting)
+
+  @doc """
+  Legacy function - changes setting.
+  """
+  def change_setting(setting, attrs \\ %{}), do: change_contract_address(setting, attrs)
 
   # ============================================
   # PubSub Broadcasting
@@ -140,8 +318,8 @@ defmodule AnomaExplorer.Settings do
     Phoenix.PubSub.subscribe(@pubsub, @topic)
   end
 
-  defp broadcast_change(setting) do
-    Phoenix.PubSub.broadcast(@pubsub, @topic, {:settings_changed, setting})
+  defp broadcast_change(event) do
+    Phoenix.PubSub.broadcast(@pubsub, @topic, {:settings_changed, event})
   end
 
   # ============================================
@@ -149,40 +327,58 @@ defmodule AnomaExplorer.Settings do
   # ============================================
 
   defp normalize_address(attrs) when is_map(attrs) do
-    case Map.get(attrs, :address) || Map.get(attrs, "address") do
-      nil -> attrs
-      addr -> Map.put(attrs, :address, String.downcase(addr))
+    cond do
+      Map.has_key?(attrs, :address) ->
+        Map.put(attrs, :address, String.downcase(attrs[:address]))
+
+      Map.has_key?(attrs, "address") ->
+        Map.put(attrs, "address", String.downcase(attrs["address"]))
+
+      true ->
+        attrs
     end
   end
 
-  defp apply_filters(query, opts) do
-    query
-    |> filter_by_category(opts[:category])
-    |> filter_by_network(opts[:network])
-    |> filter_by_active(opts[:active])
-  end
+  defp filter_by_protocol_id(query, nil), do: query
+  defp filter_by_protocol_id(query, id), do: where(query, [c], c.protocol_id == ^id)
 
   defp filter_by_category(query, nil), do: query
-  defp filter_by_category(query, cat), do: where(query, [s], s.category == ^cat)
+  defp filter_by_category(query, cat), do: where(query, [c], c.category == ^cat)
+
+  defp filter_by_version(query, nil), do: query
+  defp filter_by_version(query, ver), do: where(query, [c], c.version == ^ver)
 
   defp filter_by_network(query, nil), do: query
-  defp filter_by_network(query, net), do: where(query, [s], s.network == ^net)
+  defp filter_by_network(query, net), do: where(query, [c], c.network == ^net)
 
   defp filter_by_active(query, nil), do: query
-  defp filter_by_active(query, active), do: where(query, [s], s.active == ^active)
+  defp filter_by_active(query, active), do: where(query, [c], c.active == ^active)
 
-  defp fetch_and_cache(category, network) do
+  defp preload_if(query, nil), do: query
+  defp preload_if(query, []), do: query
+  defp preload_if(query, preloads), do: preload(query, ^preloads)
+
+  defp fetch_and_cache(protocol_id, category, version, network) do
     case Repo.one(
-           from s in ContractSetting,
-             where: s.category == ^category and s.network == ^network and s.active == true,
-             select: s.address
+           from c in ContractAddress,
+             where:
+               c.protocol_id == ^protocol_id and c.category == ^category and
+                 c.version == ^version and c.network == ^network and c.active == true,
+             select: c.address
          ) do
       nil ->
         nil
 
       address ->
-        Cache.put_address(category, network, address)
+        Cache.put_address(protocol_id, category, version, network, address)
         address
+    end
+  end
+
+  defp fetch_and_cache_by_name(protocol_name, category, version, network) do
+    case get_protocol_by_name(protocol_name) do
+      nil -> nil
+      protocol -> fetch_and_cache(protocol.id, category, version, network)
     end
   end
 

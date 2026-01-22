@@ -18,6 +18,7 @@ defmodule AnomaExplorerWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    live "/settings", SettingsLive, :index
   end
 
   # GraphQL API

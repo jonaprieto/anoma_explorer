@@ -20,6 +20,8 @@ defmodule AnomaExplorer.Application do
       AnomaExplorer.Settings.Cache,
       # Background job processing
       {Oban, Application.fetch_env!(:anoma_explorer, Oban)},
+      # Contract monitoring manager (auto-starts ingestion for active addresses)
+      AnomaExplorer.Settings.MonitoringManager,
       # Start to serve requests, typically the last entry
       AnomaExplorerWeb.Endpoint
     ]

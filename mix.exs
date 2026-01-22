@@ -65,8 +65,14 @@ defmodule AnomaExplorer.MixProject do
       {:oban, "~> 2.20"},
       # HTTP client
       {:finch, "~> 0.20"},
+      # GraphQL
+      {:absinthe, "~> 1.7"},
+      {:absinthe_plug, "~> 1.5"},
+      {:absinthe_phoenix, "~> 2.0"},
       # Testing
-      {:mox, "~> 1.2", only: :test}
+      {:mox, "~> 1.2", only: :test},
+      # AI development tools
+      {:tidewave, "~> 0.5", only: :dev}
     ]
   end
 

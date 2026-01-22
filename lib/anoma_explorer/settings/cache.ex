@@ -1,15 +1,17 @@
 defmodule AnomaExplorer.Settings.Cache do
   @moduledoc """
-  ETS-based cache for contract settings.
+  ETS-based cache for contract addresses.
 
-  Provides fast concurrent reads for settings lookups.
+  Provides fast concurrent reads for address lookups.
   The GenServer owns the ETS table and handles cache population.
+
+  Cache key structure: {protocol_id, category, version, network} -> address
   """
   use GenServer
 
-  alias AnomaExplorer.Settings.ContractSetting
+  alias AnomaExplorer.Settings.ContractAddress
 
-  @table_name :contract_settings_cache
+  @table_name :contract_addresses_cache
 
   # ============================================
   # Client API
@@ -20,12 +22,12 @@ defmodule AnomaExplorer.Settings.Cache do
   end
 
   @doc """
-  Gets an address from cache.
+  Gets an address from cache by protocol_id, category, version, and network.
   Returns {:ok, address} or :not_found.
   """
-  @spec get(String.t(), String.t()) :: {:ok, String.t()} | :not_found
-  def get(category, network) do
-    key = cache_key(category, network)
+  @spec get(integer(), String.t(), String.t(), String.t()) :: {:ok, String.t()} | :not_found
+  def get(protocol_id, category, version, network) do
+    key = cache_key(protocol_id, category, version, network)
 
     case :ets.lookup(@table_name, key) do
       [{^key, address}] -> {:ok, address}
@@ -34,33 +36,71 @@ defmodule AnomaExplorer.Settings.Cache do
   end
 
   @doc """
-  Puts a setting into the cache.
+  Gets an address from cache by protocol name, category, version, and network.
+  Returns {:ok, address} or :not_found.
+
+  This is a convenience function that looks up the protocol_id first.
   """
-  @spec put(ContractSetting.t()) :: :ok
-  def put(%ContractSetting{category: category, network: network, address: address, active: true}) do
-    put_address(category, network, address)
+  @spec get_by_protocol_name(String.t(), String.t(), String.t(), String.t()) ::
+          {:ok, String.t()} | :not_found
+  def get_by_protocol_name(protocol_name, category, version, network) do
+    # Use protocol name index for lookup
+    case :ets.lookup(@table_name, {:protocol_name, protocol_name}) do
+      [{_, protocol_id}] -> get(protocol_id, category, version, network)
+      [] -> :not_found
+    end
   end
 
-  def put(%ContractSetting{category: category, network: network, active: false}) do
-    delete(category, network)
+  @doc """
+  Puts a contract address into the cache.
+  """
+  @spec put(ContractAddress.t()) :: :ok
+  def put(%ContractAddress{
+        protocol_id: protocol_id,
+        category: category,
+        version: version,
+        network: network,
+        address: address,
+        active: true
+      }) do
+    put_address(protocol_id, category, version, network, address)
+  end
+
+  def put(%ContractAddress{
+        protocol_id: protocol_id,
+        category: category,
+        version: version,
+        network: network,
+        active: false
+      }) do
+    delete(protocol_id, category, version, network)
   end
 
   @doc """
   Puts an address directly into the cache.
   """
-  @spec put_address(String.t(), String.t(), String.t()) :: :ok
-  def put_address(category, network, address) do
-    key = cache_key(category, network)
+  @spec put_address(integer(), String.t(), String.t(), String.t(), String.t()) :: :ok
+  def put_address(protocol_id, category, version, network, address) do
+    key = cache_key(protocol_id, category, version, network)
     :ets.insert(@table_name, {key, address})
+    :ok
+  end
+
+  @doc """
+  Indexes a protocol name to its ID for fast lookups.
+  """
+  @spec index_protocol(String.t(), integer()) :: :ok
+  def index_protocol(name, id) do
+    :ets.insert(@table_name, {{:protocol_name, name}, id})
     :ok
   end
 
   @doc """
   Deletes an entry from cache.
   """
-  @spec delete(String.t(), String.t()) :: :ok
-  def delete(category, network) do
-    key = cache_key(category, network)
+  @spec delete(integer(), String.t(), String.t(), String.t()) :: :ok
+  def delete(protocol_id, category, version, network) do
+    key = cache_key(protocol_id, category, version, network)
     :ets.delete(@table_name, key)
     :ok
   end
@@ -82,6 +122,15 @@ defmodule AnomaExplorer.Settings.Cache do
     :ok
   end
 
+  @doc """
+  Returns all cached addresses as a list.
+  Useful for debugging.
+  """
+  @spec all() :: list()
+  def all do
+    :ets.tab2list(@table_name)
+  end
+
   # ============================================
   # Server Callbacks
   # ============================================
@@ -91,7 +140,7 @@ defmodule AnomaExplorer.Settings.Cache do
     table = :ets.new(@table_name, [:named_table, :public, :set, read_concurrency: true])
 
     # Load initial data from database
-    load_all_settings()
+    load_all_data()
 
     {:ok, %{table: table}}
   end
@@ -99,7 +148,7 @@ defmodule AnomaExplorer.Settings.Cache do
   @impl true
   def handle_call(:reload_all, _from, state) do
     clear()
-    load_all_settings()
+    load_all_data()
     {:reply, :ok, state}
   end
 
@@ -112,18 +161,37 @@ defmodule AnomaExplorer.Settings.Cache do
   # Private Helpers
   # ============================================
 
-  defp cache_key(category, network), do: {category, network}
+  defp cache_key(protocol_id, category, version, network) do
+    {protocol_id, category, version, network}
+  end
 
-  defp load_all_settings do
-    # Import here to avoid circular dependency at compile time
+  defp load_all_data do
+    load_protocols()
+    load_contract_addresses()
+  end
+
+  defp load_protocols do
+    alias AnomaExplorer.Repo
+    alias AnomaExplorer.Settings.Protocol
+    import Ecto.Query
+
+    Protocol
+    |> where([p], p.active == true)
+    |> Repo.all()
+    |> Enum.each(fn protocol ->
+      index_protocol(protocol.name, protocol.id)
+    end)
+  end
+
+  defp load_contract_addresses do
     alias AnomaExplorer.Repo
     import Ecto.Query
 
-    ContractSetting
-    |> where([s], s.active == true)
+    ContractAddress
+    |> where([c], c.active == true)
     |> Repo.all()
-    |> Enum.each(fn setting ->
-      put_address(setting.category, setting.network, setting.address)
+    |> Enum.each(fn address ->
+      put_address(address.protocol_id, address.category, address.version, address.network, address.address)
     end)
   end
 end

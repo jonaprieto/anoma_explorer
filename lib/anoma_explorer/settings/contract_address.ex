@@ -1,48 +1,46 @@
-defmodule AnomaExplorer.Settings.ContractSetting do
+defmodule AnomaExplorer.Settings.ContractAddress do
   @moduledoc """
-  Schema for storing contract address settings by category and network.
+  Schema for storing contract addresses by protocol, category, version, and network.
 
-  Categories represent different contract types (e.g., protocol_adapter, erc20_forwarder).
+  Categories represent different contract types (e.g., pa-evm, protocol_adapter).
+  Versions track contract iterations (e.g., v1.0, 2.1.3, latest).
   Networks represent blockchain networks (e.g., eth-mainnet, base-sepolia).
   """
   use Ecto.Schema
   import Ecto.Changeset
 
-  @valid_categories ~w(protocol_adapter erc20_forwarder)
+  alias AnomaExplorer.Settings.Protocol
 
-  schema "contract_settings" do
-    field :category, :string
+  schema "contract_addresses" do
+    field :category, :string # For example: pa-evm
+    field :version, :string
     field :network, :string
     field :address, :string
     field :active, :boolean, default: true
 
+    belongs_to :protocol, Protocol
+
     timestamps(type: :utc_datetime)
   end
 
-  @required_fields ~w(category network address)a
+  @required_fields ~w(protocol_id category version network address)a
   @optional_fields ~w(active)a
 
-  @doc """
-  Creates a changeset for contract settings.
-  """
-  def changeset(setting, attrs) do
-    setting
+  def changeset(contract_address, attrs) do
+    contract_address
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_inclusion(:category, @valid_categories)
+    |> validate_length(:category, min: 1, max: 100)
+    |> validate_length(:version, min: 1, max: 50)
     |> validate_ethereum_address(:address)
-    |> unique_constraint([:category, :network],
-      name: :contract_settings_category_network_unique_idx,
-      message: "already exists for this category and network"
+    |> foreign_key_constraint(:protocol_id)
+    |> unique_constraint([:protocol_id, :category, :version, :network],
+      name: :contract_addresses_unique_idx,
+      message: "already exists for this protocol, category, version, and network"
     )
   end
 
-  @doc """
-  Returns the list of valid categories.
-  """
-  def valid_categories, do: @valid_categories
-
-  # Private: Validates Ethereum address format (0x + 40 hex chars)
+  # Validates Ethereum address format (0x + 40 hex chars)
   defp validate_ethereum_address(changeset, field) do
     validate_change(changeset, field, fn _, value ->
       downcased = String.downcase(value)

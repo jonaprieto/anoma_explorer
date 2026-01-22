@@ -56,7 +56,8 @@ config :anoma_explorer, Oban,
   engine: Oban.Engines.Basic,
   queues: [
     default: 10,
-    ingestion: [limit: 1]
+    ingestion: [limit: 1],
+    paevm_ingestion: [limit: 2]
   ],
   repo: AnomaExplorer.Repo
 

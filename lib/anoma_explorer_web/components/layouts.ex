@@ -53,6 +53,11 @@ defmodule AnomaExplorerWeb.Layouts do
               <.icon name="hero-home" class="w-5 h-5" />
               <span>Dashboard</span>
             </a>
+
+            <a href="/settings" class={nav_class(@current_path, "/settings")}>
+              <.icon name="hero-cog-6-tooth" class="w-5 h-5" />
+              <span>Settings</span>
+            </a>
           </nav>
           
     <!-- Footer -->
