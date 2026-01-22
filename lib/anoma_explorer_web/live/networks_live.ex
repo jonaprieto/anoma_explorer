@@ -59,8 +59,8 @@ defmodule AnomaExplorerWeb.NetworksLive do
                   </tr>
                 </thead>
                 <tbody>
-                  <%= for network <- @networks do %>
-                    <tr>
+                  <%= for network <- Enum.sort_by(@networks, & &1.active, :desc) do %>
+                    <tr class={unless network.active, do: "opacity-50"}>
                       <td>
                         <span class="font-mono text-sm"><%= network.name %></span>
                       </td>
