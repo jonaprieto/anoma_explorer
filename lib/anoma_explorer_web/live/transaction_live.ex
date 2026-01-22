@@ -140,6 +140,13 @@ defmodule AnomaExplorerWeb.TransactionLive do
         Networks.address_url(assigns.tx["chainId"], assigns.tx["contractAddress"])
       )
 
+    assigns =
+      assign(
+        assigns,
+        :from_url,
+        if(assigns.tx["from"], do: Networks.address_url(assigns.tx["chainId"], assigns.tx["from"]))
+      )
+
     ~H"""
     <div class="stat-card mb-6">
       <h2 class="text-lg font-semibold mb-4">Overview</h2>
@@ -186,6 +193,39 @@ defmodule AnomaExplorerWeb.TransactionLive do
             <% end %>
             <.copy_button text={to_string(@tx["blockNumber"])} tooltip="Copy block number" />
           </div>
+        </div>
+        <div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">From</div>
+          <div class="flex items-center gap-2">
+            <%= if @tx["from"] do %>
+              <code class="hash-display text-sm">{truncate_hash(@tx["from"])}</code>
+              <.copy_button text={@tx["from"]} tooltip="Copy address" />
+              <%= if @from_url do %>
+                <a
+                  href={@from_url}
+                  target="_blank"
+                  class="btn btn-ghost shrink-0 opacity-60 hover:opacity-100"
+                  title="View on Explorer"
+                >
+                  <.icon name="hero-arrow-top-right-on-square" class="w-4 h-4" />
+                </a>
+              <% end %>
+            <% else %>
+              <span class="text-base-content/50">-</span>
+            <% end %>
+          </div>
+        </div>
+        <div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Value</div>
+          <div class="font-mono">{format_eth(@tx["value"])}</div>
+        </div>
+        <div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Gas Price</div>
+          <div class="font-mono">{format_gwei(@tx["gasPrice"])}</div>
+        </div>
+        <div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Transaction Fee</div>
+          <div class="font-mono">{format_tx_fee(@tx["gasUsed"], @tx["gasPrice"])}</div>
         </div>
         <%= if @tx["contractAddress"] do %>
           <div>
@@ -423,4 +463,55 @@ defmodule AnomaExplorerWeb.TransactionLive do
       _ -> "-"
     end
   end
+
+  # Format Wei value to Gwei (for gas price display)
+  defp format_gwei(nil), do: "-"
+
+  defp format_gwei(wei) when is_integer(wei) do
+    gwei = wei / 1_000_000_000
+    "#{Float.round(gwei, 2)} Gwei"
+  end
+
+  defp format_gwei(wei) when is_binary(wei) do
+    case Integer.parse(wei) do
+      {n, _} -> format_gwei(n)
+      :error -> "-"
+    end
+  end
+
+  defp format_gwei(_), do: "-"
+
+  # Format Wei value to ETH (for value display)
+  defp format_eth(nil), do: "-"
+
+  defp format_eth(wei) when is_integer(wei) do
+    eth = wei / 1_000_000_000_000_000_000
+    "#{Float.round(eth, 6)} ETH"
+  end
+
+  defp format_eth(wei) when is_binary(wei) do
+    case Integer.parse(wei) do
+      {n, _} -> format_eth(n)
+      :error -> "-"
+    end
+  end
+
+  defp format_eth(_), do: "-"
+
+  # Calculate and format transaction fee (gasUsed * gasPrice)
+  defp format_tx_fee(gas_used, gas_price) when is_integer(gas_used) and is_integer(gas_price) do
+    fee_wei = gas_used * gas_price
+    format_eth(fee_wei)
+  end
+
+  defp format_tx_fee(gas_used, gas_price) when is_binary(gas_used) and is_binary(gas_price) do
+    with {gu, _} <- Integer.parse(gas_used),
+         {gp, _} <- Integer.parse(gas_price) do
+      format_tx_fee(gu, gp)
+    else
+      _ -> "-"
+    end
+  end
+
+  defp format_tx_fee(_, _), do: "-"
 end

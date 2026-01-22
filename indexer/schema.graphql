@@ -16,6 +16,13 @@ type Transaction {
   chainId: Int!
   contractAddress: String!
 
+  # EVM transaction fields
+  from: String
+  value: BigInt
+  gasPrice: BigInt
+  gas: BigInt
+  gasUsed: BigInt
+
   # From TransactionExecuted event
   tags: [String!]!
   logicRefs: [String!]!

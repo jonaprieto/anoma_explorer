@@ -379,8 +379,12 @@ defmodule AnomaExplorerWeb.HomeLive do
                 <th>Tx Hash</th>
                 <th>Network</th>
                 <th>Block</th>
+                <th class="hidden md:table-cell">From</th>
+                <th class="hidden md:table-cell">Value</th>
+                <th class="hidden lg:table-cell">Gas Price</th>
+                <th class="hidden lg:table-cell">Tx Fee</th>
                 <th>Resources</th>
-                <th class="hidden lg:table-cell">Time</th>
+                <th class="hidden xl:table-cell">Time</th>
               </tr>
             </thead>
             <tbody>
@@ -417,6 +421,21 @@ defmodule AnomaExplorerWeb.HomeLive do
                       <.copy_button text={to_string(tx["blockNumber"])} tooltip="Copy block number" />
                     </div>
                   </td>
+                  <td class="hidden md:table-cell">
+                    <div class="flex items-center gap-1">
+                      <span class="hash-display text-sm">{truncate_hash(tx["from"])}</span>
+                      <.copy_button :if={tx["from"]} text={tx["from"]} tooltip="Copy address" />
+                    </div>
+                  </td>
+                  <td class="hidden md:table-cell text-sm">
+                    {format_eth(tx["value"])}
+                  </td>
+                  <td class="hidden lg:table-cell text-sm">
+                    {format_gwei(tx["gasPrice"])}
+                  </td>
+                  <td class="hidden lg:table-cell text-sm">
+                    {format_tx_fee(tx["gasUsed"], tx["gasPrice"])}
+                  </td>
                   <td>
                     <button
                       phx-click="show_resources"
@@ -434,7 +453,7 @@ defmodule AnomaExplorerWeb.HomeLive do
                       </span>
                     </button>
                   </td>
-                  <td class="hidden lg:table-cell text-base-content/60 text-sm">
+                  <td class="hidden xl:table-cell text-base-content/60 text-sm">
                     {format_timestamp(tx["timestamp"])}
                   </td>
                 </tr>
@@ -579,4 +598,55 @@ defmodule AnomaExplorerWeb.HomeLive do
       true -> "#{div(diff, 86400)}d ago"
     end
   end
+
+  # Format Wei value to Gwei (for gas price display)
+  defp format_gwei(nil), do: "-"
+
+  defp format_gwei(wei) when is_integer(wei) do
+    gwei = wei / 1_000_000_000
+    "#{Float.round(gwei, 2)} Gwei"
+  end
+
+  defp format_gwei(wei) when is_binary(wei) do
+    case Integer.parse(wei) do
+      {n, _} -> format_gwei(n)
+      :error -> "-"
+    end
+  end
+
+  defp format_gwei(_), do: "-"
+
+  # Format Wei value to ETH (for value display)
+  defp format_eth(nil), do: "-"
+
+  defp format_eth(wei) when is_integer(wei) do
+    eth = wei / 1_000_000_000_000_000_000
+    "#{Float.round(eth, 6)} ETH"
+  end
+
+  defp format_eth(wei) when is_binary(wei) do
+    case Integer.parse(wei) do
+      {n, _} -> format_eth(n)
+      :error -> "-"
+    end
+  end
+
+  defp format_eth(_), do: "-"
+
+  # Calculate and format transaction fee (gasUsed * gasPrice)
+  defp format_tx_fee(gas_used, gas_price) when is_integer(gas_used) and is_integer(gas_price) do
+    fee_wei = gas_used * gas_price
+    format_eth(fee_wei)
+  end
+
+  defp format_tx_fee(gas_used, gas_price) when is_binary(gas_used) and is_binary(gas_price) do
+    with {gu, _} <- Integer.parse(gas_used),
+         {gp, _} <- Integer.parse(gas_price) do
+      format_tx_fee(gu, gp)
+    else
+      _ -> "-"
+    end
+  end
+
+  defp format_tx_fee(_, _), do: "-"
 end

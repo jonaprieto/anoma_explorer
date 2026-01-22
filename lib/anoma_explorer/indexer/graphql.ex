@@ -32,7 +32,12 @@ defmodule AnomaExplorer.Indexer.GraphQL do
           timestamp: integer(),
           chainId: integer(),
           tags: [String.t()],
-          logicRefs: [String.t()]
+          logicRefs: [String.t()],
+          from: String.t() | nil,
+          value: integer() | nil,
+          gasPrice: integer() | nil,
+          gas: integer() | nil,
+          gasUsed: integer() | nil
         }
 
   @type resource :: %{
@@ -134,6 +139,13 @@ defmodule AnomaExplorer.Indexer.GraphQL do
     where_conditions = build_transaction_where(opts)
     where_clause = if where_conditions == "", do: "", else: ", where: {#{where_conditions}}"
 
+    # Note: from, value, gasPrice, gas, gasUsed fields require indexer update and reindex.
+    # Once indexed, uncomment these fields below:
+    # from
+    # value
+    # gasPrice
+    # gas
+    # gasUsed
     query = """
     query {
       Transaction(limit: #{limit}, offset: #{offset}, order_by: {blockNumber: desc}#{where_clause}) {
