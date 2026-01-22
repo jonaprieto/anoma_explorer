@@ -29,7 +29,9 @@ defmodule AnomaExplorer.Settings.Network do
     |> validate_required(@required_fields)
     |> validate_length(:name, min: 1, max: 100)
     |> validate_length(:display_name, min: 1, max: 100)
-    |> validate_format(:name, ~r/^[a-z0-9-]+$/, message: "must contain only lowercase letters, numbers, and hyphens")
+    |> validate_format(:name, ~r/^[a-z0-9-]+$/,
+      message: "must contain only lowercase letters, numbers, and hyphens"
+    )
     |> unique_constraint(:name)
   end
 end

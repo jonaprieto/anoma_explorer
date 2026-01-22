@@ -29,16 +29,16 @@ defmodule AnomaExplorer.Repo.Migrations.AddProtocolAndVersionToContractSettings 
 
     # 5. Drop old unique constraint
     drop unique_index(:contract_settings, [:category, :network],
-      name: :contract_settings_category_network_unique_idx
-    )
+           name: :contract_settings_category_network_unique_idx
+         )
 
     # 6. Rename table to contract_addresses
     rename table(:contract_settings), to: table(:contract_addresses)
 
     # 7. Create new unique constraint with protocol_id and version
     create unique_index(:contract_addresses, [:protocol_id, :category, :version, :network],
-      name: :contract_addresses_unique_idx
-    )
+             name: :contract_addresses_unique_idx
+           )
 
     # 8. Add index on protocol_id
     create index(:contract_addresses, [:protocol_id])
@@ -49,15 +49,16 @@ defmodule AnomaExplorer.Repo.Migrations.AddProtocolAndVersionToContractSettings 
     # Reverse the migration
     drop index(:contract_addresses, [:version])
     drop index(:contract_addresses, [:protocol_id])
+
     drop unique_index(:contract_addresses, [:protocol_id, :category, :version, :network],
-      name: :contract_addresses_unique_idx
-    )
+           name: :contract_addresses_unique_idx
+         )
 
     rename table(:contract_addresses), to: table(:contract_settings)
 
     create unique_index(:contract_settings, [:category, :network],
-      name: :contract_settings_category_network_unique_idx
-    )
+             name: :contract_settings_category_network_unique_idx
+           )
 
     alter table(:contract_settings) do
       remove :protocol_id

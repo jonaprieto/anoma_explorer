@@ -191,7 +191,13 @@ defmodule AnomaExplorer.Settings.Cache do
     |> where([c], c.active == true)
     |> Repo.all()
     |> Enum.each(fn address ->
-      put_address(address.protocol_id, address.category, address.version, address.network, address.address)
+      put_address(
+        address.protocol_id,
+        address.category,
+        address.version,
+        address.network,
+        address.address
+      )
     end)
   end
 end

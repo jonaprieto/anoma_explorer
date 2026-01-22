@@ -57,7 +57,9 @@ defmodule AnomaExplorer.Indexer.ConfigWatcher do
       errors: []
     }
 
-    Logger.info("[ConfigWatcher] Started, will generate initial config in #{div(@init_delay, 1000)}s")
+    Logger.info(
+      "[ConfigWatcher] Started, will generate initial config in #{div(@init_delay, 1000)}s"
+    )
 
     {:ok, state}
   end
@@ -72,7 +74,10 @@ defmodule AnomaExplorer.Indexer.ConfigWatcher do
   @impl true
   def handle_info({:settings_changed, event}, state) do
     if should_regenerate?(event) do
-      Logger.info("[ConfigWatcher] Settings changed (#{event_type(event)}), regenerating config.yaml")
+      Logger.info(
+        "[ConfigWatcher] Settings changed (#{event_type(event)}), regenerating config.yaml"
+      )
+
       new_state = do_generate(state)
       {:noreply, new_state}
     else
@@ -106,9 +111,10 @@ defmodule AnomaExplorer.Indexer.ConfigWatcher do
   defp do_generate(state) do
     case ConfigGenerator.generate() do
       :ok ->
-        %{state |
-          last_generated: DateTime.utc_now(),
-          generation_count: state.generation_count + 1
+        %{
+          state
+          | last_generated: DateTime.utc_now(),
+            generation_count: state.generation_count + 1
         }
 
       {:error, reason} ->

@@ -62,6 +62,17 @@ defmodule AnomaExplorerWeb.IndexerLive do
   end
 
   @impl true
+  def handle_event("global_search", %{"query" => query}, socket) do
+    query = String.trim(query)
+
+    if query != "" do
+      {:noreply, push_navigate(socket, to: "/transactions?search=#{URI.encode_www_form(query)}")}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
   def handle_info({:test_connection, url}, socket) do
     status = test_graphql_endpoint(url)
 
@@ -144,20 +155,14 @@ defmodule AnomaExplorerWeb.IndexerLive do
                 class="btn btn-outline"
               >
                 <%= if @testing do %>
-                  <span class="loading loading-spinner loading-sm"></span>
-                  Testing...
+                  <span class="loading loading-spinner loading-sm"></span> Testing...
                 <% else %>
                   Test Connection
                 <% end %>
               </button>
-              <button
-                type="submit"
-                disabled={@saving || @url_input == @url}
-                class="btn btn-primary"
-              >
+              <button type="submit" disabled={@saving || @url_input == @url} class="btn btn-primary">
                 <%= if @saving do %>
-                  <span class="loading loading-spinner loading-sm"></span>
-                  Saving...
+                  <span class="loading loading-spinner loading-sm"></span> Saving...
                 <% else %>
                   Save
                 <% end %>
@@ -180,7 +185,7 @@ defmodule AnomaExplorerWeb.IndexerLive do
               name={if elem(@status, 0) == :ok, do: "hero-check-circle", else: "hero-x-circle"}
               class="h-5 w-5"
             />
-            <span><%= elem(@status, 1) %></span>
+            <span>{elem(@status, 1)}</span>
           </div>
         <% end %>
 
@@ -189,7 +194,7 @@ defmodule AnomaExplorerWeb.IndexerLive do
             <h3 class="text-sm font-semibold mb-2">Current Configuration</h3>
             <div class="flex items-center gap-2">
               <code class="text-sm font-mono bg-base-200 px-2 py-1 rounded flex-1 overflow-x-auto">
-                <%= @url %>
+                {@url}
               </code>
               <button
                 type="button"
@@ -209,7 +214,10 @@ defmodule AnomaExplorerWeb.IndexerLive do
         <h3 class="text-sm font-semibold mb-2">Usage Notes</h3>
         <ul class="text-sm text-base-content/70 space-y-1 list-disc list-inside">
           <li>The URL is stored in the database and persists across restarts</li>
-          <li>Falls back to <code class="bg-base-200 px-1 rounded">ENVIO_GRAPHQL_URL</code> environment variable if not set</li>
+          <li>
+            Falls back to <code class="bg-base-200 px-1 rounded">ENVIO_GRAPHQL_URL</code>
+            environment variable if not set
+          </li>
           <li>Use "Test Connection" to verify the endpoint is accessible</li>
           <li>Changes take effect immediately for new dashboard queries</li>
         </ul>

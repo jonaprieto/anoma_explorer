@@ -23,23 +23,23 @@ defmodule AnomaExplorer.ChainVerifier do
   @chain_ids %{
     # Ethereum
     "eth-mainnet" => 1,
-    "eth-sepolia" => 11155111,
+    "eth-sepolia" => 11_155_111,
     # Base
     "base-mainnet" => 8453,
     "base-sepolia" => 84532,
     # Arbitrum
     "arbitrum-mainnet" => 42161,
     "arb-mainnet" => 42161,
-    "arbitrum-sepolia" => 421614,
-    "arb-sepolia" => 421614,
+    "arbitrum-sepolia" => 421_614,
+    "arb-sepolia" => 421_614,
     # Polygon
     "polygon-mainnet" => 137,
     "polygon-amoy" => 80002,
     # Optimism
     "optimism-mainnet" => 10,
     "op-mainnet" => 10,
-    "optimism-sepolia" => 11155420,
-    "op-sepolia" => 11155420,
+    "optimism-sepolia" => 11_155_420,
+    "op-sepolia" => 11_155_420,
     # BSC
     "bsc-mainnet" => 56,
     "bsc-testnet" => 97,

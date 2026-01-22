@@ -12,7 +12,7 @@ import { expect } from "chai";
 
 const GRAPHQL_URL =
   process.env.ENVIO_GRAPHQL_URL ||
-  "https://indexer.dev.hyperindex.xyz/d60d83b/v1/graphql";
+  "https://indexer.dev.hyperindex.xyz/1419641/v1/graphql";
 
 interface GraphQLResponse<T> {
   data?: T;

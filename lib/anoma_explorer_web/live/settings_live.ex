@@ -64,7 +64,7 @@ defmodule AnomaExplorerWeb.SettingsLive do
                   </div>
                   <div>
                     <div class="flex items-center gap-2">
-                      <h2 class="text-lg font-semibold text-base-content"><%= protocol.name %></h2>
+                      <h2 class="text-lg font-semibold text-base-content">{protocol.name}</h2>
                       <%= if first_address = List.first(protocol.contract_addresses) do %>
                         <div class="tooltip" data-tip={"Category: #{first_address.category}"}>
                           <.icon name="hero-tag" class="w-4 h-4 text-base-content/50" />
@@ -72,7 +72,7 @@ defmodule AnomaExplorerWeb.SettingsLive do
                       <% end %>
                     </div>
                     <%= if protocol.description do %>
-                      <p class="text-sm text-base-content/60"><%= protocol.description %></p>
+                      <p class="text-sm text-base-content/60">{protocol.description}</p>
                     <% end %>
                     <%= if protocol.github_url do %>
                       <a
@@ -81,10 +81,19 @@ defmodule AnomaExplorerWeb.SettingsLive do
                         rel="noopener noreferrer"
                         class="inline-flex items-center gap-1 text-xs text-base-content/50 hover:text-primary mt-1"
                       >
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd" />
+                        <svg
+                          class="w-3 h-3"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                            clip-rule="evenodd"
+                          />
                         </svg>
-                        <span><%= protocol.github_url %></span>
+                        <span>{protocol.github_url}</span>
                       </a>
                     <% end %>
                   </div>
@@ -140,10 +149,10 @@ defmodule AnomaExplorerWeb.SettingsLive do
                                 rel="noopener noreferrer"
                                 class="badge badge-outline badge-sm hover:bg-primary hover:text-primary-content hover:border-primary transition-colors"
                               >
-                                <%= address.version %>
+                                {address.version}
                               </a>
                             <% else %>
-                              <span class="badge badge-outline badge-sm"><%= address.version %></span>
+                              <span class="badge badge-outline badge-sm">{address.version}</span>
                             <% end %>
                           </td>
                           <td>
@@ -158,7 +167,7 @@ defmodule AnomaExplorerWeb.SettingsLive do
                                 class="text-sm font-mono link link-primary"
                                 title={address.address}
                               >
-                                <%= truncate_address(address.address) %>
+                                {truncate_address(address.address)}
                               </a>
                               <button
                                 type="button"
@@ -207,7 +216,14 @@ defmodule AnomaExplorerWeb.SettingsLive do
 
       <%= if @modal do %>
         <.modal id="settings-modal" show on_cancel={JS.push("close_modal")}>
-          <.render_modal modal={@modal} form={@form} protocols={@protocols} networks={@networks} verifying={@verifying} verification_result={@verification_result} />
+          <.render_modal
+            modal={@modal}
+            form={@form}
+            protocols={@protocols}
+            networks={@networks}
+            verifying={@verifying}
+            verification_result={@verification_result}
+          />
         </.modal>
       <% end %>
     </Layouts.app>
@@ -249,7 +265,9 @@ defmodule AnomaExplorerWeb.SettingsLive do
           class="input input-bordered w-full"
           placeholder="e.g., https://github.com/anoma/anoma-apps"
         />
-        <p class="text-xs text-base-content/50 mt-1">Used to link version badges to GitHub releases</p>
+        <p class="text-xs text-base-content/50 mt-1">
+          Used to link version badges to GitHub releases
+        </p>
       </div>
       <div class="flex justify-end gap-2 pt-4">
         <button type="button" phx-click="close_modal" class="btn btn-ghost">Cancel</button>
@@ -295,7 +313,9 @@ defmodule AnomaExplorerWeb.SettingsLive do
           class="input input-bordered w-full"
           placeholder="e.g., https://github.com/anoma/anoma-apps"
         />
-        <p class="text-xs text-base-content/50 mt-1">Used to link version badges to GitHub releases</p>
+        <p class="text-xs text-base-content/50 mt-1">
+          Used to link version badges to GitHub releases
+        </p>
       </div>
       <div class="flex items-center gap-2">
         <input type="hidden" name="protocol[active]" value="false" />
@@ -316,7 +336,14 @@ defmodule AnomaExplorerWeb.SettingsLive do
     """
   end
 
-  defp render_modal(%{modal: {:new_address, protocol_id}, form: _form, protocols: _protocols, networks: _networks} = assigns) do
+  defp render_modal(
+         %{
+           modal: {:new_address, protocol_id},
+           form: _form,
+           protocols: _protocols,
+           networks: _networks
+         } = assigns
+       ) do
     assigns = assign(assigns, :protocol_id, protocol_id)
 
     ~H"""
@@ -351,15 +378,17 @@ defmodule AnomaExplorerWeb.SettingsLive do
       </div>
       <div>
         <label class="label">Network</label>
-        <select
-          name="address[network]"
-          class="select select-bordered w-full"
-          required
-        >
-          <option value="" disabled selected={is_nil(@form[:network].value) || @form[:network].value == ""}>Select a network</option>
+        <select name="address[network]" class="select select-bordered w-full" required>
+          <option
+            value=""
+            disabled
+            selected={is_nil(@form[:network].value) || @form[:network].value == ""}
+          >
+            Select a network
+          </option>
           <%= for network <- @networks do %>
             <option value={network.name} selected={@form[:network].value == network.name}>
-              <%= network.display_name %> (<%= network.name %>)
+              {network.display_name} ({network.name})
             </option>
           <% end %>
         </select>
@@ -379,12 +408,14 @@ defmodule AnomaExplorerWeb.SettingsLive do
           <button
             type="button"
             phx-click="verify_address"
-            disabled={@verifying || is_nil(@form[:address].value) || @form[:address].value == "" || is_nil(@form[:network].value) || @form[:network].value == ""}
+            disabled={
+              @verifying || is_nil(@form[:address].value) || @form[:address].value == "" ||
+                is_nil(@form[:network].value) || @form[:network].value == ""
+            }
             class="btn btn-outline btn-sm whitespace-nowrap"
           >
             <%= if @verifying do %>
-              <span class="loading loading-spinner loading-xs"></span>
-              Verifying...
+              <span class="loading loading-spinner loading-xs"></span> Verifying...
             <% else %>
               <.icon name="hero-check-badge" class="w-4 h-4" /> Verify
             <% end %>
@@ -401,7 +432,9 @@ defmodule AnomaExplorerWeb.SettingsLive do
     """
   end
 
-  defp render_modal(%{modal: {:edit_address, address}, form: _form, networks: _networks} = assigns) do
+  defp render_modal(
+         %{modal: {:edit_address, address}, form: _form, networks: _networks} = assigns
+       ) do
     assigns = assign(assigns, :address, address)
 
     ~H"""
@@ -434,15 +467,11 @@ defmodule AnomaExplorerWeb.SettingsLive do
       </div>
       <div>
         <label class="label">Network</label>
-        <select
-          name="address[network]"
-          class="select select-bordered w-full"
-          required
-        >
+        <select name="address[network]" class="select select-bordered w-full" required>
           <option value="" disabled>Select a network</option>
           <%= for network <- @networks do %>
             <option value={network.name} selected={@form[:network].value == network.name}>
-              <%= network.display_name %> (<%= network.name %>)
+              {network.display_name} ({network.name})
             </option>
           <% end %>
         </select>
@@ -460,12 +489,14 @@ defmodule AnomaExplorerWeb.SettingsLive do
           <button
             type="button"
             phx-click="verify_address"
-            disabled={@verifying || is_nil(@form[:address].value) || @form[:address].value == "" || is_nil(@form[:network].value) || @form[:network].value == ""}
+            disabled={
+              @verifying || is_nil(@form[:address].value) || @form[:address].value == "" ||
+                is_nil(@form[:network].value) || @form[:network].value == ""
+            }
             class="btn btn-outline btn-sm whitespace-nowrap"
           >
             <%= if @verifying do %>
-              <span class="loading loading-spinner loading-xs"></span>
-              Verifying...
+              <span class="loading loading-spinner loading-xs"></span> Verifying...
             <% else %>
               <.icon name="hero-check-badge" class="w-4 h-4" /> Verify
             <% end %>
@@ -485,7 +516,10 @@ defmodule AnomaExplorerWeb.SettingsLive do
         />
         <label class="label cursor-pointer">
           Active
-          <div class="tooltip tooltip-right ml-1" data-tip="Inactive addresses are excluded from monitoring and won't appear in queries or dashboards">
+          <div
+            class="tooltip tooltip-right ml-1"
+            data-tip="Inactive addresses are excluded from monitoring and won't appear in queries or dashboards"
+          >
             <.icon name="hero-question-mark-circle" class="w-4 h-4 text-base-content/50" />
           </div>
         </label>
@@ -515,11 +549,11 @@ defmodule AnomaExplorerWeb.SettingsLive do
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="text-xs text-base-content/60 uppercase tracking-wider">Name</label>
-          <p class="font-mono text-sm"><%= @network.name %></p>
+          <p class="font-mono text-sm">{@network.name}</p>
         </div>
         <div>
           <label class="text-xs text-base-content/60 uppercase tracking-wider">Display Name</label>
-          <p class="text-sm"><%= @network.display_name %></p>
+          <p class="text-sm">{@network.display_name}</p>
         </div>
       </div>
 
@@ -528,7 +562,7 @@ defmodule AnomaExplorerWeb.SettingsLive do
           <label class="text-xs text-base-content/60 uppercase tracking-wider">Chain ID</label>
           <p class="text-sm">
             <%= if @network.chain_id do %>
-              <span class="badge badge-outline badge-sm"><%= @network.chain_id %></span>
+              <span class="badge badge-outline badge-sm">{@network.chain_id}</span>
             <% else %>
               <span class="text-base-content/40">Not set</span>
             <% end %>
@@ -549,24 +583,20 @@ defmodule AnomaExplorerWeb.SettingsLive do
       <%= if @network.explorer_url do %>
         <div>
           <label class="text-xs text-base-content/60 uppercase tracking-wider">Explorer URL</label>
-          <p class="text-sm font-mono break-all text-base-content/70"><%= @network.explorer_url %></p>
+          <p class="text-sm font-mono break-all text-base-content/70">{@network.explorer_url}</p>
         </div>
       <% end %>
 
       <%= if @network.rpc_url do %>
         <div>
           <label class="text-xs text-base-content/60 uppercase tracking-wider">RPC URL</label>
-          <p class="text-sm font-mono break-all text-base-content/70"><%= @network.rpc_url %></p>
+          <p class="text-sm font-mono break-all text-base-content/70">{@network.rpc_url}</p>
         </div>
       <% end %>
 
       <div class="pt-4 border-t border-base-300">
-        <a
-          href="/settings/networks"
-          class="btn btn-ghost btn-sm"
-        >
-          <.icon name="hero-pencil" class="w-4 h-4" />
-          Edit in Network Settings
+        <a href="/settings/networks" class="btn btn-ghost btn-sm">
+          <.icon name="hero-pencil" class="w-4 h-4" /> Edit in Network Settings
         </a>
       </div>
     </div>
@@ -578,7 +608,7 @@ defmodule AnomaExplorerWeb.SettingsLive do
   defp error_tag(assigns) do
     ~H"""
     <%= for {msg, _} <- @errors || [] do %>
-      <p class="text-error text-sm mt-1"><%= msg %></p>
+      <p class="text-error text-sm mt-1">{msg}</p>
     <% end %>
     """
   end
@@ -627,7 +657,7 @@ defmodule AnomaExplorerWeb.SettingsLive do
     ~H"""
     <div class="flex items-center gap-1 mt-2 text-error text-sm">
       <.icon name="hero-x-circle" class="w-4 h-4" />
-      <span>Verification failed: <%= @reason %></span>
+      <span>Verification failed: {@reason}</span>
     </div>
     """
   end
@@ -642,7 +672,7 @@ defmodule AnomaExplorerWeb.SettingsLive do
       phx-value-network={@network}
       class="text-sm text-base-content/70 hover:text-primary hover:underline cursor-pointer"
     >
-      <%= @network %>
+      {@network}
     </button>
     """
   end
@@ -717,14 +747,33 @@ defmodule AnomaExplorerWeb.SettingsLive do
   end
 
   def handle_event("new_address", %{"protocol-id" => protocol_id}, socket) do
-    form = to_form(Settings.change_contract_address(%ContractAddress{protocol_id: String.to_integer(protocol_id)}))
-    {:noreply, assign(socket, modal: {:new_address, protocol_id}, form: form, verifying: false, verification_result: nil)}
+    form =
+      to_form(
+        Settings.change_contract_address(%ContractAddress{
+          protocol_id: String.to_integer(protocol_id)
+        })
+      )
+
+    {:noreply,
+     assign(socket,
+       modal: {:new_address, protocol_id},
+       form: form,
+       verifying: false,
+       verification_result: nil
+     )}
   end
 
   def handle_event("edit_address", %{"id" => id}, socket) do
     address = Settings.get_contract_address!(id)
     form = to_form(Settings.change_contract_address(address))
-    {:noreply, assign(socket, modal: {:edit_address, address}, form: form, verifying: false, verification_result: nil)}
+
+    {:noreply,
+     assign(socket,
+       modal: {:edit_address, address},
+       form: form,
+       verifying: false,
+       verification_result: nil
+     )}
   end
 
   def handle_event("delete_address", %{"id" => id}, socket) do
@@ -794,6 +843,16 @@ defmodule AnomaExplorerWeb.SettingsLive do
     if network && address && String.trim(network) != "" && String.trim(address) != "" do
       send(self(), {:do_verify, network, address})
       {:noreply, assign(socket, verifying: true, verification_result: nil)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("global_search", %{"query" => query}, socket) do
+    query = String.trim(query)
+
+    if query != "" do
+      {:noreply, push_navigate(socket, to: "/transactions?search=#{URI.encode_www_form(query)}")}
     else
       {:noreply, socket}
     end

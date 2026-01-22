@@ -18,6 +18,17 @@ defmodule AnomaExplorerWeb.ApiKeysLive do
   end
 
   @impl true
+  def handle_event("global_search", %{"query" => query}, socket) do
+    query = String.trim(query)
+
+    if query != "" do
+      {:noreply, push_navigate(socket, to: "/transactions?search=#{URI.encode_www_form(query)}")}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_path="/settings/api-keys">
@@ -29,7 +40,7 @@ defmodule AnomaExplorerWeb.ApiKeysLive do
           </p>
         </div>
         <div class="badge badge-outline">
-          <%= String.upcase(to_string(@current_env)) %>
+          {String.upcase(to_string(@current_env))}
         </div>
       </div>
 
@@ -46,11 +57,18 @@ defmodule AnomaExplorerWeb.ApiKeysLive do
       <div class="mt-6 stat-card">
         <h3 class="text-sm font-semibold mb-2">Usage Notes</h3>
         <ul class="text-sm text-base-content/70 space-y-1 list-disc list-inside">
-          <li><strong>Production</strong> variables are only required when running in production mode</li>
+          <li>
+            <strong>Production</strong> variables are only required when running in production mode
+          </li>
           <li><strong>All</strong> variables apply to all environments (dev, test, prod)</li>
           <li>Sensitive values like API keys and database URLs are partially hidden</li>
-          <li>Generate a secret key with: <code class="bg-base-200 px-1 rounded">mix phx.gen.secret</code></li>
-          <li>Supported Alchemy networks: eth-mainnet, eth-sepolia, arb-mainnet, arb-sepolia, base-mainnet, base-sepolia, polygon-mainnet, polygon-amoy, optimism-mainnet, optimism-sepolia</li>
+          <li>
+            Generate a secret key with:
+            <code class="bg-base-200 px-1 rounded">mix phx.gen.secret</code>
+          </li>
+          <li>
+            Supported Alchemy networks: eth-mainnet, eth-sepolia, arb-mainnet, arb-sepolia, base-mainnet, base-sepolia, polygon-mainnet, polygon-amoy, optimism-mainnet, optimism-sepolia
+          </li>
         </ul>
       </div>
     </Layouts.app>
@@ -61,8 +79,8 @@ defmodule AnomaExplorerWeb.ApiKeysLive do
     ~H"""
     <div class="stat-card">
       <div class="mb-4">
-        <h2 class="text-lg font-semibold"><%= @title %></h2>
-        <p class="text-sm text-base-content/60"><%= @description %></p>
+        <h2 class="text-lg font-semibold">{@title}</h2>
+        <p class="text-sm text-base-content/60">{@description}</p>
       </div>
       <div class="overflow-x-auto">
         <table class="data-table w-full">
@@ -79,19 +97,22 @@ defmodule AnomaExplorerWeb.ApiKeysLive do
             <%= for var <- @vars do %>
               <tr>
                 <td>
-                  <code class="text-sm font-mono bg-base-200 px-2 py-1 rounded"><%= var.name %></code>
+                  <code class="text-sm font-mono bg-base-200 px-2 py-1 rounded">{var.name}</code>
                 </td>
                 <td class="text-sm text-base-content/70">
-                  <%= var.description %>
+                  {var.description}
                   <%= if var.default do %>
-                    <span class="text-base-content/40">(default: <%= var.default %>)</span>
+                    <span class="text-base-content/40">(default: {var.default})</span>
                   <% end %>
                 </td>
                 <td>
                   <%= if var.value do %>
                     <div class="flex items-center gap-2">
-                      <span class="text-sm font-mono text-base-content/70" title={if var.secret, do: "Value hidden for security", else: var.value}>
-                        <%= truncate_value(var.value, var.secret) %>
+                      <span
+                        class="text-sm font-mono text-base-content/70"
+                        title={if var.secret, do: "Value hidden for security", else: var.value}
+                      >
+                        {truncate_value(var.value, var.secret)}
                       </span>
                       <%= if var.secret do %>
                         <span class="badge badge-ghost badge-xs">hidden</span>
@@ -115,7 +136,7 @@ defmodule AnomaExplorerWeb.ApiKeysLive do
                     <% :all -> %>
                       <span class="badge badge-info badge-sm">All</span>
                     <% _ -> %>
-                      <span class="badge badge-ghost badge-sm"><%= var.env %></span>
+                      <span class="badge badge-ghost badge-sm">{var.env}</span>
                   <% end %>
                 </td>
               </tr>

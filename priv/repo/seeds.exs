@@ -22,7 +22,12 @@ get_or_create_protocol = fn name, description, github_url ->
   case Repo.get_by(Protocol, name: name) do
     nil ->
       %Protocol{}
-      |> Protocol.changeset(%{name: name, description: description, github_url: github_url, active: true})
+      |> Protocol.changeset(%{
+        name: name,
+        description: description,
+        github_url: github_url,
+        active: true
+      })
       |> Repo.insert!()
 
     protocol ->
@@ -60,11 +65,14 @@ end
 # ============================================
 
 IO.puts("Seeding Protocol Adapter...")
-protocol_adapter = get_or_create_protocol.(
-  "Protocol Adapter",
-  "Anoma Protocol Adapter for EVM chains",
-  "https://github.com/anoma/pa-evm"
-)
+
+protocol_adapter =
+  get_or_create_protocol.(
+    "Protocol Adapter",
+    "Anoma Protocol Adapter for EVM chains",
+    "https://github.com/anoma/pa-evm"
+  )
+
 IO.puts("  Protocol ID: #{protocol_adapter.id}")
 
 protocol_adapter_v1 = [
@@ -88,11 +96,14 @@ end)
 # ============================================
 
 IO.puts("Seeding AnomaPay ERC20 Forwarder...")
-erc20_forwarder = get_or_create_protocol.(
-  "AnomaPay ERC20 Forwarder",
-  "ERC20 token forwarder for AnomaPay",
-  "https://github.com/anoma/anomapay-erc20-forwarder"
-)
+
+erc20_forwarder =
+  get_or_create_protocol.(
+    "AnomaPay ERC20 Forwarder",
+    "ERC20 token forwarder for AnomaPay",
+    "https://github.com/anoma/anomapay-erc20-forwarder"
+  )
+
 IO.puts("  Protocol ID: #{erc20_forwarder.id}")
 
 erc20_forwarder_v1 = [

@@ -2,12 +2,14 @@
   "name": "anoma-explorer-indexer",
   "version": "0.1.0",
   "description": "Envio Hyperindex indexer for Anoma Protocol Adapter events",
+  "type": "module",
   "scripts": {
     "clean": "tsc --clean",
     "build": "tsc --build",
     "watch": "tsc --watch",
-    "codegen": "envio codegen",
-    "dev": "envio dev",
+    "gen-config": "node scripts/generate-config.cjs",
+    "codegen": "pnpm gen-config && envio codegen",
+    "dev": "pnpm gen-config && envio dev",
     "start": "envio start",
     "test": "ts-mocha --timeout 10000 test/**/*.test.ts"
   },

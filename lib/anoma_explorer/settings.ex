@@ -176,7 +176,7 @@ defmodule AnomaExplorer.Settings do
     Network
     |> filter_by_active(opts[:active])
     |> filter_by_testnet(opts[:is_testnet])
-    |> order_by([n], [asc: n.is_testnet, asc: n.name])
+    |> order_by([n], asc: n.is_testnet, asc: n.name)
     |> Repo.all()
   end
 
@@ -304,7 +304,12 @@ defmodule AnomaExplorer.Settings do
   """
   @spec list_addresses_by_protocol() :: map()
   def list_addresses_by_protocol do
-    list_protocols(preload: [contract_addresses: from(c in ContractAddress, order_by: [c.category, c.version, c.network])])
+    list_protocols(
+      preload: [
+        contract_addresses:
+          from(c in ContractAddress, order_by: [c.category, c.version, c.network])
+      ]
+    )
     |> Enum.map(fn protocol ->
       grouped =
         protocol.contract_addresses

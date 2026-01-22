@@ -12,7 +12,8 @@ defmodule AnomaExplorer.Settings.ContractAddress do
   alias AnomaExplorer.Settings.Protocol
 
   schema "contract_addresses" do
-    field :category, :string # For example: pa-evm
+    # For example: pa-evm
+    field :category, :string
     field :version, :string
     field :network, :string
     field :address, :string

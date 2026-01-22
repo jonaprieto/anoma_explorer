@@ -62,12 +62,12 @@ defmodule AnomaExplorerWeb.NetworksLive do
                   <%= for network <- Enum.sort_by(@networks, & &1.active, :desc) do %>
                     <tr class={unless network.active, do: "opacity-50"}>
                       <td>
-                        <span class="font-mono text-sm"><%= network.name %></span>
+                        <span class="font-mono text-sm">{network.name}</span>
                       </td>
-                      <td><%= network.display_name %></td>
+                      <td>{network.display_name}</td>
                       <td>
                         <%= if network.chain_id do %>
-                          <span class="badge badge-outline badge-sm"><%= network.chain_id %></span>
+                          <span class="badge badge-outline badge-sm">{network.chain_id}</span>
                         <% else %>
                           <span class="text-base-content/40">-</span>
                         <% end %>
@@ -81,7 +81,7 @@ defmodule AnomaExplorerWeb.NetworksLive do
                             class="text-sm link link-primary truncate max-w-[200px] inline-block"
                             title={network.explorer_url}
                           >
-                            <%= truncate_url(network.explorer_url) %>
+                            {truncate_url(network.explorer_url)}
                           </a>
                         <% else %>
                           <span class="text-base-content/40">-</span>
@@ -93,7 +93,7 @@ defmodule AnomaExplorerWeb.NetworksLive do
                             class="text-sm font-mono text-base-content/70 truncate max-w-[200px] inline-block"
                             title={network.rpc_url}
                           >
-                            <%= truncate_url(network.rpc_url) %>
+                            {truncate_url(network.rpc_url)}
                           </span>
                         <% else %>
                           <span class="text-base-content/40">-</span>
@@ -330,7 +330,7 @@ defmodule AnomaExplorerWeb.NetworksLive do
   defp error_tag(assigns) do
     ~H"""
     <%= for {msg, _} <- @errors || [] do %>
-      <p class="text-error text-sm mt-1"><%= msg %></p>
+      <p class="text-error text-sm mt-1">{msg}</p>
     <% end %>
     """
   end
@@ -396,6 +396,16 @@ defmodule AnomaExplorerWeb.NetworksLive do
 
   def handle_event("close_modal", _params, socket) do
     {:noreply, assign(socket, modal: nil, form: nil)}
+  end
+
+  def handle_event("global_search", %{"query" => query}, socket) do
+    query = String.trim(query)
+
+    if query != "" do
+      {:noreply, push_navigate(socket, to: "/transactions?search=#{URI.encode_www_form(query)}")}
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl true
