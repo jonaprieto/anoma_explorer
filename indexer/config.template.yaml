@@ -1,0 +1,37 @@
+name: anoma-explorer-indexer
+contracts:
+  - name: ProtocolAdapter
+    handler: src/EventHandlers.ts
+    events:
+      - event: "TransactionExecuted(bytes32[] tags, bytes32[] logicRefs)"
+      - event: "ActionExecuted(bytes32 actionTreeRoot, uint256 actionTagCount)"
+      - event: "ForwarderCallExecuted(address indexed untrustedForwarder, bytes input, bytes output)"
+      - event: "ResourcePayload(bytes32 indexed tag, uint256 index, bytes blob)"
+      - event: "DiscoveryPayload(bytes32 indexed tag, uint256 index, bytes blob)"
+      - event: "ExternalPayload(bytes32 indexed tag, uint256 index, bytes blob)"
+      - event: "ApplicationPayload(bytes32 indexed tag, uint256 index, bytes blob)"
+      - event: "CommitmentTreeRootAdded(bytes32 root)"
+field_selection:
+  transaction_fields:
+    - "hash"
+    - "input"
+networks:
+  - id: 42161
+    start_block: 0
+    contracts:
+    - name: ProtocolAdapter
+      address:
+        - "{{PROTOCOL_ADAPTER_ADDRESS}}"
+  - id: 8453
+    start_block: 0
+    contracts:
+    - name: ProtocolAdapter
+      address:
+        - "{{PROTOCOL_ADAPTER_ADDRESS}}"
+  - id: 10
+    start_block: 0
+    contracts:
+    - name: ProtocolAdapter
+      address:
+        - "{{PROTOCOL_ADAPTER_ADDRESS}}"
+unordered_multichain_mode: true
