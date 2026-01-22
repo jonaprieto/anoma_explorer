@@ -186,12 +186,17 @@ defmodule AnomaExplorerWeb.Layouts do
             <.global_search />
           </div>
         </div>
-        <div class="p-8">
+        <!-- Data Disclaimer Banner -->
+        <div class="px-8 pt-6">
+          <.disclaimer_banner />
+        </div>
+        <div class="p-8 pt-4">
           {render_slot(@inner_block)}
         </div>
       </main>
 
       <.flash_group flash={@flash} />
+      <.copy_toast />
     </div>
     """
   end
@@ -296,22 +301,22 @@ defmodule AnomaExplorerWeb.Layouts do
   """
   def theme_toggle(assigns) do
     ~H"""
-    <div class="flex items-center gap-1 bg-base-300 rounded-lg p-1">
+    <div class="flex items-center gap-0.5 bg-base-200/60 rounded-full p-0.5 border border-base-300/50">
       <button
-        class="p-1.5 rounded hover:bg-base-200 transition-colors [[data-theme=light]_&]:bg-base-200"
+        class="p-1.5 rounded-full transition-all duration-200 [[data-theme=light]_&]:bg-base-100 [[data-theme=light]_&]:shadow-sm hover:bg-base-100/50"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="light"
         title="Light mode"
       >
-        <.icon name="hero-sun-micro" class="w-4 h-4 text-base-content/70" />
+        <.icon name="hero-sun-micro" class="w-4 h-4 text-base-content/60 [[data-theme=light]_&]:text-amber-500" />
       </button>
       <button
-        class="p-1.5 rounded hover:bg-base-200 transition-colors [[data-theme=dark]_&]:bg-base-200"
+        class="p-1.5 rounded-full transition-all duration-200 [[data-theme=dark]_&]:bg-base-100 [[data-theme=dark]_&]:shadow-sm hover:bg-base-100/50"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="dark"
         title="Dark mode"
       >
-        <.icon name="hero-moon-micro" class="w-4 h-4 text-base-content/70" />
+        <.icon name="hero-moon-micro" class="w-4 h-4 text-base-content/60 [[data-theme=dark]_&]:text-indigo-400" />
       </button>
     </div>
     """

@@ -350,12 +350,21 @@ defmodule AnomaExplorerWeb.ActionsLive do
           </thead>
           <tbody>
             <%= for action <- @actions do %>
-              <tr
-                class="hover:bg-base-200/50 cursor-pointer"
-                phx-click={JS.navigate("/actions/#{action["id"]}")}
-              >
+              <tr class="hover:bg-base-200/50">
                 <td>
-                  <code class="hash-display text-xs">{truncate_hash(action["actionTreeRoot"])}</code>
+                  <div class="flex items-center gap-1">
+                    <a
+                      href={"/actions/#{action["id"]}"}
+                      class="hash-display text-xs hover:text-primary"
+                    >
+                      {truncate_hash(action["actionTreeRoot"])}
+                    </a>
+                    <.copy_button
+                      :if={action["actionTreeRoot"]}
+                      text={action["actionTreeRoot"]}
+                      tooltip="Copy action tree root"
+                    />
+                  </div>
                 </td>
                 <td>
                   <span class="text-sm text-base-content/70" title={"Chain ID: #{action["chainId"]}"}>
@@ -373,13 +382,18 @@ defmodule AnomaExplorerWeb.ActionsLive do
                 </td>
                 <td>
                   <%= if action["transaction"] do %>
-                    <a
-                      href={"/transactions/#{action["transaction"]["id"]}"}
-                      class="hash-display text-xs hover:text-primary"
-                      phx-click={JS.navigate("/transactions/#{action["transaction"]["id"]}")}
-                    >
-                      {truncate_hash(action["transaction"]["txHash"])}
-                    </a>
+                    <div class="flex items-center gap-1">
+                      <a
+                        href={"/transactions/#{action["transaction"]["id"]}"}
+                        class="hash-display text-xs hover:text-primary"
+                      >
+                        {truncate_hash(action["transaction"]["txHash"])}
+                      </a>
+                      <.copy_button
+                        text={action["transaction"]["txHash"]}
+                        tooltip="Copy tx hash"
+                      />
+                    </div>
                   <% else %>
                     -
                   <% end %>

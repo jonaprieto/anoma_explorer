@@ -366,16 +366,9 @@ defmodule AnomaExplorerWeb.CommitmentsLive do
             <%= for commitment <- @commitments do %>
               <tr class="hover:bg-base-200/50">
                 <td>
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-1">
                     <code class="hash-display text-xs">{truncate_hash(commitment["root"])}</code>
-                    <button
-                      type="button"
-                      phx-click={JS.dispatch("phx:copy", detail: %{text: commitment["root"]})}
-                      class="btn btn-ghost btn-xs"
-                      title="Copy"
-                    >
-                      <.icon name="hero-clipboard-document" class="w-3 h-3" />
-                    </button>
+                    <.copy_button :if={commitment["root"]} text={commitment["root"]} tooltip="Copy root" />
                   </div>
                 </td>
                 <td>
@@ -394,7 +387,10 @@ defmodule AnomaExplorerWeb.CommitmentsLive do
                 </td>
                 <td>
                   <%= if commitment["txHash"] do %>
-                    <code class="hash-display text-xs">{truncate_hash(commitment["txHash"])}</code>
+                    <div class="flex items-center gap-1">
+                      <code class="hash-display text-xs">{truncate_hash(commitment["txHash"])}</code>
+                      <.copy_button text={commitment["txHash"]} tooltip="Copy tx hash" />
+                    </div>
                   <% else %>
                     -
                   <% end %>

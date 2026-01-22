@@ -524,6 +524,72 @@ defmodule AnomaExplorerWeb.CoreComponents do
     |> JS.pop_focus()
   end
 
+  @doc """
+  Renders a copy button that copies text to clipboard with visual feedback.
+
+  ## Examples
+
+      <.copy_button text={@hash} />
+      <.copy_button text={@hash} tooltip="Copy hash" />
+      <.copy_button text={@hash} size="sm" />
+  """
+  attr :text, :string, required: true, doc: "the text to copy to clipboard"
+  attr :tooltip, :string, default: "Copy", doc: "the tooltip text"
+  attr :size, :string, default: "xs", values: ~w(xs sm), doc: "the button size"
+  attr :class, :string, default: nil, doc: "additional CSS classes"
+
+  def copy_button(assigns) do
+    ~H"""
+    <button
+      type="button"
+      phx-click={
+        JS.dispatch("phx:copy", detail: %{text: @text})
+        |> JS.remove_class("opacity-50", to: "#copy-toast")
+        |> JS.add_class("opacity-100", to: "#copy-toast")
+        |> JS.show(to: "#copy-toast", transition: {"ease-out duration-200", "opacity-0", "opacity-100"})
+        |> JS.hide(
+          to: "#copy-toast",
+          time: 1500,
+          transition: {"ease-in duration-300", "opacity-100", "opacity-0"}
+        )
+      }
+      class={[
+        "btn btn-ghost shrink-0 opacity-60 hover:opacity-100",
+        @size == "xs" && "btn-xs",
+        @size == "sm" && "btn-sm",
+        @class
+      ]}
+      title={@tooltip}
+    >
+      <.icon name="hero-clipboard-document" class={[@size == "xs" && "w-3 h-3", @size == "sm" && "w-4 h-4"]} />
+    </button>
+    """
+  end
+
+  @doc """
+  Renders a toast notification for copy feedback.
+  Should be placed once in the layout.
+
+  ## Examples
+
+      <.copy_toast />
+  """
+  def copy_toast(assigns) do
+    ~H"""
+    <div
+      id="copy-toast"
+      class="toast toast-bottom toast-center z-50 hidden opacity-0"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="alert alert-success py-2 px-4 min-h-0">
+        <.icon name="hero-check-circle" class="w-4 h-4" />
+        <span class="text-sm">Copied to clipboard</span>
+      </div>
+    </div>
+    """
+  end
+
   ## JS Commands
 
   def show(js \\ %JS{}, selector) do
@@ -545,6 +611,29 @@ defmodule AnomaExplorerWeb.CoreComponents do
         {"transition-all ease-in duration-200", "opacity-100 translate-y-0 sm:scale-100",
          "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"}
     )
+  end
+
+  @doc """
+  Renders a disclaimer banner for data accuracy notice.
+
+  ## Examples
+
+      <.disclaimer_banner />
+      <.disclaimer_banner class="mb-4" />
+  """
+  attr :class, :string, default: nil
+
+  def disclaimer_banner(assigns) do
+    ~H"""
+    <div class={[
+      "flex items-center gap-2 px-4 py-2 rounded-lg text-sm",
+      "bg-base-200/50 border border-base-300/50 text-base-content/70",
+      @class
+    ]}>
+      <.icon name="hero-wrench-screwdriver" class="h-4 w-4 shrink-0 text-base-content/50" />
+      <span>Under construction — some data may not appear as expected.</span>
+    </div>
+    """
   end
 
   @doc """

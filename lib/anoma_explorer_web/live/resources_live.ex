@@ -436,12 +436,17 @@ defmodule AnomaExplorerWeb.ResourcesLive do
           </thead>
           <tbody>
             <%= for resource <- @resources do %>
-              <tr
-                class="hover:bg-base-200/50 cursor-pointer"
-                phx-click={JS.navigate("/resources/#{resource["id"]}")}
-              >
+              <tr class="hover:bg-base-200/50">
                 <td>
-                  <code class="hash-display text-xs">{truncate_hash(resource["tag"])}</code>
+                  <div class="flex items-center gap-1">
+                    <a
+                      href={"/resources/#{resource["id"]}"}
+                      class="hash-display text-xs hover:text-primary"
+                    >
+                      {truncate_hash(resource["tag"])}
+                    </a>
+                    <.copy_button :if={resource["tag"]} text={resource["tag"]} tooltip="Copy tag" />
+                  </div>
                 </td>
                 <td>
                   <%= if resource["isConsumed"] do %>
@@ -463,20 +468,32 @@ defmodule AnomaExplorerWeb.ResourcesLive do
                   </span>
                 </td>
                 <td class="hidden md:table-cell">
-                  <code class="hash-display text-xs">{truncate_hash(resource["logicRef"])}</code>
+                  <div class="flex items-center gap-1">
+                    <code class="hash-display text-xs">{truncate_hash(resource["logicRef"])}</code>
+                    <.copy_button
+                      :if={resource["logicRef"]}
+                      text={resource["logicRef"]}
+                      tooltip="Copy logic ref"
+                    />
+                  </div>
                 </td>
                 <td class="hidden lg:table-cell font-mono text-sm">
                   {resource["blockNumber"]}
                 </td>
                 <td>
                   <%= if resource["transaction"] do %>
-                    <a
-                      href={"/transactions/#{resource["transaction"]["id"]}"}
-                      class="hash-display text-xs hover:text-primary"
-                      phx-click={JS.navigate("/transactions/#{resource["transaction"]["id"]}")}
-                    >
-                      {truncate_hash(resource["transaction"]["txHash"])}
-                    </a>
+                    <div class="flex items-center gap-1">
+                      <a
+                        href={"/transactions/#{resource["transaction"]["id"]}"}
+                        class="hash-display text-xs hover:text-primary"
+                      >
+                        {truncate_hash(resource["transaction"]["txHash"])}
+                      </a>
+                      <.copy_button
+                        text={resource["transaction"]["txHash"]}
+                        tooltip="Copy tx hash"
+                      />
+                    </div>
                   <% else %>
                     -
                   <% end %>

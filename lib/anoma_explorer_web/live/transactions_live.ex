@@ -386,12 +386,14 @@ defmodule AnomaExplorerWeb.TransactionsLive do
               <% tags = tx["tags"] || [] %>
               <% consumed = div(length(tags), 2) %>
               <% created = length(tags) - consumed %>
-              <tr
-                class="hover:bg-base-200/50 cursor-pointer"
-                phx-click={JS.navigate("/transactions/#{tx["id"]}")}
-              >
+              <tr class="hover:bg-base-200/50">
                 <td>
-                  <span class="hash-display">{truncate_hash(tx["txHash"])}</span>
+                  <div class="flex items-center gap-1">
+                    <a href={"/transactions/#{tx["id"]}"} class="hash-display hover:text-primary">
+                      {truncate_hash(tx["txHash"])}
+                    </a>
+                    <.copy_button text={tx["txHash"]} tooltip="Copy tx hash" />
+                  </div>
                 </td>
                 <td>
                   <span class="text-sm text-base-content/70" title={"Chain ID: #{tx["chainId"]}"}>

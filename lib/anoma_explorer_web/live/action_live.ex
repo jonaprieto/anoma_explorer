@@ -127,14 +127,7 @@ defmodule AnomaExplorerWeb.ActionLive do
           </div>
           <div class="flex items-center gap-2">
             <code class="hash-display text-sm break-all">{@action["actionTreeRoot"]}</code>
-            <button
-              type="button"
-              phx-click={JS.dispatch("phx:copy", detail: %{text: @action["actionTreeRoot"]})}
-              class="btn btn-ghost btn-xs"
-              title="Copy"
-            >
-              <.icon name="hero-clipboard-document" class="w-3 h-3" />
-            </button>
+            <.copy_button text={@action["actionTreeRoot"]} />
           </div>
         </div>
         <div>
@@ -173,13 +166,14 @@ defmodule AnomaExplorerWeb.ActionLive do
         <%= if @action["transaction"] do %>
           <div>
             <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Transaction</div>
-            <div>
+            <div class="flex items-center gap-1">
               <a
                 href={"/transactions/#{@action["transaction"]["id"]}"}
                 class="hash-display text-sm hover:text-primary"
               >
                 {truncate_hash(@action["transaction"]["txHash"])}
               </a>
+              <.copy_button text={@action["transaction"]["txHash"]} tooltip="Copy tx hash" />
             </div>
           </div>
         <% end %>
@@ -209,29 +203,57 @@ defmodule AnomaExplorerWeb.ActionLive do
             </thead>
             <tbody>
               <%= for unit <- @units do %>
-                <tr
-                  class="hover:bg-base-200/50 cursor-pointer"
-                  phx-click={JS.navigate("/compliances/#{unit["id"]}")}
-                >
+                <tr class="hover:bg-base-200/50">
                   <td>
-                    <code class="hash-display text-xs">
-                      {truncate_hash(unit["consumedNullifier"])}
-                    </code>
+                    <div class="flex items-center gap-1">
+                      <a
+                        href={"/compliances/#{unit["id"]}"}
+                        class="hash-display text-xs hover:text-primary"
+                      >
+                        {truncate_hash(unit["consumedNullifier"])}
+                      </a>
+                      <.copy_button
+                        :if={unit["consumedNullifier"]}
+                        text={unit["consumedNullifier"]}
+                        tooltip="Copy nullifier"
+                      />
+                    </div>
                   </td>
                   <td>
-                    <code class="hash-display text-xs">
-                      {truncate_hash(unit["createdCommitment"])}
-                    </code>
+                    <div class="flex items-center gap-1">
+                      <code class="hash-display text-xs">
+                        {truncate_hash(unit["createdCommitment"])}
+                      </code>
+                      <.copy_button
+                        :if={unit["createdCommitment"]}
+                        text={unit["createdCommitment"]}
+                        tooltip="Copy commitment"
+                      />
+                    </div>
                   </td>
                   <td>
-                    <code class="hash-display text-xs">
-                      {truncate_hash(unit["consumedLogicRef"])}
-                    </code>
+                    <div class="flex items-center gap-1">
+                      <code class="hash-display text-xs">
+                        {truncate_hash(unit["consumedLogicRef"])}
+                      </code>
+                      <.copy_button
+                        :if={unit["consumedLogicRef"]}
+                        text={unit["consumedLogicRef"]}
+                        tooltip="Copy logic ref"
+                      />
+                    </div>
                   </td>
                   <td>
-                    <code class="hash-display text-xs">
-                      {truncate_hash(unit["createdLogicRef"])}
-                    </code>
+                    <div class="flex items-center gap-1">
+                      <code class="hash-display text-xs">
+                        {truncate_hash(unit["createdLogicRef"])}
+                      </code>
+                      <.copy_button
+                        :if={unit["createdLogicRef"]}
+                        text={unit["createdLogicRef"]}
+                        tooltip="Copy logic ref"
+                      />
+                    </div>
                   </td>
                 </tr>
               <% end %>
@@ -263,12 +285,17 @@ defmodule AnomaExplorerWeb.ActionLive do
             </thead>
             <tbody>
               <%= for input <- @inputs do %>
-                <tr
-                  class="hover:bg-base-200/50 cursor-pointer"
-                  phx-click={JS.navigate("/logics/#{input["id"]}")}
-                >
+                <tr class="hover:bg-base-200/50">
                   <td>
-                    <code class="hash-display text-xs">{truncate_hash(input["tag"])}</code>
+                    <div class="flex items-center gap-1">
+                      <a
+                        href={"/logics/#{input["id"]}"}
+                        class="hash-display text-xs hover:text-primary"
+                      >
+                        {truncate_hash(input["tag"])}
+                      </a>
+                      <.copy_button :if={input["tag"]} text={input["tag"]} tooltip="Copy tag" />
+                    </div>
                   </td>
                   <td>
                     <%= if input["isConsumed"] do %>
@@ -282,7 +309,14 @@ defmodule AnomaExplorerWeb.ActionLive do
                     <% end %>
                   </td>
                   <td>
-                    <code class="hash-display text-xs">{truncate_hash(input["verifyingKey"])}</code>
+                    <div class="flex items-center gap-1">
+                      <code class="hash-display text-xs">{truncate_hash(input["verifyingKey"])}</code>
+                      <.copy_button
+                        :if={input["verifyingKey"]}
+                        text={input["verifyingKey"]}
+                        tooltip="Copy verifying key"
+                      />
+                    </div>
                   </td>
                 </tr>
               <% end %>

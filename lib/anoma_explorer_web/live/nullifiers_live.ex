@@ -292,37 +292,47 @@ defmodule AnomaExplorerWeb.NullifiersLive do
           </thead>
           <tbody>
             <%= for unit <- @nullifiers do %>
-              <tr
-                class="hover:bg-base-200/50 cursor-pointer"
-                phx-click={JS.navigate("/compliances/#{unit["id"]}")}
-              >
+              <tr class="hover:bg-base-200/50">
                 <td>
-                  <div class="flex items-center gap-2">
-                    <code class="hash-display text-xs">
-                      {truncate_hash(unit["consumedNullifier"])}
-                    </code>
-                    <button
-                      type="button"
-                      phx-click={JS.dispatch("phx:copy", detail: %{text: unit["consumedNullifier"]})}
-                      class="btn btn-ghost btn-xs"
-                      title="Copy"
+                  <div class="flex items-center gap-1">
+                    <a
+                      href={"/compliances/#{unit["id"]}"}
+                      class="hash-display text-xs hover:text-primary"
                     >
-                      <.icon name="hero-clipboard-document" class="w-3 h-3" />
-                    </button>
+                      {truncate_hash(unit["consumedNullifier"])}
+                    </a>
+                    <.copy_button
+                      :if={unit["consumedNullifier"]}
+                      text={unit["consumedNullifier"]}
+                      tooltip="Copy nullifier"
+                    />
                   </div>
                 </td>
                 <td>
-                  <code class="hash-display text-xs">{truncate_hash(unit["consumedLogicRef"])}</code>
+                  <div class="flex items-center gap-1">
+                    <code class="hash-display text-xs">{truncate_hash(unit["consumedLogicRef"])}</code>
+                    <.copy_button
+                      :if={unit["consumedLogicRef"]}
+                      text={unit["consumedLogicRef"]}
+                      tooltip="Copy logic ref"
+                    />
+                  </div>
                 </td>
                 <td>
                   <%= if unit["consumedResource"] do %>
-                    <a
-                      href={"/resources/#{unit["consumedResource"]["id"]}"}
-                      class="hash-display text-xs hover:text-primary"
-                      phx-click={JS.navigate("/resources/#{unit["consumedResource"]["id"]}")}
-                    >
-                      {truncate_hash(unit["consumedResource"]["tag"])}
-                    </a>
+                    <div class="flex items-center gap-1">
+                      <a
+                        href={"/resources/#{unit["consumedResource"]["id"]}"}
+                        class="hash-display text-xs hover:text-primary"
+                      >
+                        {truncate_hash(unit["consumedResource"]["tag"])}
+                      </a>
+                      <.copy_button
+                        :if={unit["consumedResource"]["tag"]}
+                        text={unit["consumedResource"]["tag"]}
+                        tooltip="Copy tag"
+                      />
+                    </div>
                   <% else %>
                     -
                   <% end %>
@@ -348,13 +358,18 @@ defmodule AnomaExplorerWeb.NullifiersLive do
                 </td>
                 <td>
                   <%= if unit["action"] && unit["action"]["transaction"] do %>
-                    <a
-                      href={"/transactions/#{unit["action"]["transaction"]["id"]}"}
-                      class="hash-display text-xs hover:text-primary"
-                      phx-click={JS.navigate("/transactions/#{unit["action"]["transaction"]["id"]}")}
-                    >
-                      {truncate_hash(unit["action"]["transaction"]["txHash"])}
-                    </a>
+                    <div class="flex items-center gap-1">
+                      <a
+                        href={"/transactions/#{unit["action"]["transaction"]["id"]}"}
+                        class="hash-display text-xs hover:text-primary"
+                      >
+                        {truncate_hash(unit["action"]["transaction"]["txHash"])}
+                      </a>
+                      <.copy_button
+                        text={unit["action"]["transaction"]["txHash"]}
+                        tooltip="Copy tx hash"
+                      />
+                    </div>
                   <% else %>
                     -
                   <% end %>

@@ -14,24 +14,23 @@ contracts:
 field_selection:
   transaction_fields:
     - "hash"
-    - "input"
 networks:
   - id: 42161
     start_block: 0
     contracts:
     - name: ProtocolAdapter
       address:
-        - "0x9ED43C229480659bF6B6607C46d7B96c6D760cBB"
+        - "0x212f275c6dd4829cd84abdf767b0df4a9cb9ef60"
   - id: 8453
     start_block: 0
     contracts:
     - name: ProtocolAdapter
       address:
-        - "0x9ED43C229480659bF6B6607C46d7B96c6D760cBB"
+        - "0x212f275c6dd4829cd84abdf767b0df4a9cb9ef60"
   - id: 10
     start_block: 0
     contracts:
     - name: ProtocolAdapter
       address:
-        - "0x9ED43C229480659bF6B6607C46d7B96c6D760cBB"
+        - "0x212f275c6dd4829cd84abdf767b0df4a9cb9ef60"
 unordered_multichain_mode: true

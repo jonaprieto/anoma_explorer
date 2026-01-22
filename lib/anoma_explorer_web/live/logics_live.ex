@@ -361,12 +361,17 @@ defmodule AnomaExplorerWeb.LogicsLive do
           </thead>
           <tbody>
             <%= for logic <- @logics do %>
-              <tr
-                class="hover:bg-base-200/50 cursor-pointer"
-                phx-click={JS.navigate("/logics/#{logic["id"]}")}
-              >
+              <tr class="hover:bg-base-200/50">
                 <td>
-                  <code class="hash-display text-xs">{truncate_hash(logic["tag"])}</code>
+                  <div class="flex items-center gap-1">
+                    <a
+                      href={"/logics/#{logic["id"]}"}
+                      class="hash-display text-xs hover:text-primary"
+                    >
+                      {truncate_hash(logic["tag"])}
+                    </a>
+                    <.copy_button :if={logic["tag"]} text={logic["tag"]} tooltip="Copy tag" />
+                  </div>
                 </td>
                 <td>
                   <%= if logic["isConsumed"] do %>
@@ -380,7 +385,14 @@ defmodule AnomaExplorerWeb.LogicsLive do
                   <% end %>
                 </td>
                 <td>
-                  <code class="hash-display text-xs">{truncate_hash(logic["verifyingKey"])}</code>
+                  <div class="flex items-center gap-1">
+                    <code class="hash-display text-xs">{truncate_hash(logic["verifyingKey"])}</code>
+                    <.copy_button
+                      :if={logic["verifyingKey"]}
+                      text={logic["verifyingKey"]}
+                      tooltip="Copy verifying key"
+                    />
+                  </div>
                 </td>
                 <td>
                   <div class="flex gap-1">
@@ -409,13 +421,18 @@ defmodule AnomaExplorerWeb.LogicsLive do
                 </td>
                 <td>
                   <%= if logic["action"] && logic["action"]["transaction"] do %>
-                    <a
-                      href={"/transactions/#{logic["action"]["transaction"]["id"]}"}
-                      class="hash-display text-xs hover:text-primary"
-                      phx-click={JS.navigate("/transactions/#{logic["action"]["transaction"]["id"]}")}
-                    >
-                      {truncate_hash(logic["action"]["transaction"]["txHash"])}
-                    </a>
+                    <div class="flex items-center gap-1">
+                      <a
+                        href={"/transactions/#{logic["action"]["transaction"]["id"]}"}
+                        class="hash-display text-xs hover:text-primary"
+                      >
+                        {truncate_hash(logic["action"]["transaction"]["txHash"])}
+                      </a>
+                      <.copy_button
+                        text={logic["action"]["transaction"]["txHash"]}
+                        tooltip="Copy tx hash"
+                      />
+                    </div>
                   <% else %>
                     -
                   <% end %>

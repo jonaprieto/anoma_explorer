@@ -138,25 +138,34 @@ defmodule AnomaExplorerWeb.ComplianceLive do
           </div>
           <div>
             <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Action</div>
-            <div>
+            <div class="flex items-center gap-1">
               <a
                 href={"/actions/#{@unit["action"]["id"]}"}
                 class="hash-display text-sm hover:text-primary"
               >
                 {truncate_hash(@unit["action"]["actionTreeRoot"])}
               </a>
+              <.copy_button
+                :if={@unit["action"]["actionTreeRoot"]}
+                text={@unit["action"]["actionTreeRoot"]}
+                tooltip="Copy action tree root"
+              />
             </div>
           </div>
           <%= if @unit["action"]["transaction"] do %>
             <div>
               <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Transaction</div>
-              <div>
+              <div class="flex items-center gap-1">
                 <a
                   href={"/transactions/#{@unit["action"]["transaction"]["id"]}"}
                   class="hash-display text-sm hover:text-primary"
                 >
                   {truncate_hash(@unit["action"]["transaction"]["txHash"])}
                 </a>
+                <.copy_button
+                  text={@unit["action"]["transaction"]["txHash"]}
+                  tooltip="Copy tx hash"
+                />
               </div>
             </div>
           <% end %>
@@ -178,40 +187,50 @@ defmodule AnomaExplorerWeb.ComplianceLive do
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Nullifier</div>
           <div class="flex items-center gap-2">
             <code class="hash-display text-sm break-all">{@unit["consumedNullifier"] || "-"}</code>
-            <%= if @unit["consumedNullifier"] do %>
-              <button
-                type="button"
-                phx-click={JS.dispatch("phx:copy", detail: %{text: @unit["consumedNullifier"]})}
-                class="btn btn-ghost btn-xs"
-                title="Copy"
-              >
-                <.icon name="hero-clipboard-document" class="w-3 h-3" />
-              </button>
-            <% end %>
+            <.copy_button :if={@unit["consumedNullifier"]} text={@unit["consumedNullifier"]} />
           </div>
         </div>
         <div>
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Logic Ref</div>
-          <code class="hash-display text-sm break-all">{@unit["consumedLogicRef"] || "-"}</code>
+          <div class="flex items-center gap-2">
+            <code class="hash-display text-sm break-all">{@unit["consumedLogicRef"] || "-"}</code>
+            <.copy_button
+              :if={@unit["consumedLogicRef"]}
+              text={@unit["consumedLogicRef"]}
+              tooltip="Copy logic ref"
+            />
+          </div>
         </div>
         <div>
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">
             Commitment Tree Root
           </div>
-          <code class="hash-display text-sm break-all">
-            {@unit["consumedCommitmentTreeRoot"] || "-"}
-          </code>
+          <div class="flex items-center gap-2">
+            <code class="hash-display text-sm break-all">
+              {@unit["consumedCommitmentTreeRoot"] || "-"}
+            </code>
+            <.copy_button
+              :if={@unit["consumedCommitmentTreeRoot"]}
+              text={@unit["consumedCommitmentTreeRoot"]}
+              tooltip="Copy commitment tree root"
+            />
+          </div>
         </div>
         <%= if @unit["consumedResource"] do %>
           <div>
             <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Resource</div>
-            <div>
+            <div class="flex items-center gap-1">
               <a
                 href={"/resources/#{@unit["consumedResource"]["id"]}"}
                 class="hash-display text-sm hover:text-primary"
               >
                 {truncate_hash(@unit["consumedResource"]["tag"])}
               </a>
+              <.copy_button
+                :if={@unit["consumedResource"]["tag"]}
+                text={@unit["consumedResource"]["tag"]}
+                tooltip="Copy tag"
+              />
             </div>
           </div>
         <% end %>
@@ -232,32 +251,35 @@ defmodule AnomaExplorerWeb.ComplianceLive do
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Commitment</div>
           <div class="flex items-center gap-2">
             <code class="hash-display text-sm break-all">{@unit["createdCommitment"] || "-"}</code>
-            <%= if @unit["createdCommitment"] do %>
-              <button
-                type="button"
-                phx-click={JS.dispatch("phx:copy", detail: %{text: @unit["createdCommitment"]})}
-                class="btn btn-ghost btn-xs"
-                title="Copy"
-              >
-                <.icon name="hero-clipboard-document" class="w-3 h-3" />
-              </button>
-            <% end %>
+            <.copy_button :if={@unit["createdCommitment"]} text={@unit["createdCommitment"]} />
           </div>
         </div>
         <div>
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Logic Ref</div>
-          <code class="hash-display text-sm break-all">{@unit["createdLogicRef"] || "-"}</code>
+          <div class="flex items-center gap-2">
+            <code class="hash-display text-sm break-all">{@unit["createdLogicRef"] || "-"}</code>
+            <.copy_button
+              :if={@unit["createdLogicRef"]}
+              text={@unit["createdLogicRef"]}
+              tooltip="Copy logic ref"
+            />
+          </div>
         </div>
         <%= if @unit["createdResource"] do %>
           <div>
             <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Resource</div>
-            <div>
+            <div class="flex items-center gap-1">
               <a
                 href={"/resources/#{@unit["createdResource"]["id"]}"}
                 class="hash-display text-sm hover:text-primary"
               >
                 {truncate_hash(@unit["createdResource"]["tag"])}
               </a>
+              <.copy_button
+                :if={@unit["createdResource"]["tag"]}
+                text={@unit["createdResource"]["tag"]}
+                tooltip="Copy tag"
+              />
             </div>
           </div>
         <% end %>
@@ -273,16 +295,33 @@ defmodule AnomaExplorerWeb.ComplianceLive do
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Delta X</div>
-          <code class="hash-display text-sm break-all">{@unit["unitDeltaX"] || "-"}</code>
+          <div class="flex items-center gap-2">
+            <code class="hash-display text-sm break-all">{@unit["unitDeltaX"] || "-"}</code>
+            <.copy_button
+              :if={@unit["unitDeltaX"]}
+              text={@unit["unitDeltaX"]}
+              tooltip="Copy delta X"
+            />
+          </div>
         </div>
         <div>
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Delta Y</div>
-          <code class="hash-display text-sm break-all">{@unit["unitDeltaY"] || "-"}</code>
+          <div class="flex items-center gap-2">
+            <code class="hash-display text-sm break-all">{@unit["unitDeltaY"] || "-"}</code>
+            <.copy_button
+              :if={@unit["unitDeltaY"]}
+              text={@unit["unitDeltaY"]}
+              tooltip="Copy delta Y"
+            />
+          </div>
         </div>
       </div>
       <%= if @unit["proof"] do %>
         <div class="mt-4">
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Proof</div>
+          <div class="flex items-center justify-between mb-1">
+            <div class="text-xs text-base-content/60 uppercase tracking-wide">Proof</div>
+            <.copy_button text={@unit["proof"]} tooltip="Copy proof" />
+          </div>
           <div class="bg-base-200/50 p-3 rounded-lg overflow-x-auto">
             <code class="text-xs break-all">{@unit["proof"]}</code>
           </div>

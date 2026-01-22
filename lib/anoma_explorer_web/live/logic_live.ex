@@ -118,14 +118,7 @@ defmodule AnomaExplorerWeb.LogicLive do
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Tag</div>
           <div class="flex items-center gap-2">
             <code class="hash-display text-sm break-all">{@logic["tag"]}</code>
-            <button
-              type="button"
-              phx-click={JS.dispatch("phx:copy", detail: %{text: @logic["tag"]})}
-              class="btn btn-ghost btn-xs"
-              title="Copy"
-            >
-              <.icon name="hero-clipboard-document" class="w-3 h-3" />
-            </button>
+            <.copy_button text={@logic["tag"]} />
           </div>
         </div>
         <div>
@@ -145,7 +138,10 @@ defmodule AnomaExplorerWeb.LogicLive do
         <%= if @logic["verifyingKey"] do %>
           <div class="md:col-span-2">
             <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Verifying Key</div>
-            <code class="hash-display text-sm break-all">{@logic["verifyingKey"]}</code>
+            <div class="flex items-center gap-2">
+              <code class="hash-display text-sm break-all">{@logic["verifyingKey"]}</code>
+              <.copy_button text={@logic["verifyingKey"]} tooltip="Copy verifying key" />
+            </div>
           </div>
         <% end %>
         <%= if @logic["action"] do %>
@@ -167,25 +163,34 @@ defmodule AnomaExplorerWeb.LogicLive do
           </div>
           <div>
             <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Action</div>
-            <div>
+            <div class="flex items-center gap-1">
               <a
                 href={"/actions/#{@logic["action"]["id"]}"}
                 class="hash-display text-sm hover:text-primary"
               >
                 {truncate_hash(@logic["action"]["actionTreeRoot"])}
               </a>
+              <.copy_button
+                :if={@logic["action"]["actionTreeRoot"]}
+                text={@logic["action"]["actionTreeRoot"]}
+                tooltip="Copy action tree root"
+              />
             </div>
           </div>
           <%= if @logic["action"]["transaction"] do %>
             <div>
               <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Transaction</div>
-              <div>
+              <div class="flex items-center gap-1">
                 <a
                   href={"/transactions/#{@logic["action"]["transaction"]["id"]}"}
                   class="hash-display text-sm hover:text-primary"
                 >
                   {truncate_hash(@logic["action"]["transaction"]["txHash"])}
                 </a>
+                <.copy_button
+                  text={@logic["action"]["transaction"]["txHash"]}
+                  tooltip="Copy tx hash"
+                />
               </div>
             </div>
           <% end %>
@@ -193,13 +198,18 @@ defmodule AnomaExplorerWeb.LogicLive do
         <%= if @logic["resource"] do %>
           <div>
             <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Resource</div>
-            <div>
+            <div class="flex items-center gap-1">
               <a
                 href={"/resources/#{@logic["resource"]["id"]}"}
                 class="hash-display text-sm hover:text-primary"
               >
                 {truncate_hash(@logic["resource"]["tag"])}
               </a>
+              <.copy_button
+                :if={@logic["resource"]["tag"]}
+                text={@logic["resource"]["tag"]}
+                tooltip="Copy tag"
+              />
             </div>
           </div>
         <% end %>
@@ -238,7 +248,10 @@ defmodule AnomaExplorerWeb.LogicLive do
     ~H"""
     <%= if @logic["proof"] do %>
       <div class="stat-card">
-        <h2 class="text-lg font-semibold mb-4">Proof</h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold">Proof</h2>
+          <.copy_button text={@logic["proof"]} tooltip="Copy proof" />
+        </div>
         <div class="bg-base-200/50 p-4 rounded-lg overflow-x-auto">
           <code class="text-xs break-all">{@logic["proof"]}</code>
         </div>

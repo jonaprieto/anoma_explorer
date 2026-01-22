@@ -227,21 +227,42 @@ defmodule AnomaExplorerWeb.HomeLive do
         value={@stats.transactions}
         icon="hero-document-text"
         color="primary"
+        href="/transactions"
       />
-      <.stat_card label="Resources" value={@stats.resources} icon="hero-cube" color="secondary" />
+      <.stat_card
+        label="Resources"
+        value={@stats.resources}
+        icon="hero-cube"
+        color="secondary"
+        href="/resources"
+      />
       <.stat_card
         label="Consumed"
         value={@stats.consumed}
         icon="hero-arrow-right-start-on-rectangle"
         color="error"
+        href="/nullifiers"
       />
-      <.stat_card label="Created" value={@stats.created} icon="hero-plus-circle" color="success" />
-      <.stat_card label="Actions" value={@stats.actions} icon="hero-bolt" color="warning" />
+      <.stat_card
+        label="Created"
+        value={@stats.created}
+        icon="hero-plus-circle"
+        color="success"
+        href="/commitments"
+      />
+      <.stat_card
+        label="Actions"
+        value={@stats.actions}
+        icon="hero-bolt"
+        color="warning"
+        href="/actions"
+      />
       <.stat_card
         label="Tree Roots"
         value={@stats.commitment_roots}
         icon="hero-server-stack"
         color="info"
+        href="/commitments"
       />
     </div>
     <.stats_warning stats={@stats} />
@@ -249,16 +270,30 @@ defmodule AnomaExplorerWeb.HomeLive do
   end
 
   defp stat_card(assigns) do
+    assigns = assign_new(assigns, :href, fn -> nil end)
+
     ~H"""
-    <div class="stat-card">
-      <div class="flex items-center gap-2 mb-1">
-        <.icon name={@icon} class={"w-4 h-4 text-#{@color}"} />
-        <span class="text-xs text-base-content/60 uppercase tracking-wide">{@label}</span>
+    <%= if @href do %>
+      <a href={@href} class="stat-card block hover:ring-2 hover:ring-primary/50 transition-all">
+        <div class="flex items-center gap-2 mb-1">
+          <.icon name={@icon} class={"w-4 h-4 text-#{@color}"} />
+          <span class="text-xs text-base-content/60 uppercase tracking-wide">{@label}</span>
+        </div>
+        <div class="text-2xl font-bold text-base-content">
+          {format_number(@value)}
+        </div>
+      </a>
+    <% else %>
+      <div class="stat-card">
+        <div class="flex items-center gap-2 mb-1">
+          <.icon name={@icon} class={"w-4 h-4 text-#{@color}"} />
+          <span class="text-xs text-base-content/60 uppercase tracking-wide">{@label}</span>
+        </div>
+        <div class="text-2xl font-bold text-base-content">
+          {format_number(@value)}
+        </div>
       </div>
-      <div class="text-2xl font-bold text-base-content">
-        {format_number(@value)}
-      </div>
-    </div>
+    <% end %>
     """
   end
 
@@ -321,14 +356,7 @@ defmodule AnomaExplorerWeb.HomeLive do
                       <a href={"/transactions/#{tx["id"]}"} class="hash-display hover:text-primary">
                         {truncate_hash(tx["txHash"])}
                       </a>
-                      <button
-                        type="button"
-                        phx-click={JS.dispatch("phx:copy", detail: %{text: tx["txHash"]})}
-                        class="btn btn-ghost btn-xs opacity-50 hover:opacity-100"
-                        title="Copy full hash"
-                      >
-                        <.icon name="hero-clipboard-document" class="w-3 h-3" />
-                      </button>
+                      <.copy_button text={tx["txHash"]} tooltip="Copy full hash" />
                     </div>
                   </td>
                   <td>
@@ -521,10 +549,16 @@ defmodule AnomaExplorerWeb.HomeLive do
                           <% end %>
                         </td>
                         <td>
-                          <code class="hash-display text-xs">{truncate_hash(tag)}</code>
+                          <div class="flex items-center gap-1">
+                            <code class="hash-display text-xs">{truncate_hash(tag)}</code>
+                            <.copy_button :if={tag} text={tag} tooltip="Copy tag" />
+                          </div>
                         </td>
                         <td>
-                          <code class="hash-display text-xs">{truncate_hash(logic_ref)}</code>
+                          <div class="flex items-center gap-1">
+                            <code class="hash-display text-xs">{truncate_hash(logic_ref)}</code>
+                            <.copy_button :if={logic_ref} text={logic_ref} tooltip="Copy logic ref" />
+                          </div>
                         </td>
                       </tr>
                     <% end %>

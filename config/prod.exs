@@ -12,10 +12,11 @@ config :anoma_explorer, AnomaExplorerWeb.Endpoint,
 # known as HSTS. If you have a health check endpoint, you may want to exclude it below.
 # Note `:force_ssl` is required to be set at compile-time.
 config :anoma_explorer, AnomaExplorerWeb.Endpoint,
-  force_ssl: [rewrite_on: [:x_forwarded_proto]],
-  exclude: [
-    # paths: ["/health"],
-    hosts: ["localhost", "127.0.0.1"]
+  force_ssl: [
+    rewrite_on: [:x_forwarded_proto],
+    exclude: fn conn ->
+      conn.host in ["localhost", "127.0.0.1"]
+    end
   ]
 
 # Do not print debug messages in production

@@ -137,14 +137,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
           </div>
           <div class="flex items-center gap-2">
             <code class="hash-display text-sm break-all">{@tx["txHash"]}</code>
-            <button
-              type="button"
-              phx-click={JS.dispatch("phx:copy", detail: %{text: @tx["txHash"]})}
-              class="btn btn-ghost btn-xs"
-              title="Copy"
-            >
-              <.icon name="hero-clipboard-document" class="w-3 h-3" />
-            </button>
+            <.copy_button text={@tx["txHash"]} />
             <%= if @tx_url do %>
               <a href={@tx_url} target="_blank" class="btn btn-ghost btn-xs" title="View on Explorer">
                 <.icon name="hero-arrow-top-right-on-square" class="w-3 h-3" />
@@ -184,6 +177,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
             </div>
             <div class="flex items-center gap-2">
               <code class="hash-display text-sm">{@tx["contractAddress"]}</code>
+              <.copy_button text={@tx["contractAddress"]} tooltip="Copy address" />
               <%= if @contract_url do %>
                 <a
                   href={@contract_url}
@@ -241,10 +235,16 @@ defmodule AnomaExplorerWeb.TransactionLive do
                     <% end %>
                   </td>
                   <td>
-                    <code class="hash-display text-xs">{truncate_hash(tag)}</code>
+                    <div class="flex items-center gap-1">
+                      <code class="hash-display text-xs">{truncate_hash(tag)}</code>
+                      <.copy_button :if={tag} text={tag} tooltip="Copy tag" />
+                    </div>
                   </td>
                   <td>
-                    <code class="hash-display text-xs">{truncate_hash(logic_ref)}</code>
+                    <div class="flex items-center gap-1">
+                      <code class="hash-display text-xs">{truncate_hash(logic_ref)}</code>
+                      <.copy_button :if={logic_ref} text={logic_ref} tooltip="Copy logic ref" />
+                    </div>
                   </td>
                 </tr>
               <% end %>
@@ -278,12 +278,17 @@ defmodule AnomaExplorerWeb.TransactionLive do
             </thead>
             <tbody>
               <%= for resource <- @resources do %>
-                <tr
-                  class="hover:bg-base-200/50 cursor-pointer"
-                  phx-click={JS.navigate("/resources/#{resource["id"]}")}
-                >
+                <tr class="hover:bg-base-200/50">
                   <td>
-                    <code class="hash-display text-xs">{truncate_hash(resource["tag"])}</code>
+                    <div class="flex items-center gap-1">
+                      <a
+                        href={"/resources/#{resource["id"]}"}
+                        class="hash-display text-xs hover:text-primary"
+                      >
+                        {truncate_hash(resource["tag"])}
+                      </a>
+                      <.copy_button :if={resource["tag"]} text={resource["tag"]} tooltip="Copy tag" />
+                    </div>
                   </td>
                   <td>
                     <%= if resource["isConsumed"] do %>
@@ -297,7 +302,14 @@ defmodule AnomaExplorerWeb.TransactionLive do
                     <% end %>
                   </td>
                   <td>
-                    <code class="hash-display text-xs">{truncate_hash(resource["logicRef"])}</code>
+                    <div class="flex items-center gap-1">
+                      <code class="hash-display text-xs">{truncate_hash(resource["logicRef"])}</code>
+                      <.copy_button
+                        :if={resource["logicRef"]}
+                        text={resource["logicRef"]}
+                        tooltip="Copy logic ref"
+                      />
+                    </div>
                   </td>
                   <td>
                     {resource["quantity"] || "-"}
@@ -336,9 +348,19 @@ defmodule AnomaExplorerWeb.TransactionLive do
               <%= for action <- @actions do %>
                 <tr>
                   <td>
-                    <code class="hash-display text-xs">
-                      {truncate_hash(action["actionTreeRoot"])}
-                    </code>
+                    <div class="flex items-center gap-1">
+                      <a
+                        href={"/actions/#{action["id"]}"}
+                        class="hash-display text-xs hover:text-primary"
+                      >
+                        {truncate_hash(action["actionTreeRoot"])}
+                      </a>
+                      <.copy_button
+                        :if={action["actionTreeRoot"]}
+                        text={action["actionTreeRoot"]}
+                        tooltip="Copy action tree root"
+                      />
+                    </div>
                   </td>
                   <td>
                     <span class="badge badge-ghost">{action["tagCount"]}</span>

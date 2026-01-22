@@ -138,14 +138,7 @@ defmodule AnomaExplorerWeb.ResourceLive do
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Tag</div>
           <div class="flex items-center gap-2">
             <code class="hash-display text-sm break-all">{@resource["tag"]}</code>
-            <button
-              type="button"
-              phx-click={JS.dispatch("phx:copy", detail: %{text: @resource["tag"]})}
-              class="btn btn-ghost btn-xs"
-              title="Copy"
-            >
-              <.icon name="hero-clipboard-document" class="w-3 h-3" />
-            </button>
+            <.copy_button text={@resource["tag"]} />
           </div>
         </div>
         <div>
@@ -213,16 +206,7 @@ defmodule AnomaExplorerWeb.ResourceLive do
       <%= if @value do %>
         <div class="flex items-center gap-2">
           <code class="hash-display text-sm break-all">{truncate_value(@value)}</code>
-          <%= if @copyable and is_binary(@value) do %>
-            <button
-              type="button"
-              phx-click={JS.dispatch("phx:copy", detail: %{text: @value})}
-              class="btn btn-ghost btn-xs shrink-0"
-              title="Copy"
-            >
-              <.icon name="hero-clipboard-document" class="w-3 h-3" />
-            </button>
-          <% end %>
+          <.copy_button :if={@copyable and is_binary(@value)} text={@value} />
         </div>
       <% else %>
         <span class="text-base-content/40">-</span>
@@ -290,6 +274,7 @@ defmodule AnomaExplorerWeb.ResourceLive do
               >
                 {@resource["transaction"]["txHash"]}
               </a>
+              <.copy_button text={@resource["transaction"]["txHash"]} tooltip="Copy tx hash" />
               <%= if @tx_url do %>
                 <a
                   href={@tx_url}
