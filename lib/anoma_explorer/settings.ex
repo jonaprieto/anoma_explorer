@@ -11,6 +11,7 @@ defmodule AnomaExplorer.Settings do
   alias AnomaExplorer.Repo
   alias AnomaExplorer.Settings.Protocol
   alias AnomaExplorer.Settings.ContractAddress
+  alias AnomaExplorer.Settings.Network
   alias AnomaExplorer.Settings.Cache
 
   @pubsub AnomaExplorer.PubSub
@@ -105,6 +106,85 @@ defmodule AnomaExplorer.Settings do
   @spec change_protocol(Protocol.t(), map()) :: Ecto.Changeset.t()
   def change_protocol(%Protocol{} = protocol, attrs \\ %{}) do
     Protocol.changeset(protocol, attrs)
+  end
+
+  # ============================================
+  # Network CRUD Operations
+  # ============================================
+
+  @doc """
+  Creates a new network.
+  """
+  @spec create_network(map()) :: {:ok, Network.t()} | {:error, Ecto.Changeset.t()}
+  def create_network(attrs) do
+    %Network{}
+    |> Network.changeset(attrs)
+    |> Repo.insert()
+    |> tap_ok(&broadcast_change({:network_created, &1}))
+  end
+
+  @doc """
+  Updates an existing network.
+  """
+  @spec update_network(Network.t(), map()) :: {:ok, Network.t()} | {:error, Ecto.Changeset.t()}
+  def update_network(%Network{} = network, attrs) do
+    network
+    |> Network.changeset(attrs)
+    |> Repo.update()
+    |> tap_ok(&broadcast_change({:network_updated, &1}))
+  end
+
+  @doc """
+  Deletes a network.
+  """
+  @spec delete_network(Network.t()) :: {:ok, Network.t()} | {:error, Ecto.Changeset.t()}
+  def delete_network(%Network{} = network) do
+    Repo.delete(network)
+    |> tap_ok(&broadcast_change({:network_deleted, &1}))
+  end
+
+  @doc """
+  Gets a single network by ID.
+  """
+  @spec get_network(integer()) :: Network.t() | nil
+  def get_network(id), do: Repo.get(Network, id)
+
+  @doc """
+  Gets a single network by ID, raising if not found.
+  """
+  @spec get_network!(integer()) :: Network.t()
+  def get_network!(id), do: Repo.get!(Network, id)
+
+  @doc """
+  Gets a network by name.
+  """
+  @spec get_network_by_name(String.t()) :: Network.t() | nil
+  def get_network_by_name(name) do
+    Repo.get_by(Network, name: name)
+  end
+
+  @doc """
+  Lists all networks.
+
+  ## Options
+    * `:active` - Filter by active status (default: nil, shows all)
+    * `:is_testnet` - Filter by testnet status (default: nil, shows all)
+  """
+  @spec list_networks(keyword()) :: [Network.t()]
+  def list_networks(opts \\ []) do
+    Network
+    |> filter_by_active(opts[:active])
+    |> filter_by_testnet(opts[:is_testnet])
+    |> order_by([n], [asc: n.is_testnet, asc: n.name])
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns a changeset for tracking network changes.
+  """
+  @spec change_network(Network.t(), map()) :: Ecto.Changeset.t()
+  def change_network(%Network{} = network, attrs \\ %{}) do
+    Network.changeset(network, attrs)
   end
 
   # ============================================
@@ -353,6 +433,9 @@ defmodule AnomaExplorer.Settings do
 
   defp filter_by_active(query, nil), do: query
   defp filter_by_active(query, active), do: where(query, [c], c.active == ^active)
+
+  defp filter_by_testnet(query, nil), do: query
+  defp filter_by_testnet(query, is_testnet), do: where(query, [n], n.is_testnet == ^is_testnet)
 
   defp preload_if(query, nil), do: query
   defp preload_if(query, []), do: query

@@ -54,9 +54,25 @@ defmodule AnomaExplorerWeb.Layouts do
               <span>Dashboard</span>
             </a>
 
-            <a href="/settings" class={nav_class(@current_path, "/settings")}>
-              <.icon name="hero-cog-6-tooth" class="w-5 h-5" />
-              <span>Settings</span>
+            <div class="px-4 mb-2 mt-6">
+              <span class="text-xs font-medium text-base-content/60 uppercase tracking-wider">
+                Settings
+              </span>
+            </div>
+
+            <a href="/settings/contracts" class={nav_class(@current_path, "/settings/contracts")}>
+              <.icon name="hero-document-text" class="w-5 h-5" />
+              <span>Contracts</span>
+            </a>
+
+            <a href="/settings/networks" class={nav_class(@current_path, "/settings/networks")}>
+              <.icon name="hero-globe-alt" class="w-5 h-5" />
+              <span>Networks</span>
+            </a>
+
+            <a href="/settings/api-keys" class={nav_class(@current_path, "/settings/api-keys")}>
+              <.icon name="hero-key" class="w-5 h-5" />
+              <span>API Keys</span>
             </a>
           </nav>
           

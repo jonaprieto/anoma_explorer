@@ -23,6 +23,12 @@ end
 config :anoma_explorer, AnomaExplorerWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+# Chain explorer API key for contract verification
+# Etherscan V2 API uses a single key for all supported chains
+if etherscan_api_key = System.get_env("ETHERSCAN_API_KEY") do
+  config :anoma_explorer, :etherscan_api_key, etherscan_api_key
+end
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

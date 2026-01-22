@@ -4,17 +4,24 @@ defmodule AnomaExplorerWeb.SettingsLive do
   alias AnomaExplorer.Settings
   alias AnomaExplorer.Settings.Protocol
   alias AnomaExplorer.Settings.ContractAddress
+  alias AnomaExplorer.ChainVerifier
 
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket), do: Settings.subscribe()
 
+    networks = list_networks()
+
     {:ok,
      socket
      |> assign(:page_title, "Settings")
      |> assign(:protocols, list_protocols())
+     |> assign(:networks, networks)
+     |> assign(:networks_map, build_networks_map(networks))
      |> assign(:modal, nil)
-     |> assign(:form, nil)}
+     |> assign(:form, nil)
+     |> assign(:verifying, false)
+     |> assign(:verification_result, nil)}
   end
 
   @impl true
@@ -25,7 +32,7 @@ defmodule AnomaExplorerWeb.SettingsLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_path="/settings">
+    <Layouts.app flash={@flash} current_path="/settings/contracts">
       <div class="page-header">
         <div>
           <h1 class="page-title">Settings</h1>
@@ -66,6 +73,19 @@ defmodule AnomaExplorerWeb.SettingsLive do
                     </div>
                     <%= if protocol.description do %>
                       <p class="text-sm text-base-content/60"><%= protocol.description %></p>
+                    <% end %>
+                    <%= if protocol.github_url do %>
+                      <a
+                        href={protocol.github_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1 text-xs text-base-content/50 hover:text-primary mt-1"
+                      >
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd" />
+                        </svg>
+                        <span><%= protocol.github_url %></span>
+                      </a>
                     <% end %>
                   </div>
                 </div>
@@ -132,7 +152,7 @@ defmodule AnomaExplorerWeb.SettingsLive do
                           <td>
                             <div class="inline-flex items-center gap-1">
                               <a
-                                href={explorer_url(address.network, address.address)}
+                                href={explorer_url(@networks_map, address.network, address.address)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 class="text-sm font-mono link link-primary"
@@ -187,7 +207,7 @@ defmodule AnomaExplorerWeb.SettingsLive do
 
       <%= if @modal do %>
         <.modal id="settings-modal" show on_cancel={JS.push("close_modal")}>
-          <.render_modal modal={@modal} form={@form} protocols={@protocols} />
+          <.render_modal modal={@modal} form={@form} protocols={@protocols} networks={@networks} verifying={@verifying} verification_result={@verification_result} />
         </.modal>
       <% end %>
     </Layouts.app>
@@ -296,12 +316,12 @@ defmodule AnomaExplorerWeb.SettingsLive do
     """
   end
 
-  defp render_modal(%{modal: {:new_address, protocol_id}, form: _form, protocols: _protocols} = assigns) do
+  defp render_modal(%{modal: {:new_address, protocol_id}, form: _form, protocols: _protocols, networks: _networks} = assigns) do
     assigns = assign(assigns, :protocol_id, protocol_id)
 
     ~H"""
     <h3 class="text-lg font-semibold mb-4">New Contract Address</h3>
-    <.form for={@form} phx-submit="save_address" class="space-y-4">
+    <.form for={@form} phx-submit="save_address" phx-change="form_change" class="space-y-4">
       <input type="hidden" name="address[protocol_id]" value={@protocol_id} />
       <div class="grid grid-cols-2 gap-4">
         <div>
@@ -331,27 +351,47 @@ defmodule AnomaExplorerWeb.SettingsLive do
       </div>
       <div>
         <label class="label">Network</label>
-        <input
-          type="text"
+        <select
           name="address[network]"
-          value={@form[:network].value}
-          class="input input-bordered w-full"
-          placeholder="e.g., eth-mainnet, base-sepolia"
+          class="select select-bordered w-full"
           required
-        />
+        >
+          <option value="" disabled selected={is_nil(@form[:network].value) || @form[:network].value == ""}>Select a network</option>
+          <%= for network <- @networks do %>
+            <option value={network.name} selected={@form[:network].value == network.name}>
+              <%= network.display_name %> (<%= network.name %>)
+            </option>
+          <% end %>
+        </select>
         <.error_tag errors={@form[:network].errors} />
       </div>
       <div>
         <label class="label">Contract Address</label>
-        <input
-          type="text"
-          name="address[address]"
-          value={@form[:address].value}
-          class="input input-bordered w-full font-mono"
-          placeholder="0x..."
-          required
-        />
+        <div class="flex gap-2">
+          <input
+            type="text"
+            name="address[address]"
+            value={@form[:address].value}
+            class="input input-bordered w-full font-mono"
+            placeholder="0x..."
+            required
+          />
+          <button
+            type="button"
+            phx-click="verify_address"
+            disabled={@verifying || is_nil(@form[:address].value) || @form[:address].value == "" || is_nil(@form[:network].value) || @form[:network].value == ""}
+            class="btn btn-outline btn-sm whitespace-nowrap"
+          >
+            <%= if @verifying do %>
+              <span class="loading loading-spinner loading-xs"></span>
+              Verifying...
+            <% else %>
+              <.icon name="hero-check-badge" class="w-4 h-4" /> Verify
+            <% end %>
+          </button>
+        </div>
         <.error_tag errors={@form[:address].errors} />
+        <.verification_badge result={@verification_result} />
       </div>
       <div class="flex justify-end gap-2 pt-4">
         <button type="button" phx-click="close_modal" class="btn btn-ghost">Cancel</button>
@@ -361,12 +401,12 @@ defmodule AnomaExplorerWeb.SettingsLive do
     """
   end
 
-  defp render_modal(%{modal: {:edit_address, address}, form: _form} = assigns) do
+  defp render_modal(%{modal: {:edit_address, address}, form: _form, networks: _networks} = assigns) do
     assigns = assign(assigns, :address, address)
 
     ~H"""
     <h3 class="text-lg font-semibold mb-4">Edit Contract Address</h3>
-    <.form for={@form} phx-submit="update_address" class="space-y-4">
+    <.form for={@form} phx-submit="update_address" phx-change="form_change" class="space-y-4">
       <input type="hidden" name="address[id]" value={@address.id} />
       <div class="grid grid-cols-2 gap-4">
         <div>
@@ -394,24 +434,45 @@ defmodule AnomaExplorerWeb.SettingsLive do
       </div>
       <div>
         <label class="label">Network</label>
-        <input
-          type="text"
+        <select
           name="address[network]"
-          value={@form[:network].value}
-          class="input input-bordered w-full"
+          class="select select-bordered w-full"
           required
-        />
+        >
+          <option value="" disabled>Select a network</option>
+          <%= for network <- @networks do %>
+            <option value={network.name} selected={@form[:network].value == network.name}>
+              <%= network.display_name %> (<%= network.name %>)
+            </option>
+          <% end %>
+        </select>
       </div>
       <div>
         <label class="label">Contract Address</label>
-        <input
-          type="text"
-          name="address[address]"
-          value={@form[:address].value}
-          class="input input-bordered w-full font-mono"
-          required
-        />
+        <div class="flex gap-2">
+          <input
+            type="text"
+            name="address[address]"
+            value={@form[:address].value}
+            class="input input-bordered w-full font-mono"
+            required
+          />
+          <button
+            type="button"
+            phx-click="verify_address"
+            disabled={@verifying || is_nil(@form[:address].value) || @form[:address].value == "" || is_nil(@form[:network].value) || @form[:network].value == ""}
+            class="btn btn-outline btn-sm whitespace-nowrap"
+          >
+            <%= if @verifying do %>
+              <span class="loading loading-spinner loading-xs"></span>
+              Verifying...
+            <% else %>
+              <.icon name="hero-check-badge" class="w-4 h-4" /> Verify
+            <% end %>
+          </button>
+        </div>
         <.error_tag errors={@form[:address].errors} />
+        <.verification_badge result={@verification_result} />
       </div>
       <div class="flex items-center gap-2">
         <input type="hidden" name="address[active]" value="false" />
@@ -437,6 +498,81 @@ defmodule AnomaExplorerWeb.SettingsLive do
     """
   end
 
+  defp render_modal(%{modal: {:network_info, network}} = assigns) do
+    assigns = assign(assigns, :network, network)
+
+    ~H"""
+    <div class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold">Network Details</h3>
+        <%= if @network.is_testnet do %>
+          <span class="badge badge-warning">Testnet</span>
+        <% else %>
+          <span class="badge badge-info">Mainnet</span>
+        <% end %>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs text-base-content/60 uppercase tracking-wider">Name</label>
+          <p class="font-mono text-sm"><%= @network.name %></p>
+        </div>
+        <div>
+          <label class="text-xs text-base-content/60 uppercase tracking-wider">Display Name</label>
+          <p class="text-sm"><%= @network.display_name %></p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs text-base-content/60 uppercase tracking-wider">Chain ID</label>
+          <p class="text-sm">
+            <%= if @network.chain_id do %>
+              <span class="badge badge-outline badge-sm"><%= @network.chain_id %></span>
+            <% else %>
+              <span class="text-base-content/40">Not set</span>
+            <% end %>
+          </p>
+        </div>
+        <div>
+          <label class="text-xs text-base-content/60 uppercase tracking-wider">Status</label>
+          <p class="text-sm">
+            <%= if @network.active do %>
+              <span class="badge badge-success badge-sm">Active</span>
+            <% else %>
+              <span class="badge badge-ghost badge-sm">Inactive</span>
+            <% end %>
+          </p>
+        </div>
+      </div>
+
+      <%= if @network.explorer_url do %>
+        <div>
+          <label class="text-xs text-base-content/60 uppercase tracking-wider">Explorer URL</label>
+          <p class="text-sm font-mono break-all text-base-content/70"><%= @network.explorer_url %></p>
+        </div>
+      <% end %>
+
+      <%= if @network.rpc_url do %>
+        <div>
+          <label class="text-xs text-base-content/60 uppercase tracking-wider">RPC URL</label>
+          <p class="text-sm font-mono break-all text-base-content/70"><%= @network.rpc_url %></p>
+        </div>
+      <% end %>
+
+      <div class="pt-4 border-t border-base-300">
+        <a
+          href="/settings/networks"
+          class="btn btn-ghost btn-sm"
+        >
+          <.icon name="hero-pencil" class="w-4 h-4" />
+          Edit in Network Settings
+        </a>
+      </div>
+    </div>
+    """
+  end
+
   defp render_modal(assigns), do: ~H""
 
   defp error_tag(assigns) do
@@ -447,15 +583,83 @@ defmodule AnomaExplorerWeb.SettingsLive do
     """
   end
 
+  defp verification_badge(%{result: nil} = assigns), do: ~H""
+
+  defp verification_badge(%{result: {:ok, :verified, _info}} = assigns) do
+    ~H"""
+    <div class="flex items-center gap-1 mt-2 text-success text-sm">
+      <.icon name="hero-check-circle" class="w-4 h-4" />
+      <span>Contract verified on chain explorer</span>
+    </div>
+    """
+  end
+
+  defp verification_badge(%{result: {:ok, :unverified}} = assigns) do
+    ~H"""
+    <div class="flex items-center gap-1 mt-2 text-warning text-sm">
+      <.icon name="hero-exclamation-triangle" class="w-4 h-4" />
+      <span>Contract exists but source code is not verified</span>
+    </div>
+    """
+  end
+
+  defp verification_badge(%{result: {:error, :not_contract}} = assigns) do
+    ~H"""
+    <div class="flex items-center gap-1 mt-2 text-error text-sm">
+      <.icon name="hero-x-circle" class="w-4 h-4" />
+      <span>Not a contract address (EOA or invalid)</span>
+    </div>
+    """
+  end
+
+  defp verification_badge(%{result: {:error, :network_unsupported}} = assigns) do
+    ~H"""
+    <div class="flex items-center gap-1 mt-2 text-base-content/50 text-sm">
+      <.icon name="hero-information-circle" class="w-4 h-4" />
+      <span>Verification not available for this network</span>
+    </div>
+    """
+  end
+
+  defp verification_badge(%{result: {:error, :api_error, reason}} = assigns) do
+    assigns = assign(assigns, :reason, reason)
+
+    ~H"""
+    <div class="flex items-center gap-1 mt-2 text-error text-sm">
+      <.icon name="hero-x-circle" class="w-4 h-4" />
+      <span>Verification failed: <%= @reason %></span>
+    </div>
+    """
+  end
+
+  defp verification_badge(assigns), do: ~H""
+
   defp network_badge(assigns) do
     ~H"""
-    <span class="text-sm text-base-content/70"><%= @network %></span>
+    <button
+      type="button"
+      phx-click="show_network_info"
+      phx-value-network={@network}
+      class="text-sm text-base-content/70 hover:text-primary hover:underline cursor-pointer"
+    >
+      <%= @network %>
+    </button>
     """
   end
 
   # Event Handlers
 
   @impl true
+  def handle_event("show_network_info", %{"network" => network_name}, socket) do
+    case Map.get(socket.assigns.networks_map, network_name) do
+      nil ->
+        {:noreply, put_flash(socket, :error, "Network '#{network_name}' not found in database")}
+
+      network ->
+        {:noreply, assign(socket, modal: {:network_info, network})}
+    end
+  end
+
   def handle_event("new_protocol", _params, socket) do
     form = to_form(Settings.change_protocol(%Protocol{}))
     {:noreply, assign(socket, modal: :new_protocol, form: form)}
@@ -514,13 +718,13 @@ defmodule AnomaExplorerWeb.SettingsLive do
 
   def handle_event("new_address", %{"protocol-id" => protocol_id}, socket) do
     form = to_form(Settings.change_contract_address(%ContractAddress{protocol_id: String.to_integer(protocol_id)}))
-    {:noreply, assign(socket, modal: {:new_address, protocol_id}, form: form)}
+    {:noreply, assign(socket, modal: {:new_address, protocol_id}, form: form, verifying: false, verification_result: nil)}
   end
 
   def handle_event("edit_address", %{"id" => id}, socket) do
     address = Settings.get_contract_address!(id)
     form = to_form(Settings.change_contract_address(address))
-    {:noreply, assign(socket, modal: {:edit_address, address}, form: form)}
+    {:noreply, assign(socket, modal: {:edit_address, address}, form: form, verifying: false, verification_result: nil)}
   end
 
   def handle_event("delete_address", %{"id" => id}, socket) do
@@ -569,12 +773,46 @@ defmodule AnomaExplorerWeb.SettingsLive do
   end
 
   def handle_event("close_modal", _params, socket) do
-    {:noreply, assign(socket, modal: nil, form: nil)}
+    {:noreply, assign(socket, modal: nil, form: nil, verification_result: nil)}
+  end
+
+  def handle_event("form_change", %{"address" => params}, socket) do
+    # Update the form with the new values so disabled states work correctly
+    changeset = Settings.change_contract_address(%ContractAddress{}, params)
+    {:noreply, assign(socket, form: to_form(changeset), verification_result: nil)}
+  end
+
+  def handle_event("form_change", _params, socket) do
+    {:noreply, socket}
+  end
+
+  def handle_event("verify_address", _params, socket) do
+    form = socket.assigns.form
+    network = form[:network].value
+    address = form[:address].value
+
+    if network && address && String.trim(network) != "" && String.trim(address) != "" do
+      send(self(), {:do_verify, network, address})
+      {:noreply, assign(socket, verifying: true, verification_result: nil)}
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl true
   def handle_info({:settings_changed, _}, socket) do
-    {:noreply, assign(socket, :protocols, list_protocols())}
+    networks = list_networks()
+
+    {:noreply,
+     socket
+     |> assign(:protocols, list_protocols())
+     |> assign(:networks, networks)
+     |> assign(:networks_map, build_networks_map(networks))}
+  end
+
+  def handle_info({:do_verify, network, address}, socket) do
+    result = ChainVerifier.verify(network, address)
+    {:noreply, assign(socket, verifying: false, verification_result: result)}
   end
 
   # Helpers
@@ -583,41 +821,61 @@ defmodule AnomaExplorerWeb.SettingsLive do
     Settings.list_protocols(preload: [:contract_addresses])
   end
 
+  defp list_networks do
+    Settings.list_networks(active: true)
+  end
+
+  defp build_networks_map(networks) do
+    Map.new(networks, fn n -> {n.name, n} end)
+  end
+
   defp truncate_address(address) when byte_size(address) > 16 do
     String.slice(address, 0, 10) <> "..." <> String.slice(address, -6, 6)
   end
 
   defp truncate_address(address), do: address
 
-  defp explorer_url(network, address) do
-    base_url = case network do
-      # Ethereum
-      "eth-mainnet" -> "https://etherscan.io/address/"
-      "eth-sepolia" -> "https://sepolia.etherscan.io/address/"
-      # Base
-      "base-mainnet" -> "https://basescan.org/address/"
-      "base-sepolia" -> "https://sepolia.basescan.org/address/"
-      # Polygon
-      "polygon-mainnet" -> "https://polygonscan.com/address/"
-      "polygon-mumbai" -> "https://mumbai.polygonscan.com/address/"
-      # Arbitrum
-      "arbitrum-mainnet" -> "https://arbiscan.io/address/"
-      "arb-mainnet" -> "https://arbiscan.io/address/"
-      "arbitrum-sepolia" -> "https://sepolia.arbiscan.io/address/"
-      "arb-sepolia" -> "https://sepolia.arbiscan.io/address/"
-      # Optimism
-      "optimism-mainnet" -> "https://optimistic.etherscan.io/address/"
-      "op-mainnet" -> "https://optimistic.etherscan.io/address/"
-      "optimism-sepolia" -> "https://sepolia-optimism.etherscan.io/address/"
-      "op-sepolia" -> "https://sepolia-optimism.etherscan.io/address/"
-      # BSC
-      "bsc-mainnet" -> "https://bscscan.com/address/"
-      "bsc-testnet" -> "https://testnet.bscscan.com/address/"
-      # Avalanche
-      "avalanche-mainnet" -> "https://snowtrace.io/address/"
-      "avalanche-fuji" -> "https://testnet.snowtrace.io/address/"
-      _ -> nil
+  defp explorer_url(networks_map, network_name, address) do
+    case Map.get(networks_map, network_name) do
+      %{explorer_url: explorer_url} when is_binary(explorer_url) and explorer_url != "" ->
+        explorer_url <> address
+
+      _ ->
+        # Fallback to hardcoded URLs for backwards compatibility
+        fallback_explorer_url(network_name, address)
     end
+  end
+
+  defp fallback_explorer_url(network, address) do
+    base_url =
+      case network do
+        # Ethereum
+        "eth-mainnet" -> "https://etherscan.io/address/"
+        "eth-sepolia" -> "https://sepolia.etherscan.io/address/"
+        # Base
+        "base-mainnet" -> "https://basescan.org/address/"
+        "base-sepolia" -> "https://sepolia.basescan.org/address/"
+        # Polygon
+        "polygon-mainnet" -> "https://polygonscan.com/address/"
+        "polygon-mumbai" -> "https://mumbai.polygonscan.com/address/"
+        # Arbitrum
+        "arbitrum-mainnet" -> "https://arbiscan.io/address/"
+        "arb-mainnet" -> "https://arbiscan.io/address/"
+        "arbitrum-sepolia" -> "https://sepolia.arbiscan.io/address/"
+        "arb-sepolia" -> "https://sepolia.arbiscan.io/address/"
+        # Optimism
+        "optimism-mainnet" -> "https://optimistic.etherscan.io/address/"
+        "op-mainnet" -> "https://optimistic.etherscan.io/address/"
+        "optimism-sepolia" -> "https://sepolia-optimism.etherscan.io/address/"
+        "op-sepolia" -> "https://sepolia-optimism.etherscan.io/address/"
+        # BSC
+        "bsc-mainnet" -> "https://bscscan.com/address/"
+        "bsc-testnet" -> "https://testnet.bscscan.com/address/"
+        # Avalanche
+        "avalanche-mainnet" -> "https://snowtrace.io/address/"
+        "avalanche-fuji" -> "https://testnet.snowtrace.io/address/"
+        _ -> nil
+      end
 
     if base_url, do: base_url <> address, else: "#"
   end
