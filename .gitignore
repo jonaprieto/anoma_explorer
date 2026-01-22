@@ -36,3 +36,6 @@ npm-debug.log
 .env
 .env.local
 .env.*.local
+
+# ElixirLS (Language Server)
+.elixir_ls/
