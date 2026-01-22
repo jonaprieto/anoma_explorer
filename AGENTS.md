@@ -3,7 +3,29 @@ This is a web application written using the Phoenix web framework.
 ## Project guidelines
 
 - Use `mix precommit` alias when you are done with all changes and fix any pending issues
-- Use the already included and available `:req` (`Req`) library for HTTP requests, **avoid** `:httpoison`, `:tesla`, and `:httpc`. Req is included by default and is the preferred HTTP client for Phoenix apps
+- Elixir version: `~> 1.17` or `~> 1.18` (see `.tool-versions` for exact versions)
+- Use the already included and available `Finch` HTTP client (not Req). **Avoid** `:httpoison`, `:tesla`, and `:httpc`
+
+### Environment variables
+
+Required for production (see `.env.example`):
+- `DATABASE_URL` - PostgreSQL connection string
+- `SECRET_KEY_BASE` - Phoenix secret (generate with `mix phx.gen.secret`)
+- `PHX_HOST` - Hostname where app is accessible (e.g., `anoma-explorer.onrender.com`)
+- `PHX_SERVER=true` - Enable the server
+- `ENVIO_GRAPHQL_URL` - Envio HyperIndex GraphQL endpoint for blockchain data
+- `ETHERSCAN_API_KEY` - Etherscan V2 API key for contract verification
+
+Optional:
+- `PORT` - Server port (default: 4000)
+- `POOL_SIZE` - Database pool size (default: 10)
+- `DNS_CLUSTER_QUERY` - For production clustering
+- `ECTO_IPV6` - Enable IPv6 for database connections
+
+### Deployment (Render.com)
+
+- If `PHX_HOST` is not set, the app uses `check_origin: :conn` to automatically allow the connection's host
+- Database migrations run automatically before server start
 
 ### Phoenix v1.8 guidelines
 
@@ -30,7 +52,7 @@ custom classes must fully style the input
 
 - **Always use and maintain this import syntax** in the app.css file for projects generated with `phx.new`
 - **Never** use `@apply` when writing raw css
-- **Always** manually write your own tailwind-based components instead of using daisyUI for a unique, world-class design
+- This project uses **daisyUI** for component styling with a custom dark theme (see `assets/css/app.css`)
 - Out of the box **only the app.js and app.css bundles are supported**
   - You cannot reference an external vendor'd script `src` or link `href` in the layouts
   - You must import the vendor deps into app.js and app.css to use them
