@@ -177,8 +177,10 @@ defmodule AnomaExplorerWeb.HomeLive do
         <%= if @loading and is_nil(@stats) do %>
           <.loading_skeleton />
         <% else %>
-          <.stats_grid stats={@stats} />
-          <.recent_transactions transactions={@transactions} loading={@loading} />
+          <%= if @stats do %>
+            <.stats_grid stats={@stats} />
+            <.recent_transactions transactions={@transactions} loading={@loading} />
+          <% end %>
         <% end %>
 
         <.chain_info_modal chain={@selected_chain} />
