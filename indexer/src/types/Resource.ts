@@ -16,7 +16,7 @@ export interface Resource {
 }
 
 export interface DecodedResource {
-  resource: Resource | null;
+  resource: Partial<Resource> | null;
   status: "success" | "failed" | "pending" | "raw";
   error?: string;
 }

@@ -103,6 +103,7 @@ type Resource {
   id: ID!
   tag: String!
   index: Int!
+  blobIndex: Int
   isConsumed: Boolean!
   blockNumber: Int!
   chainId: Int!
