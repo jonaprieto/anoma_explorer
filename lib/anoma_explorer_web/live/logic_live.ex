@@ -7,6 +7,7 @@ defmodule AnomaExplorerWeb.LogicLive do
   alias AnomaExplorerWeb.Layouts
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Networks
+  alias AnomaExplorer.Utils.Formatting
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
@@ -71,7 +72,7 @@ defmodule AnomaExplorerWeb.LogicLive do
           <div>
             <h1 class="page-title">Logic Input Details</h1>
             <p class="text-sm text-base-content/70 mt-1">
-              {if @logic, do: truncate_hash(@logic["tag"]), else: "Loading..."}
+              {if @logic, do: Formatting.truncate_hash(@logic["tag"]), else: "Loading..."}
             </p>
           </div>
         </div>
@@ -165,7 +166,7 @@ defmodule AnomaExplorerWeb.LogicLive do
           </div>
           <div>
             <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Timestamp</div>
-            <div>{format_timestamp(@logic["action"]["timestamp"])}</div>
+            <div>{Formatting.format_timestamp_full(@logic["action"]["timestamp"])}</div>
           </div>
           <div>
             <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Action</div>
@@ -174,7 +175,7 @@ defmodule AnomaExplorerWeb.LogicLive do
                 href={"/actions/#{@logic["action"]["id"]}"}
                 class="hash-display text-sm hover:text-primary"
               >
-                {truncate_hash(@logic["action"]["actionTreeRoot"])}
+                {Formatting.truncate_hash(@logic["action"]["actionTreeRoot"])}
               </a>
               <.copy_button
                 :if={@logic["action"]["actionTreeRoot"]}
@@ -191,7 +192,7 @@ defmodule AnomaExplorerWeb.LogicLive do
                   href={"/transactions/#{@logic["action"]["transaction"]["id"]}"}
                   class="hash-display text-sm hover:text-primary"
                 >
-                  {truncate_hash(@logic["action"]["transaction"]["txHash"])}
+                  {Formatting.truncate_hash(@logic["action"]["transaction"]["txHash"])}
                 </a>
                 <.copy_button text={@logic["action"]["transaction"]["txHash"]} tooltip="Copy tx hash" />
               </div>
@@ -206,7 +207,7 @@ defmodule AnomaExplorerWeb.LogicLive do
                 href={"/resources/#{@logic["resource"]["id"]}"}
                 class="hash-display text-sm hover:text-primary"
               >
-                {truncate_hash(@logic["resource"]["tag"])}
+                {Formatting.truncate_hash(@logic["resource"]["tag"])}
               </a>
               <.copy_button
                 :if={@logic["resource"]["tag"]}
@@ -263,20 +264,4 @@ defmodule AnomaExplorerWeb.LogicLive do
     """
   end
 
-  defp truncate_hash(nil), do: "-"
-
-  defp truncate_hash(hash) when byte_size(hash) > 20 do
-    String.slice(hash, 0, 10) <> "..." <> String.slice(hash, -8, 8)
-  end
-
-  defp truncate_hash(hash), do: hash
-
-  defp format_timestamp(nil), do: "-"
-
-  defp format_timestamp(ts) when is_integer(ts) do
-    case DateTime.from_unix(ts) do
-      {:ok, dt} -> Calendar.strftime(dt, "%Y-%m-%d %H:%M:%S UTC")
-      _ -> "-"
-    end
-  end
 end

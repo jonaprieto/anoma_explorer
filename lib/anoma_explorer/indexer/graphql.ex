@@ -10,6 +10,7 @@ defmodule AnomaExplorer.Indexer.GraphQL do
 
   alias AnomaExplorer.Settings
   alias AnomaExplorer.Indexer.Cache
+  alias AnomaExplorer.Utils.Formatting
 
   # Default timeout values
   @default_timeout 15_000
@@ -179,7 +180,7 @@ defmodule AnomaExplorer.Indexer.GraphQL do
       case Keyword.get(opts, :tx_hash) do
         nil -> conditions
         "" -> conditions
-        hash -> conditions ++ ["txHash: {_ilike: \"%#{escape_string(hash)}%\"}"]
+        hash -> conditions ++ ["txHash: {_ilike: \"%#{Formatting.escape_string(hash)}%\"}"]
       end
 
     conditions =
@@ -210,7 +211,7 @@ defmodule AnomaExplorer.Indexer.GraphQL do
       case Keyword.get(opts, :contract_address) do
         nil -> conditions
         "" -> conditions
-        addr -> conditions ++ ["contractAddress: {_ilike: \"%#{escape_string(addr)}%\"}"]
+        addr -> conditions ++ ["contractAddress: {_ilike: \"%#{Formatting.escape_string(addr)}%\"}"]
       end
 
     Enum.join(conditions, ", ")
@@ -331,14 +332,14 @@ defmodule AnomaExplorer.Indexer.GraphQL do
       case Keyword.get(opts, :tag) do
         nil -> conditions
         "" -> conditions
-        tag -> conditions ++ ["tag: {_ilike: \"%#{escape_string(tag)}%\"}"]
+        tag -> conditions ++ ["tag: {_ilike: \"%#{Formatting.escape_string(tag)}%\"}"]
       end
 
     conditions =
       case Keyword.get(opts, :logic_ref) do
         nil -> conditions
         "" -> conditions
-        ref -> conditions ++ ["logicRef: {_ilike: \"%#{escape_string(ref)}%\"}"]
+        ref -> conditions ++ ["logicRef: {_ilike: \"%#{Formatting.escape_string(ref)}%\"}"]
       end
 
     conditions =
@@ -353,7 +354,7 @@ defmodule AnomaExplorer.Indexer.GraphQL do
       case Keyword.get(opts, :decoding_status) do
         nil -> conditions
         "" -> conditions
-        status -> conditions ++ ["decodingStatus: {_eq: \"#{escape_string(status)}\"}"]
+        status -> conditions ++ ["decodingStatus: {_eq: \"#{Formatting.escape_string(status)}\"}"]
       end
 
     conditions =
@@ -479,7 +480,7 @@ defmodule AnomaExplorer.Indexer.GraphQL do
       case Keyword.get(opts, :action_tree_root) do
         nil -> conditions
         "" -> conditions
-        root -> conditions ++ ["actionTreeRoot: {_ilike: \"%#{escape_string(root)}%\"}"]
+        root -> conditions ++ ["actionTreeRoot: {_ilike: \"%#{Formatting.escape_string(root)}%\"}"]
       end
 
     conditions =
@@ -626,14 +627,14 @@ defmodule AnomaExplorer.Indexer.GraphQL do
       case Keyword.get(opts, :nullifier) do
         nil -> conditions
         "" -> conditions
-        nf -> conditions ++ ["consumedNullifier: {_ilike: \"%#{escape_string(nf)}%\"}"]
+        nf -> conditions ++ ["consumedNullifier: {_ilike: \"%#{Formatting.escape_string(nf)}%\"}"]
       end
 
     conditions =
       case Keyword.get(opts, :commitment) do
         nil -> conditions
         "" -> conditions
-        cm -> conditions ++ ["createdCommitment: {_ilike: \"%#{escape_string(cm)}%\"}"]
+        cm -> conditions ++ ["createdCommitment: {_ilike: \"%#{Formatting.escape_string(cm)}%\"}"]
       end
 
     conditions =
@@ -647,7 +648,7 @@ defmodule AnomaExplorer.Indexer.GraphQL do
         ref ->
           conditions ++
             [
-              "_or: [{consumedLogicRef: {_ilike: \"%#{escape_string(ref)}%\"}}, {createdLogicRef: {_ilike: \"%#{escape_string(ref)}%\"}}]"
+              "_or: [{consumedLogicRef: {_ilike: \"%#{Formatting.escape_string(ref)}%\"}}, {createdLogicRef: {_ilike: \"%#{Formatting.escape_string(ref)}%\"}}]"
             ]
       end
 
@@ -779,7 +780,7 @@ defmodule AnomaExplorer.Indexer.GraphQL do
       case Keyword.get(opts, :tag) do
         nil -> conditions
         "" -> conditions
-        tag -> conditions ++ ["tag: {_ilike: \"%#{escape_string(tag)}%\"}"]
+        tag -> conditions ++ ["tag: {_ilike: \"%#{Formatting.escape_string(tag)}%\"}"]
       end
 
     conditions =
@@ -793,7 +794,7 @@ defmodule AnomaExplorer.Indexer.GraphQL do
       case Keyword.get(opts, :verifying_key) do
         nil -> conditions
         "" -> conditions
-        key -> conditions ++ ["verifyingKey: {_ilike: \"%#{escape_string(key)}%\"}"]
+        key -> conditions ++ ["verifyingKey: {_ilike: \"%#{Formatting.escape_string(key)}%\"}"]
       end
 
     Enum.join(conditions, ", ")
@@ -906,14 +907,14 @@ defmodule AnomaExplorer.Indexer.GraphQL do
       case Keyword.get(opts, :root) do
         nil -> conditions
         "" -> conditions
-        root -> conditions ++ ["root: {_ilike: \"%#{escape_string(root)}%\"}"]
+        root -> conditions ++ ["root: {_ilike: \"%#{Formatting.escape_string(root)}%\"}"]
       end
 
     conditions =
       case Keyword.get(opts, :tx_hash) do
         nil -> conditions
         "" -> conditions
-        hash -> conditions ++ ["txHash: {_ilike: \"%#{escape_string(hash)}%\"}"]
+        hash -> conditions ++ ["txHash: {_ilike: \"%#{Formatting.escape_string(hash)}%\"}"]
       end
 
     conditions =
@@ -1038,7 +1039,7 @@ defmodule AnomaExplorer.Indexer.GraphQL do
       case Keyword.get(opts, :nullifier) do
         nil -> conditions
         "" -> conditions
-        nf -> conditions ++ ["consumedNullifier: {_ilike: \"%#{escape_string(nf)}%\"}"]
+        nf -> conditions ++ ["consumedNullifier: {_ilike: \"%#{Formatting.escape_string(nf)}%\"}"]
       end
 
     Enum.join(conditions, ", ")
@@ -1104,7 +1105,7 @@ defmodule AnomaExplorer.Indexer.GraphQL do
       case Keyword.get(opts, :commitment) do
         nil -> conditions
         "" -> conditions
-        cm -> conditions ++ ["createdCommitment: {_ilike: \"%#{escape_string(cm)}%\"}"]
+        cm -> conditions ++ ["createdCommitment: {_ilike: \"%#{Formatting.escape_string(cm)}%\"}"]
       end
 
     Enum.join(conditions, ", ")
@@ -1135,21 +1136,6 @@ defmodule AnomaExplorer.Indexer.GraphQL do
   # ============================================
   # Private Helpers
   # ============================================
-
-  # Escapes a string for safe inclusion in GraphQL queries.
-  # Handles backslashes, quotes, newlines, tabs, and SQL LIKE wildcards.
-  defp escape_string(str) when is_binary(str) do
-    str
-    |> String.replace("\\", "\\\\")
-    |> String.replace("\"", "\\\"")
-    |> String.replace("\n", "\\n")
-    |> String.replace("\r", "\\r")
-    |> String.replace("\t", "\\t")
-    |> String.replace("%", "\\%")
-    |> String.replace("_", "\\_")
-  end
-
-  defp escape_string(other), do: escape_string(to_string(other))
 
   defp execute(query) do
     case get_url() do

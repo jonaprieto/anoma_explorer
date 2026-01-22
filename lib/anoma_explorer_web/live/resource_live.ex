@@ -7,6 +7,7 @@ defmodule AnomaExplorerWeb.ResourceLive do
   alias AnomaExplorerWeb.Layouts
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Networks
+  alias AnomaExplorer.Utils.Formatting
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
@@ -30,7 +31,7 @@ defmodule AnomaExplorerWeb.ResourceLive do
          socket
          |> assign(:resource, resource)
          |> assign(:loading, false)
-         |> assign(:page_title, "Resource #{truncate_hash(resource["tag"])}")}
+         |> assign(:page_title, "Resource #{Formatting.truncate_hash(resource["tag"])}")}
 
       {:error, :not_found} ->
         {:noreply,
@@ -74,7 +75,7 @@ defmodule AnomaExplorerWeb.ResourceLive do
           <div>
             <h1 class="page-title">Resource Details</h1>
             <p class="text-sm text-base-content/70 mt-1">
-              {if @resource, do: truncate_hash(@resource["tag"]), else: "Loading..."}
+              {if @resource, do: Formatting.truncate_hash(@resource["tag"]), else: "Loading..."}
             </p>
           </div>
         </div>
@@ -191,7 +192,7 @@ defmodule AnomaExplorerWeb.ResourceLive do
         <.field_row label="Nonce" value={@resource["nonce"]} copyable />
         <.field_row label="Rand Seed" value={@resource["randSeed"]} copyable />
         <.field_row label="Quantity" value={@resource["quantity"]} />
-        <.field_row label="Ephemeral" value={format_bool(@resource["ephemeral"])} />
+        <.field_row label="Ephemeral" value={Formatting.format_bool(@resource["ephemeral"])} />
       </div>
     </div>
     """
@@ -205,7 +206,7 @@ defmodule AnomaExplorerWeb.ResourceLive do
       <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">{@label}</div>
       <%= if @value do %>
         <div class="flex items-center gap-2">
-          <code class="hash-display text-sm break-all">{truncate_value(@value)}</code>
+          <code class="hash-display text-sm break-all">{Formatting.truncate_value(@value)}</code>
           <.copy_button :if={@copyable and is_binary(@value)} text={@value} />
         </div>
       <% else %>
@@ -328,23 +329,4 @@ defmodule AnomaExplorerWeb.ResourceLive do
     """
   end
 
-  defp truncate_hash(nil), do: "-"
-
-  defp truncate_hash(hash) when byte_size(hash) > 20 do
-    String.slice(hash, 0, 10) <> "..." <> String.slice(hash, -8, 8)
-  end
-
-  defp truncate_hash(hash), do: hash
-
-  defp truncate_value(nil), do: nil
-
-  defp truncate_value(val) when is_binary(val) and byte_size(val) > 50 do
-    String.slice(val, 0, 24) <> "..." <> String.slice(val, -24, 24)
-  end
-
-  defp truncate_value(val), do: to_string(val)
-
-  defp format_bool(nil), do: nil
-  defp format_bool(true), do: "Yes"
-  defp format_bool(false), do: "No"
 end

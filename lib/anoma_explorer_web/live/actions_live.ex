@@ -8,6 +8,7 @@ defmodule AnomaExplorerWeb.ActionsLive do
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Client
   alias AnomaExplorer.Indexer.Networks
+  alias AnomaExplorer.Utils.Formatting
 
   @default_filters %{
     "action_tree_root" => "",
@@ -402,7 +403,7 @@ defmodule AnomaExplorerWeb.ActionsLive do
                       href={"/actions/#{action["id"]}"}
                       class="hash-display text-xs hover:text-primary"
                     >
-                      {truncate_hash(action["actionTreeRoot"])}
+                      {Formatting.truncate_hash(action["actionTreeRoot"])}
                     </a>
                     <.copy_button
                       :if={action["actionTreeRoot"]}
@@ -424,7 +425,7 @@ defmodule AnomaExplorerWeb.ActionsLive do
                   </div>
                 </td>
                 <td class="hidden lg:table-cell text-base-content/60 text-sm">
-                  {format_timestamp(action["timestamp"])}
+                  {Formatting.format_timestamp_full(action["timestamp"])}
                 </td>
                 <td>
                   <%= if action["transaction"] do %>
@@ -433,7 +434,7 @@ defmodule AnomaExplorerWeb.ActionsLive do
                         href={"/transactions/#{action["transaction"]["id"]}"}
                         class="hash-display text-xs hover:text-primary"
                       >
-                        {truncate_hash(action["transaction"]["txHash"])}
+                        {Formatting.truncate_hash(action["transaction"]["txHash"])}
                       </a>
                       <.copy_button text={action["transaction"]["txHash"]} tooltip="Copy tx hash" />
                     </div>
@@ -466,20 +467,4 @@ defmodule AnomaExplorerWeb.ActionsLive do
     """
   end
 
-  defp truncate_hash(nil), do: "-"
-
-  defp truncate_hash(hash) when byte_size(hash) > 16 do
-    String.slice(hash, 0, 10) <> "..." <> String.slice(hash, -6, 6)
-  end
-
-  defp truncate_hash(hash), do: hash
-
-  defp format_timestamp(nil), do: "-"
-
-  defp format_timestamp(ts) when is_integer(ts) do
-    case DateTime.from_unix(ts) do
-      {:ok, dt} -> Calendar.strftime(dt, "%Y-%m-%d %H:%M:%S")
-      _ -> "-"
-    end
-  end
 end

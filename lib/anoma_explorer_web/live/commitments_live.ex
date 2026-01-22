@@ -8,6 +8,7 @@ defmodule AnomaExplorerWeb.CommitmentsLive do
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Client
   alias AnomaExplorer.Indexer.Networks
+  alias AnomaExplorer.Utils.Formatting
 
   @default_filters %{
     "root" => "",
@@ -412,7 +413,7 @@ defmodule AnomaExplorerWeb.CommitmentsLive do
               <tr class="hover:bg-base-200/50">
                 <td>
                   <div class="flex items-center gap-1">
-                    <code class="hash-display text-xs">{truncate_hash(commitment["root"])}</code>
+                    <code class="hash-display text-xs">{Formatting.truncate_hash(commitment["root"])}</code>
                     <.copy_button
                       :if={commitment["root"]}
                       text={commitment["root"]}
@@ -433,12 +434,12 @@ defmodule AnomaExplorerWeb.CommitmentsLive do
                   </div>
                 </td>
                 <td class="hidden lg:table-cell text-base-content/60 text-sm">
-                  {format_timestamp(commitment["timestamp"])}
+                  {Formatting.format_timestamp_full(commitment["timestamp"])}
                 </td>
                 <td>
                   <%= if commitment["txHash"] do %>
                     <div class="flex items-center gap-1">
-                      <code class="hash-display text-xs">{truncate_hash(commitment["txHash"])}</code>
+                      <code class="hash-display text-xs">{Formatting.truncate_hash(commitment["txHash"])}</code>
                       <.copy_button text={commitment["txHash"]} tooltip="Copy tx hash" />
                     </div>
                   <% else %>
@@ -470,20 +471,4 @@ defmodule AnomaExplorerWeb.CommitmentsLive do
     """
   end
 
-  defp truncate_hash(nil), do: "-"
-
-  defp truncate_hash(hash) when byte_size(hash) > 16 do
-    String.slice(hash, 0, 10) <> "..." <> String.slice(hash, -6, 6)
-  end
-
-  defp truncate_hash(hash), do: hash
-
-  defp format_timestamp(nil), do: "-"
-
-  defp format_timestamp(ts) when is_integer(ts) do
-    case DateTime.from_unix(ts) do
-      {:ok, dt} -> Calendar.strftime(dt, "%Y-%m-%d %H:%M:%S")
-      _ -> "-"
-    end
-  end
 end

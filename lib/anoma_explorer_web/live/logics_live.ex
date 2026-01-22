@@ -8,6 +8,7 @@ defmodule AnomaExplorerWeb.LogicsLive do
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Client
   alias AnomaExplorer.Indexer.Networks
+  alias AnomaExplorer.Utils.Formatting
 
   @default_filters %{
     "tag" => "",
@@ -402,7 +403,7 @@ defmodule AnomaExplorerWeb.LogicsLive do
                 <td>
                   <div class="flex items-center gap-1">
                     <a href={"/logics/#{logic["id"]}"} class="hash-display text-xs hover:text-primary">
-                      {truncate_hash(logic["tag"])}
+                      {Formatting.truncate_hash(logic["tag"])}
                     </a>
                     <.copy_button :if={logic["tag"]} text={logic["tag"]} tooltip="Copy tag" />
                   </div>
@@ -420,7 +421,7 @@ defmodule AnomaExplorerWeb.LogicsLive do
                 </td>
                 <td>
                   <div class="flex items-center gap-1">
-                    <code class="hash-display text-xs">{truncate_hash(logic["verifyingKey"])}</code>
+                    <code class="hash-display text-xs">{Formatting.truncate_hash(logic["verifyingKey"])}</code>
                     <.copy_button
                       :if={logic["verifyingKey"]}
                       text={logic["verifyingKey"]}
@@ -455,7 +456,7 @@ defmodule AnomaExplorerWeb.LogicsLive do
                         href={"/transactions/#{logic["action"]["transaction"]["id"]}"}
                         class="hash-display text-xs hover:text-primary"
                       >
-                        {truncate_hash(logic["action"]["transaction"]["txHash"])}
+                        {Formatting.truncate_hash(logic["action"]["transaction"]["txHash"])}
                       </a>
                       <.copy_button
                         text={logic["action"]["transaction"]["txHash"]}
@@ -491,11 +492,4 @@ defmodule AnomaExplorerWeb.LogicsLive do
     """
   end
 
-  defp truncate_hash(nil), do: "-"
-
-  defp truncate_hash(hash) when byte_size(hash) > 16 do
-    String.slice(hash, 0, 10) <> "..." <> String.slice(hash, -6, 6)
-  end
-
-  defp truncate_hash(hash), do: hash
 end

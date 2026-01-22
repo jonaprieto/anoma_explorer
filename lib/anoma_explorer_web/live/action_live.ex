@@ -7,6 +7,7 @@ defmodule AnomaExplorerWeb.ActionLive do
   alias AnomaExplorerWeb.Layouts
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Networks
+  alias AnomaExplorer.Utils.Formatting
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
@@ -71,7 +72,7 @@ defmodule AnomaExplorerWeb.ActionLive do
           <div>
             <h1 class="page-title">Action Details</h1>
             <p class="text-sm text-base-content/70 mt-1">
-              {if @action, do: truncate_hash(@action["actionTreeRoot"]), else: "Loading..."}
+              {if @action, do: Formatting.truncate_hash(@action["actionTreeRoot"]), else: "Loading..."}
             </p>
           </div>
         </div>
@@ -161,7 +162,7 @@ defmodule AnomaExplorerWeb.ActionLive do
         </div>
         <div>
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Timestamp</div>
-          <div>{format_timestamp(@action["timestamp"])}</div>
+          <div>{Formatting.format_timestamp_full(@action["timestamp"])}</div>
         </div>
         <%= if @action["transaction"] do %>
           <div>
@@ -171,7 +172,7 @@ defmodule AnomaExplorerWeb.ActionLive do
                 href={"/transactions/#{@action["transaction"]["id"]}"}
                 class="hash-display text-sm hover:text-primary"
               >
-                {truncate_hash(@action["transaction"]["txHash"])}
+                {Formatting.truncate_hash(@action["transaction"]["txHash"])}
               </a>
               <.copy_button text={@action["transaction"]["txHash"]} tooltip="Copy tx hash" />
             </div>
@@ -210,7 +211,7 @@ defmodule AnomaExplorerWeb.ActionLive do
                         href={"/compliances/#{unit["id"]}"}
                         class="hash-display text-xs hover:text-primary"
                       >
-                        {truncate_hash(unit["consumedNullifier"])}
+                        {Formatting.truncate_hash(unit["consumedNullifier"])}
                       </a>
                       <.copy_button
                         :if={unit["consumedNullifier"]}
@@ -222,7 +223,7 @@ defmodule AnomaExplorerWeb.ActionLive do
                   <td>
                     <div class="flex items-center gap-1">
                       <code class="hash-display text-xs">
-                        {truncate_hash(unit["createdCommitment"])}
+                        {Formatting.truncate_hash(unit["createdCommitment"])}
                       </code>
                       <.copy_button
                         :if={unit["createdCommitment"]}
@@ -234,7 +235,7 @@ defmodule AnomaExplorerWeb.ActionLive do
                   <td>
                     <div class="flex items-center gap-1">
                       <code class="hash-display text-xs">
-                        {truncate_hash(unit["consumedLogicRef"])}
+                        {Formatting.truncate_hash(unit["consumedLogicRef"])}
                       </code>
                       <.copy_button
                         :if={unit["consumedLogicRef"]}
@@ -246,7 +247,7 @@ defmodule AnomaExplorerWeb.ActionLive do
                   <td>
                     <div class="flex items-center gap-1">
                       <code class="hash-display text-xs">
-                        {truncate_hash(unit["createdLogicRef"])}
+                        {Formatting.truncate_hash(unit["createdLogicRef"])}
                       </code>
                       <.copy_button
                         :if={unit["createdLogicRef"]}
@@ -292,7 +293,7 @@ defmodule AnomaExplorerWeb.ActionLive do
                         href={"/logics/#{input["id"]}"}
                         class="hash-display text-xs hover:text-primary"
                       >
-                        {truncate_hash(input["tag"])}
+                        {Formatting.truncate_hash(input["tag"])}
                       </a>
                       <.copy_button :if={input["tag"]} text={input["tag"]} tooltip="Copy tag" />
                     </div>
@@ -310,7 +311,7 @@ defmodule AnomaExplorerWeb.ActionLive do
                   </td>
                   <td>
                     <div class="flex items-center gap-1">
-                      <code class="hash-display text-xs">{truncate_hash(input["verifyingKey"])}</code>
+                      <code class="hash-display text-xs">{Formatting.truncate_hash(input["verifyingKey"])}</code>
                       <.copy_button
                         :if={input["verifyingKey"]}
                         text={input["verifyingKey"]}
@@ -328,20 +329,4 @@ defmodule AnomaExplorerWeb.ActionLive do
     """
   end
 
-  defp truncate_hash(nil), do: "-"
-
-  defp truncate_hash(hash) when byte_size(hash) > 20 do
-    String.slice(hash, 0, 10) <> "..." <> String.slice(hash, -8, 8)
-  end
-
-  defp truncate_hash(hash), do: hash
-
-  defp format_timestamp(nil), do: "-"
-
-  defp format_timestamp(ts) when is_integer(ts) do
-    case DateTime.from_unix(ts) do
-      {:ok, dt} -> Calendar.strftime(dt, "%Y-%m-%d %H:%M:%S UTC")
-      _ -> "-"
-    end
-  end
 end

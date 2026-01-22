@@ -8,6 +8,7 @@ defmodule AnomaExplorerWeb.HomeLive do
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Client
   alias AnomaExplorer.Indexer.Networks
+  alias AnomaExplorer.Utils.Formatting
 
   @refresh_interval 30_000
 
@@ -135,11 +136,7 @@ defmodule AnomaExplorerWeb.HomeLive do
     end
   end
 
-  defp format_error(:not_configured), do: "Indexer endpoint not configured"
-  defp format_error({:connection_error, _}), do: "Failed to connect to indexer"
-  defp format_error({:http_error, status, _}), do: "HTTP error: #{status}"
-  defp format_error({:graphql_error, errors}), do: "GraphQL error: #{inspect(errors)}"
-  defp format_error(reason), do: "Error: #{inspect(reason)}"
+  defp format_error(reason), do: Formatting.format_error(reason)
 
   @impl true
   def render(assigns) do
@@ -155,7 +152,7 @@ defmodule AnomaExplorerWeb.HomeLive do
         <div class="flex items-center gap-2">
           <%= if @last_updated do %>
             <span class="text-xs text-base-content/50">
-              Updated {format_time(@last_updated)}
+              Updated {Formatting.format_time(@last_updated)}
             </span>
           <% end %>
           <button phx-click="refresh" class="btn btn-ghost btn-sm" disabled={@loading}>
@@ -312,7 +309,7 @@ defmodule AnomaExplorerWeb.HomeLive do
           </span>
         </div>
         <div class="text-xl font-bold text-base-content">
-          {format_number(@value)}
+          {Formatting.format_number(@value)}
         </div>
       </a>
     <% else %>
@@ -324,7 +321,7 @@ defmodule AnomaExplorerWeb.HomeLive do
           </span>
         </div>
         <div class="text-xl font-bold text-base-content">
-          {format_number(@value)}
+          {Formatting.format_number(@value)}
         </div>
       </div>
     <% end %>
@@ -396,7 +393,7 @@ defmodule AnomaExplorerWeb.HomeLive do
                   <td>
                     <div class="flex items-center gap-1">
                       <a href={"/transactions/#{tx["id"]}"} class="hash-display hover:text-primary">
-                        {truncate_hash(tx["txHash"])}
+                        {Formatting.truncate_hash(tx["txHash"])}
                       </a>
                       <.copy_button text={tx["txHash"]} tooltip="Copy full hash" />
                     </div>
@@ -423,18 +420,18 @@ defmodule AnomaExplorerWeb.HomeLive do
                   </td>
                   <td class="hidden md:table-cell">
                     <div class="flex items-center gap-1">
-                      <span class="hash-display text-sm">{truncate_hash(tx["from"])}</span>
+                      <span class="hash-display text-sm">{Formatting.truncate_hash(tx["from"])}</span>
                       <.copy_button :if={tx["from"]} text={tx["from"]} tooltip="Copy address" />
                     </div>
                   </td>
                   <td class="hidden md:table-cell text-sm">
-                    {format_eth(tx["value"])}
+                    {Formatting.format_eth(tx["value"])}
                   </td>
                   <td class="hidden lg:table-cell text-sm">
-                    {format_gwei(tx["gasPrice"])}
+                    {Formatting.format_gwei(tx["gasPrice"])}
                   </td>
                   <td class="hidden lg:table-cell text-sm">
-                    {format_tx_fee(tx["gasUsed"], tx["gasPrice"])}
+                    {Formatting.format_tx_fee(tx["gasUsed"], tx["gasPrice"])}
                   </td>
                   <td>
                     <button
@@ -454,7 +451,7 @@ defmodule AnomaExplorerWeb.HomeLive do
                     </button>
                   </td>
                   <td class="hidden xl:table-cell text-base-content/60 text-sm">
-                    {format_timestamp(tx["timestamp"])}
+                    {Formatting.format_timestamp(tx["timestamp"])}
                   </td>
                 </tr>
               <% end %>
@@ -528,13 +525,13 @@ defmodule AnomaExplorerWeb.HomeLive do
                         </td>
                         <td>
                           <div class="flex items-center gap-1">
-                            <code class="hash-display text-xs">{truncate_hash(tag)}</code>
+                            <code class="hash-display text-xs">{Formatting.truncate_hash(tag)}</code>
                             <.copy_button :if={tag} text={tag} tooltip="Copy tag" />
                           </div>
                         </td>
                         <td>
                           <div class="flex items-center gap-1">
-                            <code class="hash-display text-xs">{truncate_hash(logic_ref)}</code>
+                            <code class="hash-display text-xs">{Formatting.truncate_hash(logic_ref)}</code>
                             <.copy_button :if={logic_ref} text={logic_ref} tooltip="Copy logic ref" />
                           </div>
                         </td>
@@ -552,101 +549,4 @@ defmodule AnomaExplorerWeb.HomeLive do
     """
   end
 
-  defp truncate_hash(nil), do: "-"
-
-  defp truncate_hash(hash) when byte_size(hash) > 16 do
-    String.slice(hash, 0, 10) <> "..." <> String.slice(hash, -6, 6)
-  end
-
-  defp truncate_hash(hash), do: hash
-
-  defp format_number(nil), do: "-"
-
-  defp format_number(n) when is_integer(n) do
-    n
-    |> Integer.to_string()
-    |> String.graphemes()
-    |> Enum.reverse()
-    |> Enum.chunk_every(3)
-    |> Enum.join(",")
-    |> String.reverse()
-  end
-
-  defp format_number(n), do: to_string(n)
-
-  defp format_timestamp(nil), do: "-"
-
-  defp format_timestamp(ts) when is_integer(ts) do
-    case DateTime.from_unix(ts) do
-      {:ok, dt} -> format_relative(dt)
-      _ -> "-"
-    end
-  end
-
-  defp format_time(%DateTime{} = dt) do
-    Calendar.strftime(dt, "%H:%M:%S")
-  end
-
-  defp format_relative(%DateTime{} = dt) do
-    now = DateTime.utc_now()
-    diff = DateTime.diff(now, dt, :second)
-
-    cond do
-      diff < 60 -> "#{diff}s ago"
-      diff < 3600 -> "#{div(diff, 60)}m ago"
-      diff < 86400 -> "#{div(diff, 3600)}h ago"
-      true -> "#{div(diff, 86400)}d ago"
-    end
-  end
-
-  # Format Wei value to Gwei (for gas price display)
-  defp format_gwei(nil), do: "-"
-
-  defp format_gwei(wei) when is_integer(wei) do
-    gwei = wei / 1_000_000_000
-    "#{Float.round(gwei, 2)} Gwei"
-  end
-
-  defp format_gwei(wei) when is_binary(wei) do
-    case Integer.parse(wei) do
-      {n, _} -> format_gwei(n)
-      :error -> "-"
-    end
-  end
-
-  defp format_gwei(_), do: "-"
-
-  # Format Wei value to ETH (for value display)
-  defp format_eth(nil), do: "-"
-
-  defp format_eth(wei) when is_integer(wei) do
-    eth = wei / 1_000_000_000_000_000_000
-    "#{Float.round(eth, 6)} ETH"
-  end
-
-  defp format_eth(wei) when is_binary(wei) do
-    case Integer.parse(wei) do
-      {n, _} -> format_eth(n)
-      :error -> "-"
-    end
-  end
-
-  defp format_eth(_), do: "-"
-
-  # Calculate and format transaction fee (gasUsed * gasPrice)
-  defp format_tx_fee(gas_used, gas_price) when is_integer(gas_used) and is_integer(gas_price) do
-    fee_wei = gas_used * gas_price
-    format_eth(fee_wei)
-  end
-
-  defp format_tx_fee(gas_used, gas_price) when is_binary(gas_used) and is_binary(gas_price) do
-    with {gu, _} <- Integer.parse(gas_used),
-         {gp, _} <- Integer.parse(gas_price) do
-      format_tx_fee(gu, gp)
-    else
-      _ -> "-"
-    end
-  end
-
-  defp format_tx_fee(_, _), do: "-"
 end

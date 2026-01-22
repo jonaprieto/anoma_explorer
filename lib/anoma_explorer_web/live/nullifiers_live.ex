@@ -9,6 +9,7 @@ defmodule AnomaExplorerWeb.NullifiersLive do
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Client
   alias AnomaExplorer.Indexer.Networks
+  alias AnomaExplorer.Utils.Formatting
 
   @default_filters %{
     "nullifier" => ""
@@ -336,7 +337,7 @@ defmodule AnomaExplorerWeb.NullifiersLive do
                       href={"/compliances/#{unit["id"]}"}
                       class="hash-display text-xs hover:text-primary"
                     >
-                      {truncate_hash(unit["consumedNullifier"])}
+                      {Formatting.truncate_hash(unit["consumedNullifier"])}
                     </a>
                     <.copy_button
                       :if={unit["consumedNullifier"]}
@@ -348,7 +349,7 @@ defmodule AnomaExplorerWeb.NullifiersLive do
                 <td>
                   <div class="flex items-center gap-1">
                     <code class="hash-display text-xs">
-                      {truncate_hash(unit["consumedLogicRef"])}
+                      {Formatting.truncate_hash(unit["consumedLogicRef"])}
                     </code>
                     <.copy_button
                       :if={unit["consumedLogicRef"]}
@@ -364,7 +365,7 @@ defmodule AnomaExplorerWeb.NullifiersLive do
                         href={"/resources/#{unit["consumedResource"]["id"]}"}
                         class="hash-display text-xs hover:text-primary"
                       >
-                        {truncate_hash(unit["consumedResource"]["tag"])}
+                        {Formatting.truncate_hash(unit["consumedResource"]["tag"])}
                       </a>
                       <.copy_button
                         :if={unit["consumedResource"]["tag"]}
@@ -403,7 +404,7 @@ defmodule AnomaExplorerWeb.NullifiersLive do
                         href={"/transactions/#{unit["action"]["transaction"]["id"]}"}
                         class="hash-display text-xs hover:text-primary"
                       >
-                        {truncate_hash(unit["action"]["transaction"]["txHash"])}
+                        {Formatting.truncate_hash(unit["action"]["transaction"]["txHash"])}
                       </a>
                       <.copy_button
                         text={unit["action"]["transaction"]["txHash"]}
@@ -439,11 +440,4 @@ defmodule AnomaExplorerWeb.NullifiersLive do
     """
   end
 
-  defp truncate_hash(nil), do: "-"
-
-  defp truncate_hash(hash) when byte_size(hash) > 16 do
-    String.slice(hash, 0, 10) <> "..." <> String.slice(hash, -6, 6)
-  end
-
-  defp truncate_hash(hash), do: hash
 end

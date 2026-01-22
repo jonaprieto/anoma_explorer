@@ -8,6 +8,7 @@ defmodule AnomaExplorerWeb.ResourcesLive do
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Client
   alias AnomaExplorer.Indexer.Networks
+  alias AnomaExplorer.Utils.Formatting
 
   @page_size 20
 
@@ -206,9 +207,7 @@ defmodule AnomaExplorerWeb.ResourcesLive do
     Keyword.put(opts, key, value)
   end
 
-  defp format_error(:not_configured), do: "Indexer endpoint not configured"
-  defp format_error({:connection_error, _}), do: "Failed to connect to indexer"
-  defp format_error(reason), do: "Error: #{inspect(reason)}"
+  defp format_error(reason), do: Formatting.format_error(reason)
 
   defp active_filter_count(filters) do
     filters
@@ -488,7 +487,7 @@ defmodule AnomaExplorerWeb.ResourcesLive do
                       href={"/resources/#{resource["id"]}"}
                       class="hash-display text-xs hover:text-primary"
                     >
-                      {truncate_hash(resource["tag"])}
+                      {Formatting.truncate_hash(resource["tag"])}
                     </a>
                     <.copy_button :if={resource["tag"]} text={resource["tag"]} tooltip="Copy tag" />
                   </div>
@@ -509,7 +508,7 @@ defmodule AnomaExplorerWeb.ResourcesLive do
                 </td>
                 <td class="hidden md:table-cell">
                   <div class="flex items-center gap-1">
-                    <code class="hash-display text-xs">{truncate_hash(resource["logicRef"])}</code>
+                    <code class="hash-display text-xs">{Formatting.truncate_hash(resource["logicRef"])}</code>
                     <.copy_button
                       :if={resource["logicRef"]}
                       text={resource["logicRef"]}
@@ -533,7 +532,7 @@ defmodule AnomaExplorerWeb.ResourcesLive do
                         href={"/transactions/#{resource["transaction"]["id"]}"}
                         class="hash-display text-xs hover:text-primary"
                       >
-                        {truncate_hash(resource["transaction"]["txHash"])}
+                        {Formatting.truncate_hash(resource["transaction"]["txHash"])}
                       </a>
                       <.copy_button text={resource["transaction"]["txHash"]} tooltip="Copy tx hash" />
                     </div>
@@ -566,11 +565,4 @@ defmodule AnomaExplorerWeb.ResourcesLive do
     """
   end
 
-  defp truncate_hash(nil), do: "-"
-
-  defp truncate_hash(hash) when byte_size(hash) > 16 do
-    String.slice(hash, 0, 10) <> "..." <> String.slice(hash, -6, 6)
-  end
-
-  defp truncate_hash(hash), do: hash
 end

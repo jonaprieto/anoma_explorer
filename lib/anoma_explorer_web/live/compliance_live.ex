@@ -7,6 +7,7 @@ defmodule AnomaExplorerWeb.ComplianceLive do
   alias AnomaExplorerWeb.Layouts
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Networks
+  alias AnomaExplorer.Utils.Formatting
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
@@ -134,7 +135,7 @@ defmodule AnomaExplorerWeb.ComplianceLive do
           </div>
           <div>
             <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Timestamp</div>
-            <div>{format_timestamp(@unit["action"]["timestamp"])}</div>
+            <div>{Formatting.format_timestamp_full(@unit["action"]["timestamp"])}</div>
           </div>
           <div>
             <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Action</div>
@@ -143,7 +144,7 @@ defmodule AnomaExplorerWeb.ComplianceLive do
                 href={"/actions/#{@unit["action"]["id"]}"}
                 class="hash-display text-sm hover:text-primary"
               >
-                {truncate_hash(@unit["action"]["actionTreeRoot"])}
+                {Formatting.truncate_hash(@unit["action"]["actionTreeRoot"])}
               </a>
               <.copy_button
                 :if={@unit["action"]["actionTreeRoot"]}
@@ -160,7 +161,7 @@ defmodule AnomaExplorerWeb.ComplianceLive do
                   href={"/transactions/#{@unit["action"]["transaction"]["id"]}"}
                   class="hash-display text-sm hover:text-primary"
                 >
-                  {truncate_hash(@unit["action"]["transaction"]["txHash"])}
+                  {Formatting.truncate_hash(@unit["action"]["transaction"]["txHash"])}
                 </a>
                 <.copy_button text={@unit["action"]["transaction"]["txHash"]} tooltip="Copy tx hash" />
               </div>
@@ -220,7 +221,7 @@ defmodule AnomaExplorerWeb.ComplianceLive do
                 href={"/resources/#{@unit["consumedResource"]["id"]}"}
                 class="hash-display text-sm hover:text-primary"
               >
-                {truncate_hash(@unit["consumedResource"]["tag"])}
+                {Formatting.truncate_hash(@unit["consumedResource"]["tag"])}
               </a>
               <.copy_button
                 :if={@unit["consumedResource"]["tag"]}
@@ -269,7 +270,7 @@ defmodule AnomaExplorerWeb.ComplianceLive do
                 href={"/resources/#{@unit["createdResource"]["id"]}"}
                 class="hash-display text-sm hover:text-primary"
               >
-                {truncate_hash(@unit["createdResource"]["tag"])}
+                {Formatting.truncate_hash(@unit["createdResource"]["tag"])}
               </a>
               <.copy_button
                 :if={@unit["createdResource"]["tag"]}
@@ -319,20 +320,4 @@ defmodule AnomaExplorerWeb.ComplianceLive do
     """
   end
 
-  defp truncate_hash(nil), do: "-"
-
-  defp truncate_hash(hash) when byte_size(hash) > 20 do
-    String.slice(hash, 0, 10) <> "..." <> String.slice(hash, -8, 8)
-  end
-
-  defp truncate_hash(hash), do: hash
-
-  defp format_timestamp(nil), do: "-"
-
-  defp format_timestamp(ts) when is_integer(ts) do
-    case DateTime.from_unix(ts) do
-      {:ok, dt} -> Calendar.strftime(dt, "%Y-%m-%d %H:%M:%S UTC")
-      _ -> "-"
-    end
-  end
 end

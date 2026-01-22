@@ -7,6 +7,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
   alias AnomaExplorerWeb.Layouts
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Networks
+  alias AnomaExplorer.Utils.Formatting
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
@@ -30,7 +31,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
          socket
          |> assign(:transaction, transaction)
          |> assign(:loading, false)
-         |> assign(:page_title, "Transaction #{truncate_hash(transaction["txHash"])}")}
+         |> assign(:page_title, "Transaction #{Formatting.truncate_hash(transaction["txHash"])}")}
 
       {:error, :not_found} ->
         {:noreply,
@@ -79,7 +80,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
           <div>
             <h1 class="page-title">Transaction Details</h1>
             <p class="text-sm text-base-content/70 mt-1">
-              {if @transaction, do: truncate_hash(@transaction["txHash"]), else: "Loading..."}
+              {if @transaction, do: Formatting.truncate_hash(@transaction["txHash"]), else: "Loading..."}
             </p>
           </div>
         </div>
@@ -172,7 +173,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
         </div>
         <div>
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Timestamp</div>
-          <div class="font-mono">{format_timestamp(@tx["timestamp"])}</div>
+          <div class="font-mono">{Formatting.format_timestamp_full(@tx["timestamp"])}</div>
         </div>
         <div>
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Network</div>
@@ -198,7 +199,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">From</div>
           <div class="flex items-center gap-2">
             <%= if @tx["from"] do %>
-              <code class="hash-display text-sm">{truncate_hash(@tx["from"])}</code>
+              <code class="hash-display text-sm">{Formatting.truncate_hash(@tx["from"])}</code>
               <.copy_button text={@tx["from"]} tooltip="Copy address" />
               <%= if @from_url do %>
                 <a
@@ -217,15 +218,15 @@ defmodule AnomaExplorerWeb.TransactionLive do
         </div>
         <div>
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Value</div>
-          <div class="font-mono">{format_eth(@tx["value"])}</div>
+          <div class="font-mono">{Formatting.format_eth(@tx["value"])}</div>
         </div>
         <div>
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Gas Price</div>
-          <div class="font-mono">{format_gwei(@tx["gasPrice"])}</div>
+          <div class="font-mono">{Formatting.format_gwei(@tx["gasPrice"])}</div>
         </div>
         <div>
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Transaction Fee</div>
-          <div class="font-mono">{format_tx_fee(@tx["gasUsed"], @tx["gasPrice"])}</div>
+          <div class="font-mono">{Formatting.format_tx_fee(@tx["gasUsed"], @tx["gasPrice"])}</div>
         </div>
         <%= if @tx["contractAddress"] do %>
           <div>
@@ -293,13 +294,13 @@ defmodule AnomaExplorerWeb.TransactionLive do
                   </td>
                   <td>
                     <div class="flex items-center gap-1">
-                      <code class="hash-display text-xs">{truncate_hash(tag)}</code>
+                      <code class="hash-display text-xs">{Formatting.truncate_hash(tag)}</code>
                       <.copy_button :if={tag} text={tag} tooltip="Copy tag" />
                     </div>
                   </td>
                   <td>
                     <div class="flex items-center gap-1">
-                      <code class="hash-display text-xs">{truncate_hash(logic_ref)}</code>
+                      <code class="hash-display text-xs">{Formatting.truncate_hash(logic_ref)}</code>
                       <.copy_button :if={logic_ref} text={logic_ref} tooltip="Copy logic ref" />
                     </div>
                   </td>
@@ -342,7 +343,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
                         href={"/resources/#{resource["id"]}"}
                         class="hash-display text-xs hover:text-primary"
                       >
-                        {truncate_hash(resource["tag"])}
+                        {Formatting.truncate_hash(resource["tag"])}
                       </a>
                       <.copy_button :if={resource["tag"]} text={resource["tag"]} tooltip="Copy tag" />
                     </div>
@@ -360,7 +361,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
                   </td>
                   <td>
                     <div class="flex items-center gap-1">
-                      <code class="hash-display text-xs">{truncate_hash(resource["logicRef"])}</code>
+                      <code class="hash-display text-xs">{Formatting.truncate_hash(resource["logicRef"])}</code>
                       <.copy_button
                         :if={resource["logicRef"]}
                         text={resource["logicRef"]}
@@ -410,7 +411,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
                         href={"/actions/#{action["id"]}"}
                         class="hash-display text-xs hover:text-primary"
                       >
-                        {truncate_hash(action["actionTreeRoot"])}
+                        {Formatting.truncate_hash(action["actionTreeRoot"])}
                       </a>
                       <.copy_button
                         :if={action["actionTreeRoot"]}
@@ -447,71 +448,4 @@ defmodule AnomaExplorerWeb.TransactionLive do
     """
   end
 
-  defp truncate_hash(nil), do: "-"
-
-  defp truncate_hash(hash) when byte_size(hash) > 20 do
-    String.slice(hash, 0, 10) <> "..." <> String.slice(hash, -8, 8)
-  end
-
-  defp truncate_hash(hash), do: hash
-
-  defp format_timestamp(nil), do: "-"
-
-  defp format_timestamp(ts) when is_integer(ts) do
-    case DateTime.from_unix(ts) do
-      {:ok, dt} -> Calendar.strftime(dt, "%Y-%m-%d %H:%M:%S UTC")
-      _ -> "-"
-    end
-  end
-
-  # Format Wei value to Gwei (for gas price display)
-  defp format_gwei(nil), do: "-"
-
-  defp format_gwei(wei) when is_integer(wei) do
-    gwei = wei / 1_000_000_000
-    "#{Float.round(gwei, 2)} Gwei"
-  end
-
-  defp format_gwei(wei) when is_binary(wei) do
-    case Integer.parse(wei) do
-      {n, _} -> format_gwei(n)
-      :error -> "-"
-    end
-  end
-
-  defp format_gwei(_), do: "-"
-
-  # Format Wei value to ETH (for value display)
-  defp format_eth(nil), do: "-"
-
-  defp format_eth(wei) when is_integer(wei) do
-    eth = wei / 1_000_000_000_000_000_000
-    "#{Float.round(eth, 6)} ETH"
-  end
-
-  defp format_eth(wei) when is_binary(wei) do
-    case Integer.parse(wei) do
-      {n, _} -> format_eth(n)
-      :error -> "-"
-    end
-  end
-
-  defp format_eth(_), do: "-"
-
-  # Calculate and format transaction fee (gasUsed * gasPrice)
-  defp format_tx_fee(gas_used, gas_price) when is_integer(gas_used) and is_integer(gas_price) do
-    fee_wei = gas_used * gas_price
-    format_eth(fee_wei)
-  end
-
-  defp format_tx_fee(gas_used, gas_price) when is_binary(gas_used) and is_binary(gas_price) do
-    with {gu, _} <- Integer.parse(gas_used),
-         {gp, _} <- Integer.parse(gas_price) do
-      format_tx_fee(gu, gp)
-    else
-      _ -> "-"
-    end
-  end
-
-  defp format_tx_fee(_, _), do: "-"
 end

@@ -8,6 +8,7 @@ defmodule AnomaExplorerWeb.CompliancesLive do
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Client
   alias AnomaExplorer.Indexer.Networks
+  alias AnomaExplorer.Utils.Formatting
 
   @default_filters %{
     "nullifier" => "",
@@ -364,7 +365,7 @@ defmodule AnomaExplorerWeb.CompliancesLive do
                       href={"/compliances/#{unit["id"]}"}
                       class="hash-display text-xs hover:text-primary"
                     >
-                      {truncate_hash(unit["consumedNullifier"])}
+                      {Formatting.truncate_hash(unit["consumedNullifier"])}
                     </a>
                     <.copy_button
                       :if={unit["consumedNullifier"]}
@@ -376,7 +377,7 @@ defmodule AnomaExplorerWeb.CompliancesLive do
                 <td>
                   <div class="flex items-center gap-1">
                     <code class="hash-display text-xs">
-                      {truncate_hash(unit["createdCommitment"])}
+                      {Formatting.truncate_hash(unit["createdCommitment"])}
                     </code>
                     <.copy_button
                       :if={unit["createdCommitment"]}
@@ -412,7 +413,7 @@ defmodule AnomaExplorerWeb.CompliancesLive do
                         href={"/transactions/#{unit["action"]["transaction"]["id"]}"}
                         class="hash-display text-xs hover:text-primary"
                       >
-                        {truncate_hash(unit["action"]["transaction"]["txHash"])}
+                        {Formatting.truncate_hash(unit["action"]["transaction"]["txHash"])}
                       </a>
                       <.copy_button
                         text={unit["action"]["transaction"]["txHash"]}
@@ -448,11 +449,4 @@ defmodule AnomaExplorerWeb.CompliancesLive do
     """
   end
 
-  defp truncate_hash(nil), do: "-"
-
-  defp truncate_hash(hash) when byte_size(hash) > 16 do
-    String.slice(hash, 0, 10) <> "..." <> String.slice(hash, -6, 6)
-  end
-
-  defp truncate_hash(hash), do: hash
 end
