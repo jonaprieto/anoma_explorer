@@ -86,6 +86,8 @@ defmodule AnomaExplorerWeb do
       import Phoenix.HTML
       # Core UI components
       import AnomaExplorerWeb.CoreComponents
+      # Admin authorization components
+      import AnomaExplorerWeb.AdminComponents
 
       # Common modules used in templates
       alias Phoenix.LiveView.JS

@@ -4,8 +4,11 @@ defmodule AnomaExplorerWeb.IndexerLive do
   """
   use AnomaExplorerWeb, :live_view
 
+  alias AnomaExplorerWeb.AdminAuth
   alias AnomaExplorerWeb.Layouts
   alias AnomaExplorer.Settings
+
+  on_mount {AdminAuth, :load_admin_state}
 
   @impl true
   def mount(_params, _session, socket) do
@@ -23,29 +26,40 @@ defmodule AnomaExplorerWeb.IndexerLive do
      |> assign(:saving, false)}
   end
 
+  # Admin authorization events
   @impl true
+  def handle_event(event, params, socket)
+      when event in ~w(admin_show_unlock_modal admin_close_unlock_modal admin_verify_secret admin_logout) do
+    case AdminAuth.handle_event(event, params, socket) do
+      {:handled, socket} -> {:noreply, socket}
+      :not_handled -> {:noreply, socket}
+    end
+  end
+
   def handle_event("update_url", %{"url" => url}, socket) do
     {:noreply, assign(socket, :url_input, url)}
   end
 
   @impl true
   def handle_event("save_url", %{"url" => url}, socket) do
-    socket = assign(socket, :saving, true)
+    AdminAuth.require_admin(socket, fn ->
+      socket = assign(socket, :saving, true)
 
-    case Settings.set_envio_url(url) do
-      {:ok, _} ->
-        {:noreply,
-         socket
-         |> assign(:url, url)
-         |> assign(:saving, false)
-         |> put_flash(:info, "Indexer endpoint saved successfully")}
+      case Settings.set_envio_url(url) do
+        {:ok, _} ->
+          {:noreply,
+           socket
+           |> assign(:url, url)
+           |> assign(:saving, false)
+           |> put_flash(:info, "Indexer endpoint saved successfully")}
 
-      {:error, _} ->
-        {:noreply,
-         socket
-         |> assign(:saving, false)
-         |> put_flash(:error, "Failed to save endpoint")}
-    end
+        {:error, _} ->
+          {:noreply,
+           socket
+           |> assign(:saving, false)
+           |> put_flash(:error, "Failed to save endpoint")}
+      end
+    end)
   end
 
   @impl true
@@ -90,6 +104,13 @@ defmodule AnomaExplorerWeb.IndexerLive do
 
   @impl true
   def handle_info({:settings_changed, _}, socket), do: {:noreply, socket}
+
+  def handle_info(:admin_check_expiration, socket) do
+    case AdminAuth.handle_info(:admin_check_expiration, socket) do
+      {:handled, socket} -> {:noreply, socket}
+      :not_handled -> {:noreply, socket}
+    end
+  end
 
   defp test_graphql_endpoint(url) do
     query = """
@@ -137,6 +158,11 @@ defmodule AnomaExplorerWeb.IndexerLive do
             GraphQL endpoint for indexed blockchain data
           </p>
         </div>
+        <.admin_status
+          authorized={@admin_authorized}
+          authorized_at={@admin_authorized_at}
+          timeout_ms={@admin_timeout_ms}
+        />
       </div>
 
       <div class="stat-card">
@@ -167,13 +193,18 @@ defmodule AnomaExplorerWeb.IndexerLive do
                   Test Connection
                 <% end %>
               </button>
-              <button type="submit" disabled={@saving || @url_input == @url} class="btn btn-primary">
+              <.protected_button
+                authorized={@admin_authorized}
+                type="submit"
+                disabled={@saving || @url_input == @url}
+                class="btn btn-primary"
+              >
                 <%= if @saving do %>
                   <span class="loading loading-spinner loading-sm"></span> Saving...
                 <% else %>
                   Save
                 <% end %>
-              </button>
+              </.protected_button>
             </div>
             <label class="label">
               <span class="label-text-alt text-base-content/50">
@@ -229,6 +260,8 @@ defmodule AnomaExplorerWeb.IndexerLive do
           <li>Changes take effect immediately for new dashboard queries</li>
         </ul>
       </div>
+
+      <.unlock_modal show={@admin_show_unlock_modal} error={@admin_error} />
     </Layouts.app>
     """
   end

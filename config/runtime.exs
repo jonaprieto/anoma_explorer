@@ -34,6 +34,15 @@ if etherscan_api_key = System.get_env("ETHERSCAN_API_KEY") do
   config :anoma_explorer, :etherscan_api_key, etherscan_api_key
 end
 
+# Admin authorization for production settings
+if admin_secret_key = System.get_env("ADMIN_SECRET_KEY") do
+  config :anoma_explorer, :admin_secret_key, admin_secret_key
+end
+
+if admin_timeout = System.get_env("ADMIN_TIMEOUT_MINUTES") do
+  config :anoma_explorer, :admin_timeout_minutes, String.to_integer(admin_timeout)
+end
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

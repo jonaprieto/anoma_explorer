@@ -3,7 +3,10 @@ defmodule AnomaExplorerWeb.NetworksLive do
 
   alias AnomaExplorer.Settings
   alias AnomaExplorer.Settings.Network
+  alias AnomaExplorerWeb.AdminAuth
   alias AnomaExplorerWeb.Layouts
+
+  on_mount {AdminAuth, :load_admin_state}
 
   @impl true
   def mount(_params, _session, socket) do
@@ -28,9 +31,20 @@ defmodule AnomaExplorerWeb.NetworksLive do
             Configure blockchain networks and RPC endpoints
           </p>
         </div>
-        <button phx-click="new_network" class="btn btn-primary btn-sm">
-          <.icon name="hero-plus" class="w-4 h-4" /> Add Network
-        </button>
+        <div class="flex items-center gap-4">
+          <.admin_status
+            authorized={@admin_authorized}
+            authorized_at={@admin_authorized_at}
+            timeout_ms={@admin_timeout_ms}
+          />
+          <.protected_button
+            authorized={@admin_authorized}
+            phx-click="new_network"
+            class="btn btn-primary btn-sm"
+          >
+            <.icon name="hero-plus" class="w-4 h-4" /> Add Network
+          </.protected_button>
+        </div>
       </div>
 
       <div class="space-y-4">
@@ -38,9 +52,13 @@ defmodule AnomaExplorerWeb.NetworksLive do
           <div class="stat-card text-center py-12">
             <.icon name="hero-globe-alt" class="w-12 h-12 text-base-content/30 mx-auto mb-4" />
             <p class="text-base-content/70">No networks configured yet.</p>
-            <button phx-click="new_network" class="btn btn-primary btn-sm mt-4">
+            <.protected_button
+              authorized={@admin_authorized}
+              phx-click="new_network"
+              class="btn btn-primary btn-sm mt-4"
+            >
               Add your first network
-            </button>
+            </.protected_button>
           </div>
         <% else %>
           <div class="stat-card">
@@ -98,21 +116,23 @@ defmodule AnomaExplorerWeb.NetworksLive do
                         <% end %>
                       </td>
                       <td class="text-right">
-                        <button
+                        <.protected_button
+                          authorized={@admin_authorized}
                           phx-click="edit_network"
                           phx-value-id={network.id}
                           class="btn btn-ghost btn-xs"
                         >
                           <.icon name="hero-pencil" class="w-3 h-3" />
-                        </button>
-                        <button
+                        </.protected_button>
+                        <.protected_button
+                          authorized={@admin_authorized}
                           phx-click="delete_network"
                           phx-value-id={network.id}
                           data-confirm="Delete this network?"
                           class="btn btn-ghost btn-xs text-error"
                         >
                           <.icon name="hero-trash" class="w-3 h-3" />
-                        </button>
+                        </.protected_button>
                       </td>
                     </tr>
                   <% end %>
@@ -128,6 +148,8 @@ defmodule AnomaExplorerWeb.NetworksLive do
           <.render_modal modal={@modal} form={@form} />
         </.modal>
       <% end %>
+
+      <.unlock_modal show={@admin_show_unlock_modal} error={@admin_error} />
     </Layouts.app>
     """
   end
@@ -321,31 +343,46 @@ defmodule AnomaExplorerWeb.NetworksLive do
 
   # Event Handlers
 
+  # Admin authorization events
   @impl true
+  def handle_event(event, params, socket)
+      when event in ~w(admin_show_unlock_modal admin_close_unlock_modal admin_verify_secret admin_logout) do
+    case AdminAuth.handle_event(event, params, socket) do
+      {:handled, socket} -> {:noreply, socket}
+      :not_handled -> {:noreply, socket}
+    end
+  end
+
   def handle_event("new_network", _params, socket) do
-    form = to_form(Settings.change_network(%Network{}))
-    {:noreply, assign(socket, modal: :new_network, form: form)}
+    AdminAuth.require_admin(socket, fn ->
+      form = to_form(Settings.change_network(%Network{}))
+      {:noreply, assign(socket, modal: :new_network, form: form)}
+    end)
   end
 
   def handle_event("edit_network", %{"id" => id}, socket) do
-    network = Settings.get_network!(id)
-    form = to_form(Settings.change_network(network))
-    {:noreply, assign(socket, modal: {:edit_network, network}, form: form)}
+    AdminAuth.require_admin(socket, fn ->
+      network = Settings.get_network!(id)
+      form = to_form(Settings.change_network(network))
+      {:noreply, assign(socket, modal: {:edit_network, network}, form: form)}
+    end)
   end
 
   def handle_event("delete_network", %{"id" => id}, socket) do
-    network = Settings.get_network!(id)
+    AdminAuth.require_admin(socket, fn ->
+      network = Settings.get_network!(id)
 
-    case Settings.delete_network(network) do
-      {:ok, _} ->
-        {:noreply,
-         socket
-         |> put_flash(:info, "Network deleted")
-         |> assign(:networks, list_networks())}
+      case Settings.delete_network(network) do
+        {:ok, _} ->
+          {:noreply,
+           socket
+           |> put_flash(:info, "Network deleted")
+           |> assign(:networks, list_networks())}
 
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Could not delete network")}
-    end
+        {:error, _} ->
+          {:noreply, put_flash(socket, :error, "Could not delete network")}
+      end
+    end)
   end
 
   def handle_event("save_network", %{"network" => params}, socket) do
@@ -395,6 +432,13 @@ defmodule AnomaExplorerWeb.NetworksLive do
   @impl true
   def handle_info({:settings_changed, _}, socket) do
     {:noreply, assign(socket, :networks, list_networks())}
+  end
+
+  def handle_info(:admin_check_expiration, socket) do
+    case AdminAuth.handle_info(:admin_check_expiration, socket) do
+      {:handled, socket} -> {:noreply, socket}
+      :not_handled -> {:noreply, socket}
+    end
   end
 
   # Helpers

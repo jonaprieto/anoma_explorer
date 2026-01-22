@@ -108,6 +108,25 @@ defmodule AnomaExplorer.EnvConfig do
       category: :services,
       default: nil,
       secret: true
+    },
+    # Admin Configuration
+    %{
+      name: "ADMIN_SECRET_KEY",
+      description: "Secret key for admin access to edit/delete settings in production",
+      required: false,
+      env: :prod,
+      category: :admin,
+      default: nil,
+      secret: true
+    },
+    %{
+      name: "ADMIN_TIMEOUT_MINUTES",
+      description: "Admin session timeout in minutes",
+      required: false,
+      env: :prod,
+      category: :admin,
+      default: "30",
+      secret: false
     }
   ]
 
@@ -126,6 +145,11 @@ defmodule AnomaExplorer.EnvConfig do
       title: "External Services",
       description: "Third-party API integrations",
       order: 3
+    },
+    admin: %{
+      title: "Admin Access",
+      description: "Production admin authorization settings",
+      order: 4
     }
   }
 

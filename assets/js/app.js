@@ -167,6 +167,15 @@ window.addEventListener("phx:copy", (event) => {
   }
 })
 
+// Admin session management - store/clear authorization timestamp
+window.addEventListener("phx:admin_store_session", (event) => {
+  sessionStorage.setItem('admin_authorized_at', event.detail.authorized_at)
+})
+
+window.addEventListener("phx:admin_clear_session", () => {
+  sessionStorage.removeItem('admin_authorized_at')
+})
+
 // Global search keyboard shortcut (⌘K / Ctrl+K)
 document.addEventListener("keydown", (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === "k") {

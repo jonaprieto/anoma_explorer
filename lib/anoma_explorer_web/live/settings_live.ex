@@ -2,6 +2,9 @@ defmodule AnomaExplorerWeb.SettingsLive do
   use AnomaExplorerWeb, :live_view
 
   alias AnomaExplorer.Settings
+  alias AnomaExplorerWeb.AdminAuth
+
+  on_mount {AdminAuth, :load_admin_state}
   alias AnomaExplorer.Settings.Protocol
   alias AnomaExplorer.Settings.ContractAddress
   alias AnomaExplorer.ChainVerifier
@@ -40,9 +43,20 @@ defmodule AnomaExplorerWeb.SettingsLive do
             Manage contract categories and addresses
           </p>
         </div>
-        <button phx-click="new_protocol" class="btn btn-primary btn-sm">
-          <.icon name="hero-plus" class="w-4 h-4" /> Add Category
-        </button>
+        <div class="flex items-center gap-4">
+          <.admin_status
+            authorized={@admin_authorized}
+            authorized_at={@admin_authorized_at}
+            timeout_ms={@admin_timeout_ms}
+          />
+          <.protected_button
+            authorized={@admin_authorized}
+            phx-click="new_protocol"
+            class="btn btn-primary btn-sm"
+          >
+            <.icon name="hero-plus" class="w-4 h-4" /> Add Category
+          </.protected_button>
+        </div>
       </div>
 
       <div class="space-y-6">
@@ -50,9 +64,13 @@ defmodule AnomaExplorerWeb.SettingsLive do
           <div class="stat-card text-center py-12">
             <.icon name="hero-cube-transparent" class="w-12 h-12 text-base-content/30 mx-auto mb-4" />
             <p class="text-base-content/70">No categories configured yet.</p>
-            <button phx-click="new_protocol" class="btn btn-primary btn-sm mt-4">
+            <.protected_button
+              authorized={@admin_authorized}
+              phx-click="new_protocol"
+              class="btn btn-primary btn-sm mt-4"
+            >
               Add your first category
-            </button>
+            </.protected_button>
           </div>
         <% else %>
           <%= for protocol <- @protocols do %>
@@ -99,28 +117,31 @@ defmodule AnomaExplorerWeb.SettingsLive do
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
-                  <button
+                  <.protected_button
+                    authorized={@admin_authorized}
                     phx-click="new_address"
                     phx-value-protocol-id={protocol.id}
                     class="btn btn-ghost btn-sm"
                   >
                     <.icon name="hero-plus" class="w-4 h-4" /> Add Address
-                  </button>
-                  <button
+                  </.protected_button>
+                  <.protected_button
+                    authorized={@admin_authorized}
                     phx-click="edit_protocol"
                     phx-value-id={protocol.id}
                     class="btn btn-ghost btn-sm"
                   >
                     <.icon name="hero-pencil" class="w-4 h-4" />
-                  </button>
-                  <button
+                  </.protected_button>
+                  <.protected_button
+                    authorized={@admin_authorized}
                     phx-click="delete_protocol"
                     phx-value-id={protocol.id}
                     data-confirm="Delete this category and all its addresses?"
                     class="btn btn-ghost btn-sm text-error"
                   >
                     <.icon name="hero-trash" class="w-4 h-4" />
-                  </button>
+                  </.protected_button>
                 </div>
               </div>
 
@@ -187,21 +208,23 @@ defmodule AnomaExplorerWeb.SettingsLive do
                             <% end %>
                           </td>
                           <td class="text-right">
-                            <button
+                            <.protected_button
+                              authorized={@admin_authorized}
                               phx-click="edit_address"
                               phx-value-id={address.id}
                               class="btn btn-ghost btn-xs"
                             >
                               <.icon name="hero-pencil" class="w-3 h-3" />
-                            </button>
-                            <button
+                            </.protected_button>
+                            <.protected_button
+                              authorized={@admin_authorized}
                               phx-click="delete_address"
                               phx-value-id={address.id}
                               data-confirm="Delete this address?"
                               class="btn btn-ghost btn-xs text-error"
                             >
                               <.icon name="hero-trash" class="w-3 h-3" />
-                            </button>
+                            </.protected_button>
                           </td>
                         </tr>
                       <% end %>
@@ -226,6 +249,8 @@ defmodule AnomaExplorerWeb.SettingsLive do
           />
         </.modal>
       <% end %>
+
+      <.unlock_modal show={@admin_show_unlock_modal} error={@admin_error} />
     </Layouts.app>
     """
   end
@@ -679,7 +704,16 @@ defmodule AnomaExplorerWeb.SettingsLive do
 
   # Event Handlers
 
+  # Admin authorization events
   @impl true
+  def handle_event(event, params, socket)
+      when event in ~w(admin_show_unlock_modal admin_close_unlock_modal admin_verify_secret admin_logout) do
+    case AdminAuth.handle_event(event, params, socket) do
+      {:handled, socket} -> {:noreply, socket}
+      :not_handled -> {:noreply, socket}
+    end
+  end
+
   def handle_event("show_network_info", %{"network" => network_name}, socket) do
     case Map.get(socket.assigns.networks_map, network_name) do
       nil ->
@@ -691,29 +725,35 @@ defmodule AnomaExplorerWeb.SettingsLive do
   end
 
   def handle_event("new_protocol", _params, socket) do
-    form = to_form(Settings.change_protocol(%Protocol{}))
-    {:noreply, assign(socket, modal: :new_protocol, form: form)}
+    AdminAuth.require_admin(socket, fn ->
+      form = to_form(Settings.change_protocol(%Protocol{}))
+      {:noreply, assign(socket, modal: :new_protocol, form: form)}
+    end)
   end
 
   def handle_event("edit_protocol", %{"id" => id}, socket) do
-    protocol = Settings.get_protocol!(id)
-    form = to_form(Settings.change_protocol(protocol))
-    {:noreply, assign(socket, modal: {:edit_protocol, protocol}, form: form)}
+    AdminAuth.require_admin(socket, fn ->
+      protocol = Settings.get_protocol!(id)
+      form = to_form(Settings.change_protocol(protocol))
+      {:noreply, assign(socket, modal: {:edit_protocol, protocol}, form: form)}
+    end)
   end
 
   def handle_event("delete_protocol", %{"id" => id}, socket) do
-    protocol = Settings.get_protocol!(id)
+    AdminAuth.require_admin(socket, fn ->
+      protocol = Settings.get_protocol!(id)
 
-    case Settings.delete_protocol(protocol) do
-      {:ok, _} ->
-        {:noreply,
-         socket
-         |> put_flash(:info, "Category deleted")
-         |> assign(:protocols, list_protocols())}
+      case Settings.delete_protocol(protocol) do
+        {:ok, _} ->
+          {:noreply,
+           socket
+           |> put_flash(:info, "Category deleted")
+           |> assign(:protocols, list_protocols())}
 
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Could not delete protocol")}
-    end
+        {:error, _} ->
+          {:noreply, put_flash(socket, :error, "Could not delete protocol")}
+      end
+    end)
   end
 
   def handle_event("save_protocol", %{"protocol" => params}, socket) do
@@ -747,48 +787,54 @@ defmodule AnomaExplorerWeb.SettingsLive do
   end
 
   def handle_event("new_address", %{"protocol-id" => protocol_id}, socket) do
-    form =
-      to_form(
-        Settings.change_contract_address(%ContractAddress{
-          protocol_id: String.to_integer(protocol_id)
-        })
-      )
+    AdminAuth.require_admin(socket, fn ->
+      form =
+        to_form(
+          Settings.change_contract_address(%ContractAddress{
+            protocol_id: String.to_integer(protocol_id)
+          })
+        )
 
-    {:noreply,
-     assign(socket,
-       modal: {:new_address, protocol_id},
-       form: form,
-       verifying: false,
-       verification_result: nil
-     )}
+      {:noreply,
+       assign(socket,
+         modal: {:new_address, protocol_id},
+         form: form,
+         verifying: false,
+         verification_result: nil
+       )}
+    end)
   end
 
   def handle_event("edit_address", %{"id" => id}, socket) do
-    address = Settings.get_contract_address!(id)
-    form = to_form(Settings.change_contract_address(address))
+    AdminAuth.require_admin(socket, fn ->
+      address = Settings.get_contract_address!(id)
+      form = to_form(Settings.change_contract_address(address))
 
-    {:noreply,
-     assign(socket,
-       modal: {:edit_address, address},
-       form: form,
-       verifying: false,
-       verification_result: nil
-     )}
+      {:noreply,
+       assign(socket,
+         modal: {:edit_address, address},
+         form: form,
+         verifying: false,
+         verification_result: nil
+       )}
+    end)
   end
 
   def handle_event("delete_address", %{"id" => id}, socket) do
-    address = Settings.get_contract_address!(id)
+    AdminAuth.require_admin(socket, fn ->
+      address = Settings.get_contract_address!(id)
 
-    case Settings.delete_contract_address(address) do
-      {:ok, _} ->
-        {:noreply,
-         socket
-         |> put_flash(:info, "Address deleted")
-         |> assign(:protocols, list_protocols())}
+      case Settings.delete_contract_address(address) do
+        {:ok, _} ->
+          {:noreply,
+           socket
+           |> put_flash(:info, "Address deleted")
+           |> assign(:protocols, list_protocols())}
 
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Could not delete address")}
-    end
+        {:error, _} ->
+          {:noreply, put_flash(socket, :error, "Could not delete address")}
+      end
+    end)
   end
 
   def handle_event("save_address", %{"address" => params}, socket) do
@@ -872,6 +918,13 @@ defmodule AnomaExplorerWeb.SettingsLive do
   def handle_info({:do_verify, network, address}, socket) do
     result = ChainVerifier.verify(network, address)
     {:noreply, assign(socket, verifying: false, verification_result: result)}
+  end
+
+  def handle_info(:admin_check_expiration, socket) do
+    case AdminAuth.handle_info(:admin_check_expiration, socket) do
+      {:handled, socket} -> {:noreply, socket}
+      :not_handled -> {:noreply, socket}
+    end
   end
 
   # Helpers
