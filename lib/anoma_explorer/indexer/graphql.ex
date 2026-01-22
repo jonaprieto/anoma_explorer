@@ -6,6 +6,8 @@ defmodule AnomaExplorer.Indexer.GraphQL do
   and aggregate statistics from the indexed blockchain data.
   """
 
+  require Logger
+
   alias AnomaExplorer.Settings
 
   @type transaction :: %{
@@ -1153,16 +1155,24 @@ defmodule AnomaExplorer.Indexer.GraphQL do
             {:ok, data}
 
           {:ok, %{"errors" => errors}} ->
+            Logger.warning("GraphQL query returned errors", errors: errors)
             {:error, {:graphql_error, errors}}
 
           {:error, reason} ->
+            Logger.error("Failed to decode GraphQL response", reason: inspect(reason))
             {:error, {:decode_error, reason}}
         end
 
-      {:ok, %{status: status, body: body}} ->
-        {:error, {:http_error, status, body}}
+      {:ok, %{status: status, body: response_body}} ->
+        Logger.error("GraphQL HTTP error",
+          status: status,
+          body: String.slice(response_body, 0, 500)
+        )
+
+        {:error, {:http_error, status, response_body}}
 
       {:error, reason} ->
+        Logger.error("GraphQL connection error", reason: inspect(reason))
         {:error, {:connection_error, reason}}
     end
   end

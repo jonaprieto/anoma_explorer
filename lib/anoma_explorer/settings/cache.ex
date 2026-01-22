@@ -9,6 +9,8 @@ defmodule AnomaExplorer.Settings.Cache do
   """
   use GenServer
 
+  require Logger
+
   alias AnomaExplorer.Settings.ContractAddress
 
   @table_name :contract_addresses_cache
@@ -149,7 +151,16 @@ defmodule AnomaExplorer.Settings.Cache do
     table = :ets.new(@table_name, [:named_table, :public, :set, read_concurrency: true])
 
     # Load initial data from database
-    load_all_data()
+    case load_all_data() do
+      {:ok, counts} ->
+        Logger.info("Settings cache initialized",
+          protocols: counts.protocols,
+          addresses: counts.addresses
+        )
+
+      {:error, reason} ->
+        Logger.error("Failed to initialize settings cache", reason: inspect(reason))
+    end
 
     {:ok, %{table: table}}
   end
@@ -175,8 +186,13 @@ defmodule AnomaExplorer.Settings.Cache do
   end
 
   defp load_all_data do
-    load_protocols()
-    load_contract_addresses()
+    try do
+      protocol_count = load_protocols()
+      address_count = load_contract_addresses()
+      {:ok, %{protocols: protocol_count, addresses: address_count}}
+    rescue
+      e -> {:error, e}
+    end
   end
 
   defp load_protocols do
@@ -184,22 +200,28 @@ defmodule AnomaExplorer.Settings.Cache do
     alias AnomaExplorer.Settings.Protocol
     import Ecto.Query
 
-    Protocol
-    |> where([p], p.active == true)
-    |> Repo.all()
-    |> Enum.each(fn protocol ->
+    protocols =
+      Protocol
+      |> where([p], p.active == true)
+      |> Repo.all()
+
+    Enum.each(protocols, fn protocol ->
       index_protocol(protocol.name, protocol.id)
     end)
+
+    length(protocols)
   end
 
   defp load_contract_addresses do
     alias AnomaExplorer.Repo
     import Ecto.Query
 
-    ContractAddress
-    |> where([c], c.active == true)
-    |> Repo.all()
-    |> Enum.each(fn address ->
+    addresses =
+      ContractAddress
+      |> where([c], c.active == true)
+      |> Repo.all()
+
+    Enum.each(addresses, fn address ->
       put_address(
         address.protocol_id,
         address.category,
@@ -208,5 +230,7 @@ defmodule AnomaExplorer.Settings.Cache do
         address.address
       )
     end)
+
+    length(addresses)
   end
 end
