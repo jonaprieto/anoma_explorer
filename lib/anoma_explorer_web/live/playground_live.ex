@@ -7,6 +7,9 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
   alias AnomaExplorerWeb.Layouts
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Client
+  alias AnomaExplorerWeb.IndexerSetupComponents
+  alias AnomaExplorer.Settings
+  alias AnomaExplorerWeb.Live.Helpers.SetupHandlers
 
   @default_query """
   query {
@@ -120,7 +123,29 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
      |> assign(:error, nil)
      |> assign(:loading, false)
      |> assign(:configured, Client.configured?())
-     |> assign(:templates, @query_templates)}
+     |> assign(:connection_status, nil)
+     |> assign(:templates, @query_templates)
+     |> SetupHandlers.init_setup_assigns()}
+  end
+
+  @impl true
+  def handle_event("retry_connection", _params, socket) do
+    {:noreply, assign(socket, :configured, Client.configured?())}
+  end
+
+  @impl true
+  def handle_event("setup_update_url", %{"url" => url}, socket) do
+    {:noreply, SetupHandlers.handle_update_url(socket, url)}
+  end
+
+  @impl true
+  def handle_event("setup_save_url", %{"url" => url}, socket) do
+    case SetupHandlers.handle_save_url(socket, url) do
+      {:ok, socket} ->
+        {:noreply, assign(socket, :configured, true)}
+      {:error, socket} ->
+        {:noreply, socket}
+    end
   end
 
   @impl true
@@ -160,6 +185,11 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
     else
       {:noreply, socket}
     end
+  end
+
+  @impl true
+  def handle_info({:setup_auto_test_connection, url}, socket) do
+    {:noreply, SetupHandlers.handle_auto_test(socket, url)}
   end
 
   @impl true
@@ -417,37 +447,27 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
         </div>
       </div>
 
-      <%= if not @configured do %>
-        <.not_configured_message />
-      <% else %>
-        <.action_bar templates={@templates} loading={@loading} />
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <.query_editor query={@query} />
-          <.results_panel result={@result} error={@error} loading={@loading} />
-        </div>
+      <%= cond do %>
+        <% not @configured -> %>
+          <IndexerSetupComponents.setup_required
+            url_input={@setup_url_input}
+            status={@setup_status}
+            auto_testing={@setup_auto_testing}
+            saving={@setup_saving}
+          />
+        <% match?({:error, _}, @connection_status) -> %>
+          <IndexerSetupComponents.connection_error
+            error={elem(@connection_status, 1)}
+            url={Settings.get_envio_url()}
+          />
+        <% true -> %>
+          <.action_bar templates={@templates} loading={@loading} />
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <.query_editor query={@query} />
+            <.results_panel result={@result} error={@error} loading={@loading} />
+          </div>
       <% end %>
     </Layouts.app>
-    """
-  end
-
-  defp not_configured_message(assigns) do
-    ~H"""
-    <div class="stat-card">
-      <div class="flex items-center gap-4">
-        <div class="w-14 h-14 rounded-xl bg-warning/10 flex items-center justify-center">
-          <.icon name="hero-exclamation-triangle" class="w-7 h-7 text-warning" />
-        </div>
-        <div class="flex-1">
-          <h2 class="text-lg font-semibold text-base-content">Indexer Not Configured</h2>
-          <p class="text-sm text-base-content/70">
-            Configure the Envio GraphQL endpoint to use the playground.
-          </p>
-          <a href="/settings/indexer" class="btn btn-primary btn-sm mt-3">
-            Configure Indexer
-          </a>
-        </div>
-      </div>
-    </div>
     """
   end
 

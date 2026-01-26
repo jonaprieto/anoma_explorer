@@ -10,9 +10,7 @@ import Config
 config :anoma_explorer,
   ecto_repos: [AnomaExplorer.Repo],
   generators: [timestamp_type: :utc_datetime],
-  env: config_env(),
-  # Default Envio Hyperindex GraphQL endpoint
-  envio_graphql_url: "https://indexer.dev.hyperindex.xyz/26e6996/v1/graphql"
+  env: config_env()
 
 # Configure the endpoint
 config :anoma_explorer, AnomaExplorerWeb.Endpoint,

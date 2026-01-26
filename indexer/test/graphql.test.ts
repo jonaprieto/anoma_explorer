@@ -5,14 +5,19 @@
  * by running queries against indexed PA-EVM data.
  *
  * Usage:
- *   ENVIO_GRAPHQL_URL=https://indexer.dev.hyperindex.xyz/d60d83b/v1/graphql pnpm test
+ *   ENVIO_GRAPHQL_URL=https://your-endpoint/v1/graphql pnpm test
  */
 
 import { expect } from "chai";
 
-const GRAPHQL_URL =
-  process.env.ENVIO_GRAPHQL_URL ||
-  "https://indexer.dev.hyperindex.xyz/1419641/v1/graphql";
+const GRAPHQL_URL = process.env.ENVIO_GRAPHQL_URL;
+
+if (!GRAPHQL_URL) {
+  throw new Error(
+    "ENVIO_GRAPHQL_URL environment variable is required. " +
+      "Set it to your Envio Hyperindex GraphQL endpoint."
+  );
+}
 
 interface GraphQLResponse<T> {
   data?: T;

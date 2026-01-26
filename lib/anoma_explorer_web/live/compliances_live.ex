@@ -5,11 +5,14 @@ defmodule AnomaExplorerWeb.CompliancesLive do
   use AnomaExplorerWeb, :live_view
 
   alias AnomaExplorerWeb.Layouts
+  alias AnomaExplorerWeb.IndexerSetupComponents
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Client
+  alias AnomaExplorer.Settings
   alias AnomaExplorer.Utils.Formatting
 
   alias AnomaExplorerWeb.Live.Helpers.SharedHandlers
+  alias AnomaExplorerWeb.Live.Helpers.SetupHandlers
   import AnomaExplorerWeb.Live.Helpers.FilterHelpers
 
   @default_filters %{
@@ -20,30 +23,77 @@ defmodule AnomaExplorerWeb.CompliancesLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    socket =
-      socket
-      |> assign(:page_title, "Compliance Units")
-      |> assign(:compliances, [])
-      |> assign(:loading, true)
-      |> assign(:error, nil)
-      |> assign(:page, 0)
-      |> assign(:has_more, true)
-      |> assign(:configured, Client.configured?())
-      |> assign(:filters, @default_filters)
-      |> assign(:filter_version, 0)
-      |> assign(:show_filters, false)
-      |> assign(:selected_chain, nil)
+    if connected?(socket), do: send(self(), :check_connection)
 
-    if connected?(socket) and Client.configured?() do
-      send(self(), :load_compliances)
-    end
-
-    {:ok, socket}
+    {:ok,
+     socket
+     |> assign(:page_title, "Compliance Units")
+     |> assign(:compliances, [])
+     |> assign(:loading, true)
+     |> assign(:error, nil)
+     |> assign(:page, 0)
+     |> assign(:has_more, true)
+     |> assign(:configured, Client.configured?())
+     |> assign(:connection_status, nil)
+     |> assign(:filters, @default_filters)
+     |> assign(:filter_version, 0)
+     |> assign(:show_filters, false)
+     |> assign(:selected_chain, nil)
+     |> SetupHandlers.init_setup_assigns()}
   end
 
   @impl true
-  def handle_info(:load_compliances, socket) do
-    {:noreply, load_compliances(socket)}
+  def handle_info(:check_connection, socket) do
+    if Client.configured?() do
+      case Client.test_connection() do
+        {:ok, _} ->
+          socket = load_compliances(socket)
+          {:noreply, assign(socket, :connection_status, :ok)}
+
+        {:error, reason} ->
+          {:noreply,
+           socket
+           |> assign(:connection_status, {:error, reason})
+           |> assign(:loading, false)}
+      end
+    else
+      {:noreply,
+       socket
+       |> assign(:configured, false)
+       |> assign(:loading, false)}
+    end
+  end
+
+  @impl true
+  def handle_info({:setup_auto_test_connection, url}, socket) do
+    {:noreply, SetupHandlers.handle_auto_test(socket, url)}
+  end
+
+  @impl true
+  def handle_event("retry_connection", _params, socket) do
+    send(self(), :check_connection)
+    {:noreply, assign(socket, :loading, true)}
+  end
+
+  @impl true
+  def handle_event("setup_update_url", %{"url" => url}, socket) do
+    {:noreply, SetupHandlers.handle_update_url(socket, url)}
+  end
+
+  @impl true
+  def handle_event("setup_save_url", %{"url" => url}, socket) do
+    case SetupHandlers.handle_save_url(socket, url) do
+      {:ok, socket} ->
+        send(self(), :check_connection)
+
+        {:noreply,
+         socket
+         |> assign(:configured, true)
+         |> assign(:loading, true)}
+
+      {:error, socket} ->
+        {:noreply, socket}
+    end
   end
 
   @impl true
@@ -189,30 +239,41 @@ defmodule AnomaExplorerWeb.CompliancesLive do
         </div>
       </div>
 
-      <%= if not @configured do %>
-        <.not_configured_message />
-      <% else %>
-        <%= if @error do %>
-          <div class="alert alert-error mb-6">
-            <.icon name="hero-exclamation-triangle" class="h-5 w-5" />
-            <span>{@error}</span>
-          </div>
-        <% end %>
-
-        <div class="stat-card">
-          <.filter_toggle show_filters={@show_filters} filter_count={active_filter_count(@filters)} />
-          <.filter_form :if={@show_filters} filters={@filters} filter_version={@filter_version} />
-
-          <%= if @loading and @compliances == [] do %>
-            <.loading_skeleton />
-          <% else %>
-            <.compliances_table compliances={@compliances} />
+      <%= cond do %>
+        <% not @configured -> %>
+          <IndexerSetupComponents.setup_required
+            url_input={@setup_url_input}
+            status={@setup_status}
+            auto_testing={@setup_auto_testing}
+            saving={@setup_saving}
+          />
+        <% match?({:error, _}, @connection_status) -> %>
+          <IndexerSetupComponents.connection_error
+            error={elem(@connection_status, 1)}
+            url={Settings.get_envio_url()}
+          />
+        <% true -> %>
+          <%= if @error do %>
+            <div class="alert alert-error mb-6">
+              <.icon name="hero-exclamation-triangle" class="h-5 w-5" />
+              <span>{@error}</span>
+            </div>
           <% end %>
 
-          <.pagination page={@page} has_more={@has_more} loading={@loading} />
-        </div>
+          <div class="stat-card">
+            <.filter_toggle show_filters={@show_filters} filter_count={active_filter_count(@filters)} />
+            <.filter_form :if={@show_filters} filters={@filters} filter_version={@filter_version} />
 
-        <.chain_info_modal chain={@selected_chain} />
+            <%= if @loading and @compliances == [] do %>
+              <.loading_skeleton />
+            <% else %>
+              <.compliances_table compliances={@compliances} />
+            <% end %>
+
+            <.pagination page={@page} has_more={@has_more} loading={@loading} />
+          </div>
+
+          <.chain_info_modal chain={@selected_chain} />
       <% end %>
     </Layouts.app>
     """
@@ -292,27 +353,6 @@ defmodule AnomaExplorerWeb.CompliancesLive do
         </button>
       </div>
     </form>
-    """
-  end
-
-  defp not_configured_message(assigns) do
-    ~H"""
-    <div class="stat-card">
-      <div class="flex items-center gap-4">
-        <div class="w-14 h-14 rounded-xl bg-warning/10 flex items-center justify-center">
-          <.icon name="hero-exclamation-triangle" class="w-7 h-7 text-warning" />
-        </div>
-        <div class="flex-1">
-          <h2 class="text-lg font-semibold text-base-content">Indexer Not Configured</h2>
-          <p class="text-sm text-base-content/70">
-            Configure the Envio GraphQL endpoint in settings to view compliance units.
-          </p>
-          <a href="/settings/indexer" class="btn btn-primary btn-sm mt-3">
-            Configure Indexer
-          </a>
-        </div>
-      </div>
-    </div>
     """
   end
 
