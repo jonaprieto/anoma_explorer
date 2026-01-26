@@ -20,6 +20,7 @@ defmodule AnomaExplorerWeb.HomeLive do
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket) do
+      Settings.subscribe()
       send(self(), :check_connection)
       :timer.send_interval(@refresh_interval, self(), :refresh)
     end
@@ -78,6 +79,22 @@ defmodule AnomaExplorerWeb.HomeLive do
   def handle_info({:setup_auto_test_connection, url}, socket) do
     {:noreply, SetupHandlers.handle_auto_test(socket, url)}
   end
+
+  @impl true
+  def handle_info({:settings_changed, {:app_setting_updated, _}}, socket) do
+    # Envio URL changed, clear cache and re-check connection
+    AnomaExplorer.Indexer.Cache.clear()
+
+    {:noreply,
+     socket
+     |> assign(:configured, Client.configured?())
+     |> assign(:loading, true)
+     |> assign(:connection_status, nil)
+     |> then(fn s -> send(self(), :check_connection); s end)}
+  end
+
+  @impl true
+  def handle_info({:settings_changed, _}, socket), do: {:noreply, socket}
 
   @impl true
   def handle_event("refresh", _params, socket) do

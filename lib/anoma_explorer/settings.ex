@@ -415,10 +415,19 @@ defmodule AnomaExplorer.Settings do
 
   @doc """
   Sets the Envio GraphQL URL.
+  Clears the indexer cache to ensure fresh data is fetched with the new endpoint.
   """
   @spec set_envio_url(String.t()) :: {:ok, AppSetting.t()} | {:error, Ecto.Changeset.t()}
   def set_envio_url(url) do
-    set_app_setting(@envio_url_key, url, "Envio Hyperindex GraphQL endpoint URL")
+    result = set_app_setting(@envio_url_key, url, "Envio Hyperindex GraphQL endpoint URL")
+
+    # Clear cache on URL change so queries use the new endpoint immediately
+    case result do
+      {:ok, _} -> AnomaExplorer.Indexer.Cache.clear()
+      _ -> :ok
+    end
+
+    result
   end
 
   # ============================================
