@@ -416,7 +416,6 @@ defmodule AnomaExplorerWeb.CommitmentsLive do
               <th title="Merkle root of the commitment tree">Root</th>
               <th class="hidden sm:table-cell" title="Blockchain network">Network</th>
               <th class="hidden sm:table-cell" title="Block number">Block</th>
-              <th class="hidden lg:table-cell" title="Timestamp">Time</th>
               <th title="Transaction hash">
                 <span class="hidden sm:inline">Transaction</span>
                 <span class="sm:hidden">Tx</span>
@@ -448,9 +447,6 @@ defmodule AnomaExplorerWeb.CommitmentsLive do
                       tooltip="Copy block number"
                     />
                   </div>
-                </td>
-                <td class="hidden lg:table-cell text-base-content/60 text-sm">
-                  {Formatting.format_timestamp_full(commitment["timestamp"])}
                 </td>
                 <td>
                   <%= if commitment["txHash"] do %>

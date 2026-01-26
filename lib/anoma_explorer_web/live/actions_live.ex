@@ -406,7 +406,6 @@ defmodule AnomaExplorerWeb.ActionsLive do
               <th class="hidden sm:table-cell" title="Blockchain network where this action was recorded">Network</th>
               <th title="Total number of resource tags (nullifiers + commitments)">Tags</th>
               <th class="hidden sm:table-cell" title="Blockchain block number">Block</th>
-              <th class="hidden lg:table-cell" title="When the action was recorded">Time</th>
               <th title="EVM transaction that submitted this action">
                 <span class="hidden sm:inline">Transaction</span>
                 <span class="sm:hidden">Tx</span>
@@ -443,9 +442,6 @@ defmodule AnomaExplorerWeb.ActionsLive do
                     <span class="font-mono text-sm">{action["blockNumber"]}</span>
                     <.copy_button text={to_string(action["blockNumber"])} tooltip="Copy block number" />
                   </div>
-                </td>
-                <td class="hidden lg:table-cell text-base-content/60 text-sm">
-                  {Formatting.format_timestamp(action["timestamp"])}
                 </td>
                 <td>
                   <%= if action["transaction"] do %>

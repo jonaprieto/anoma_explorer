@@ -458,7 +458,6 @@ defmodule AnomaExplorerWeb.TransactionsLive do
               <th class="hidden sm:table-cell" title="Block number where this transaction was included">Block</th>
               <th class="hidden lg:table-cell" title="Account address that sent this transaction">From</th>
               <th title="Count of nullifiers (consumed) and commitments (created)">Resources</th>
-              <th class="hidden xl:table-cell" title="When this transaction was included in a block">Time</th>
             </tr>
           </thead>
           <tbody>
@@ -507,9 +506,6 @@ defmodule AnomaExplorerWeb.TransactionsLive do
                       {created}
                     </span>
                   </button>
-                </td>
-                <td class="hidden xl:table-cell text-base-content/60 text-sm">
-                  {Formatting.format_timestamp(evm_tx["timestamp"])}
                 </td>
               </tr>
             <% end %>

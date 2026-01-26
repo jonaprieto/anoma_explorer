@@ -466,7 +466,6 @@ defmodule AnomaExplorerWeb.HomeLive do
                 <th class="hidden sm:table-cell">Block</th>
                 <th class="hidden lg:table-cell">From</th>
                 <th>Resources</th>
-                <th class="hidden xl:table-cell">Time</th>
               </tr>
             </thead>
             <tbody>
@@ -526,9 +525,6 @@ defmodule AnomaExplorerWeb.HomeLive do
                         {created}
                       </span>
                     </button>
-                  </td>
-                  <td class="hidden xl:table-cell text-base-content/60 text-sm">
-                    {Formatting.format_timestamp(evm_tx["timestamp"])}
                   </td>
                 </tr>
               <% end %>

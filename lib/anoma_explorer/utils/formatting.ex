@@ -11,17 +11,19 @@ defmodule AnomaExplorer.Utils.Formatting do
   # ============================================
 
   @doc """
-  Truncates a hash or hex string to a readable format.
+  Truncates a hash or hex string to show only the last 6 characters.
+
+  This compact format is optimized for mobile displays while still
+  allowing identification of different hashes. Full hash is available
+  via copy button or tooltip.
 
   ## Options
-    * `:max_length` - Maximum length before truncation (default: 16)
-    * `:prefix_length` - Characters to show at the start (default: 10)
     * `:suffix_length` - Characters to show at the end (default: 6)
 
   ## Examples
 
       iex> truncate_hash("0x1234567890abcdef1234567890abcdef")
-      "0x12345678...abcdef"
+      "...abcdef"
 
       iex> truncate_hash(nil)
       "-"
@@ -34,29 +36,27 @@ defmodule AnomaExplorer.Utils.Formatting do
   def truncate_hash(nil, _opts), do: "-"
 
   def truncate_hash(hash, opts) when is_binary(hash) do
-    max_length = Keyword.get(opts, :max_length, 16)
-    prefix_length = Keyword.get(opts, :prefix_length, 10)
     suffix_length = Keyword.get(opts, :suffix_length, 6)
 
-    if byte_size(hash) > max_length do
-      String.slice(hash, 0, prefix_length) <> "..." <> String.slice(hash, -suffix_length, suffix_length)
+    if byte_size(hash) > suffix_length do
+      "..." <> String.slice(hash, -suffix_length, suffix_length)
     else
       hash
     end
   end
 
   @doc """
-  Truncates a hash with longer display (20 char threshold, 10+8 split).
+  Truncates a hash with longer display (8 chars suffix).
   Useful for resource IDs and logic references.
 
   ## Examples
 
       iex> truncate_hash_long("0x1234567890abcdef1234567890abcdef12345678")
-      "0x12345678...12345678"
+      "...12345678"
   """
   @spec truncate_hash_long(String.t() | nil) :: String.t()
   def truncate_hash_long(hash) do
-    truncate_hash(hash, max_length: 20, prefix_length: 10, suffix_length: 8)
+    truncate_hash(hash, suffix_length: 8)
   end
 
   @doc """
