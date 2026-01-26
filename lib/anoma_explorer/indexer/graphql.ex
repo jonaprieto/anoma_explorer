@@ -453,6 +453,10 @@ defmodule AnomaExplorer.Indexer.GraphQL do
           tag
           isConsumed
           logicRef
+          resource {
+            id
+            tag
+          }
         }
       }
     }

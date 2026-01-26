@@ -426,10 +426,10 @@ defmodule AnomaExplorerWeb.NullifiersLive do
                         href={"/transactions/#{unit["action"]["transaction"]["id"]}"}
                         class="hash-display text-xs hover:text-primary"
                       >
-                        {Formatting.truncate_hash(unit["action"]["transaction"]["txHash"])}
+                        {Formatting.truncate_hash(unit["action"]["transaction"]["evmTransaction"]["txHash"])}
                       </a>
                       <.copy_button
-                        text={unit["action"]["transaction"]["txHash"]}
+                        text={unit["action"]["transaction"]["evmTransaction"]["txHash"]}
                         tooltip="Copy tx hash"
                       />
                     </div>

@@ -426,15 +426,13 @@ defmodule AnomaExplorerWeb.HomeLive do
                 <th>Network</th>
                 <th>Block</th>
                 <th class="hidden md:table-cell">From</th>
-                <th class="hidden md:table-cell">Value</th>
-                <th class="hidden lg:table-cell">Gas Price</th>
-                <th class="hidden lg:table-cell">Tx Fee</th>
                 <th>Resources</th>
                 <th class="hidden xl:table-cell">Time</th>
               </tr>
             </thead>
             <tbody>
               <%= for tx <- @transactions do %>
+                <% evm_tx = tx["evmTransaction"] %>
                 <% tags = tx["tags"] || [] %>
                 <% consumed = div(length(tags), 2) %>
                 <% created = length(tags) - consumed %>
@@ -442,45 +440,36 @@ defmodule AnomaExplorerWeb.HomeLive do
                   <td>
                     <div class="flex items-center gap-1">
                       <a href={"/transactions/#{tx["id"]}"} class="hash-display hover:text-primary">
-                        {Formatting.truncate_hash(tx["txHash"])}
+                        {Formatting.truncate_hash(evm_tx["txHash"])}
                       </a>
-                      <.copy_button text={tx["txHash"]} tooltip="Copy full hash" />
+                      <.copy_button text={evm_tx["txHash"]} tooltip="Copy full hash" />
                     </div>
                   </td>
                   <td>
-                    <.network_button chain_id={tx["chainId"]} />
+                    <.network_button chain_id={evm_tx["chainId"]} />
                   </td>
                   <td>
                     <div class="flex items-center gap-1">
-                      <%= if block_url = Networks.block_url(tx["chainId"], tx["blockNumber"]) do %>
+                      <%= if block_url = Networks.block_url(evm_tx["chainId"], evm_tx["blockNumber"]) do %>
                         <a
                           href={block_url}
                           target="_blank"
                           rel="noopener"
                           class="font-mono text-sm link link-hover"
                         >
-                          {tx["blockNumber"]}
+                          {evm_tx["blockNumber"]}
                         </a>
                       <% else %>
-                        <span class="font-mono text-sm">{tx["blockNumber"]}</span>
+                        <span class="font-mono text-sm">{evm_tx["blockNumber"]}</span>
                       <% end %>
-                      <.copy_button text={to_string(tx["blockNumber"])} tooltip="Copy block number" />
+                      <.copy_button text={to_string(evm_tx["blockNumber"])} tooltip="Copy block number" />
                     </div>
                   </td>
                   <td class="hidden md:table-cell">
                     <div class="flex items-center gap-1">
-                      <span class="hash-display text-sm">{Formatting.truncate_hash(tx["from"])}</span>
-                      <.copy_button :if={tx["from"]} text={tx["from"]} tooltip="Copy address" />
+                      <span class="hash-display text-sm">{Formatting.truncate_hash(evm_tx["from"])}</span>
+                      <.copy_button :if={evm_tx["from"]} text={evm_tx["from"]} tooltip="Copy address" />
                     </div>
-                  </td>
-                  <td class="hidden md:table-cell text-sm">
-                    {Formatting.format_eth(tx["value"])}
-                  </td>
-                  <td class="hidden lg:table-cell text-sm">
-                    {Formatting.format_gwei(tx["gasPrice"])}
-                  </td>
-                  <td class="hidden lg:table-cell text-sm">
-                    {Formatting.format_tx_fee(tx["gasUsed"], tx["gasPrice"])}
                   </td>
                   <td>
                     <button
@@ -500,7 +489,7 @@ defmodule AnomaExplorerWeb.HomeLive do
                     </button>
                   </td>
                   <td class="hidden xl:table-cell text-base-content/60 text-sm">
-                    {Formatting.format_timestamp(tx["timestamp"])}
+                    {Formatting.format_timestamp(evm_tx["timestamp"])}
                   </td>
                 </tr>
               <% end %>

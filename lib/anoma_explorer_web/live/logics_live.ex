@@ -411,12 +411,12 @@ defmodule AnomaExplorerWeb.LogicsLive do
         <table class="data-table w-full">
           <thead>
             <tr>
-              <th>Tag</th>
-              <th>Status</th>
-              <th>Verifying Key</th>
-              <th>Payloads</th>
-              <th>Network</th>
-              <th>Transaction</th>
+              <th title="Resource identifier - nullifier hash (consumed) or commitment hash (created)">Resource ID</th>
+              <th title="Resource type: Nullifier (consumed input) or Commitment (created output)">Type</th>
+              <th title="Reference to the logic circuit (verifying key) that validates this resource">Logic Ref</th>
+              <th title="Payload counts: A=Application, D=Discovery, E=External">Payloads</th>
+              <th title="Blockchain network where this logic input was recorded">Network</th>
+              <th title="Transaction containing this logic input">Transaction</th>
             </tr>
           </thead>
           <tbody>
@@ -424,42 +424,48 @@ defmodule AnomaExplorerWeb.LogicsLive do
               <tr class="hover:bg-base-200/50">
                 <td>
                   <div class="flex items-center gap-1">
-                    <a href={"/logics/#{logic["id"]}"} class="hash-display text-xs hover:text-primary">
-                      {Formatting.truncate_hash(logic["tag"])}
-                    </a>
-                    <.copy_button :if={logic["tag"]} text={logic["tag"]} tooltip="Copy tag" />
+                    <%= if logic["resource"] do %>
+                      <a href={"/resources/#{logic["resource"]["id"]}"} class="hash-display text-xs hover:text-primary">
+                        {Formatting.truncate_hash(logic["tag"])}
+                      </a>
+                    <% else %>
+                      <a href={"/logics/#{logic["id"]}"} class="hash-display text-xs hover:text-primary" title="No linked resource - view logic input">
+                        {Formatting.truncate_hash(logic["tag"])}
+                      </a>
+                    <% end %>
+                    <.copy_button :if={logic["tag"]} text={logic["tag"]} tooltip="Copy resource ID" />
                   </div>
                 </td>
                 <td>
                   <%= if logic["isConsumed"] do %>
-                    <span class="badge badge-outline badge-sm text-error border-error/50">
-                      Consumed
+                    <span class="badge badge-outline badge-sm text-error border-error/50" title="Nullifier - resource consumed as input">
+                      Nullifier
                     </span>
                   <% else %>
-                    <span class="badge badge-outline badge-sm text-success border-success/50">
-                      Created
+                    <span class="badge badge-outline badge-sm text-success border-success/50" title="Commitment - new resource created as output">
+                      Commitment
                     </span>
                   <% end %>
                 </td>
                 <td>
                   <div class="flex items-center gap-1">
-                    <code class="hash-display text-xs">{Formatting.truncate_hash(logic["verifyingKey"])}</code>
+                    <code class="hash-display text-xs">{Formatting.truncate_hash(logic["logicRef"])}</code>
                     <.copy_button
-                      :if={logic["verifyingKey"]}
-                      text={logic["verifyingKey"]}
-                      tooltip="Copy verifying key"
+                      :if={logic["logicRef"]}
+                      text={logic["logicRef"]}
+                      tooltip="Copy logic ref"
                     />
                   </div>
                 </td>
                 <td>
                   <div class="flex gap-1">
-                    <span class="badge badge-ghost badge-xs" title="Application">
+                    <span class="badge badge-ghost badge-xs" title="Application payloads - app-specific data for the logic circuit">
                       A:{logic["applicationPayloadCount"] || 0}
                     </span>
-                    <span class="badge badge-ghost badge-xs" title="Discovery">
+                    <span class="badge badge-ghost badge-xs" title="Discovery payloads - data for resource indexing">
                       D:{logic["discoveryPayloadCount"] || 0}
                     </span>
-                    <span class="badge badge-ghost badge-xs" title="External">
+                    <span class="badge badge-ghost badge-xs" title="External payloads - data stored off-chain">
                       E:{logic["externalPayloadCount"] || 0}
                     </span>
                   </div>
@@ -478,10 +484,10 @@ defmodule AnomaExplorerWeb.LogicsLive do
                         href={"/transactions/#{logic["action"]["transaction"]["id"]}"}
                         class="hash-display text-xs hover:text-primary"
                       >
-                        {Formatting.truncate_hash(logic["action"]["transaction"]["txHash"])}
+                        {Formatting.truncate_hash(logic["action"]["transaction"]["evmTransaction"]["txHash"])}
                       </a>
                       <.copy_button
-                        text={logic["action"]["transaction"]["txHash"]}
+                        text={logic["action"]["transaction"]["evmTransaction"]["txHash"]}
                         tooltip="Copy tx hash"
                       />
                     </div>

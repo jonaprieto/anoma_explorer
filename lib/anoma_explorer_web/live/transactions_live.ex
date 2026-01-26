@@ -453,19 +453,17 @@ defmodule AnomaExplorerWeb.TransactionsLive do
         <table class="data-table w-full">
           <thead>
             <tr>
-              <th>Tx Hash</th>
-              <th>Network</th>
-              <th>Block</th>
-              <th class="hidden md:table-cell">From</th>
-              <th class="hidden md:table-cell">Value</th>
-              <th class="hidden lg:table-cell">Gas Price</th>
-              <th class="hidden lg:table-cell">Tx Fee</th>
-              <th>Resources</th>
-              <th class="hidden xl:table-cell">Time</th>
+              <th title="Unique identifier of this EVM transaction on the blockchain">Tx Hash</th>
+              <th title="Blockchain network where this transaction was recorded">Network</th>
+              <th title="Block number where this transaction was included">Block</th>
+              <th class="hidden md:table-cell" title="Account address that sent this transaction">From</th>
+              <th title="Count of nullifiers (consumed) and commitments (created)">Resources</th>
+              <th class="hidden xl:table-cell" title="When this transaction was included in a block">Time</th>
             </tr>
           </thead>
           <tbody>
             <%= for tx <- @transactions do %>
+              <% evm_tx = tx["evmTransaction"] %>
               <% tags = tx["tags"] || [] %>
               <% consumed = div(length(tags), 2) %>
               <% created = length(tags) - consumed %>
@@ -473,34 +471,25 @@ defmodule AnomaExplorerWeb.TransactionsLive do
                 <td>
                   <div class="flex items-center gap-1">
                     <a href={"/transactions/#{tx["id"]}"} class="hash-display hover:text-primary">
-                      {Formatting.truncate_hash(tx["txHash"])}
+                      {Formatting.truncate_hash(evm_tx["txHash"])}
                     </a>
-                    <.copy_button text={tx["txHash"]} tooltip="Copy tx hash" />
+                    <.copy_button text={evm_tx["txHash"]} tooltip="Copy tx hash" />
                   </div>
                 </td>
                 <td>
-                  <.network_button chain_id={tx["chainId"]} />
+                  <.network_button chain_id={evm_tx["chainId"]} />
                 </td>
                 <td>
                   <div class="flex items-center gap-1">
-                    <span class="font-mono text-sm">{tx["blockNumber"]}</span>
-                    <.copy_button text={to_string(tx["blockNumber"])} tooltip="Copy block number" />
+                    <span class="font-mono text-sm">{evm_tx["blockNumber"]}</span>
+                    <.copy_button text={to_string(evm_tx["blockNumber"])} tooltip="Copy block number" />
                   </div>
                 </td>
                 <td class="hidden md:table-cell">
                   <div class="flex items-center gap-1">
-                    <span class="hash-display text-sm">{Formatting.truncate_hash(tx["from"])}</span>
-                    <.copy_button :if={tx["from"]} text={tx["from"]} tooltip="Copy address" />
+                    <span class="hash-display text-sm">{Formatting.truncate_hash(evm_tx["from"])}</span>
+                    <.copy_button :if={evm_tx["from"]} text={evm_tx["from"]} tooltip="Copy address" />
                   </div>
-                </td>
-                <td class="hidden md:table-cell text-sm">
-                  {Formatting.format_eth(tx["value"])}
-                </td>
-                <td class="hidden lg:table-cell text-sm">
-                  {Formatting.format_gwei(tx["gasPrice"])}
-                </td>
-                <td class="hidden lg:table-cell text-sm">
-                  {Formatting.format_tx_fee(tx["gasUsed"], tx["gasPrice"])}
                 </td>
                 <td>
                   <button
@@ -520,7 +509,7 @@ defmodule AnomaExplorerWeb.TransactionsLive do
                   </button>
                 </td>
                 <td class="hidden xl:table-cell text-base-content/60 text-sm">
-                  {Formatting.format_timestamp(tx["timestamp"])}
+                  {Formatting.format_timestamp(evm_tx["timestamp"])}
                 </td>
               </tr>
             <% end %>
@@ -577,10 +566,10 @@ defmodule AnomaExplorerWeb.TransactionsLive do
                 <table class="data-table w-full">
                   <thead>
                     <tr>
-                      <th>Index</th>
-                      <th>Type</th>
-                      <th>Tag</th>
-                      <th>Logic Ref</th>
+                      <th title="Position in the array (even = nullifier, odd = commitment)">Index</th>
+                      <th title="Determined by index parity: even = Nullifier, odd = Commitment">Type</th>
+                      <th title="Resource identifier - nullifier hash or commitment hash">Resource ID</th>
+                      <th title="Reference to the logic circuit that validates this resource">Logic Ref</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -593,24 +582,24 @@ defmodule AnomaExplorerWeb.TransactionsLive do
                         </td>
                         <td>
                           <%= if is_consumed do %>
-                            <div class="flex items-center gap-1 text-sm">
+                            <div class="flex items-center gap-1 text-sm" title="Nullifier - resource consumed as input">
                               <.icon
                                 name="hero-arrow-right-start-on-rectangle"
                                 class="w-3 h-3 text-base-content/50"
                               />
-                              <span class="text-base-content/70">Consumed</span>
+                              <span class="text-base-content/70">Nullifier</span>
                             </div>
                           <% else %>
-                            <div class="flex items-center gap-1 text-sm">
+                            <div class="flex items-center gap-1 text-sm" title="Commitment - new resource created as output">
                               <.icon name="hero-plus-circle" class="w-3 h-3 text-base-content/50" />
-                              <span class="text-base-content/70">Created</span>
+                              <span class="text-base-content/70">Commitment</span>
                             </div>
                           <% end %>
                         </td>
                         <td>
                           <div class="flex items-center gap-1">
                             <code class="hash-display text-xs">{Formatting.truncate_hash(tag)}</code>
-                            <.copy_button :if={tag} text={tag} tooltip="Copy tag" />
+                            <.copy_button :if={tag} text={tag} tooltip="Copy resource ID" />
                           </div>
                         </td>
                         <td>

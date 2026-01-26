@@ -117,24 +117,24 @@ defmodule AnomaExplorerWeb.ActionLive do
       <h2 class="text-lg font-semibold mb-4">Overview</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="md:col-span-2">
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Merkle root uniquely identifying this action and all its contents">
             Action Tree Root
           </div>
           <div class="flex items-center gap-2">
             <code class="hash-display text-sm break-all">{@action["actionTreeRoot"]}</code>
-            <.copy_button text={@action["actionTreeRoot"]} />
+            <.copy_button text={@action["actionTreeRoot"]} tooltip="Copy action tree root" />
           </div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Tag Count</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Total number of resource tags (nullifiers + commitments) in this action">Tag Count</div>
           <div><span class="badge badge-ghost">{@action["tagCount"]}</span></div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Index</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Position of this action within the transaction's actions array">Index</div>
           <div class="font-mono">{@action["index"]}</div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Block Number</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Blockchain block where this action was recorded">Block Number</div>
           <div class="flex items-center gap-2">
             <%= if @block_url do %>
               <a href={@block_url} target="_blank" class="font-mono hover:text-primary">
@@ -147,7 +147,7 @@ defmodule AnomaExplorerWeb.ActionLive do
           </div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Network</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Blockchain network where this action was recorded">Network</div>
           <div>
             <span class="text-sm text-base-content/70" title={"Chain ID: #{@action["chainId"]}"}>
               {Networks.name(@action["chainId"])}
@@ -155,20 +155,20 @@ defmodule AnomaExplorerWeb.ActionLive do
           </div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Timestamp</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="When this action was recorded on the blockchain">Timestamp</div>
           <div>{Formatting.format_timestamp_full(@action["timestamp"])}</div>
         </div>
         <%= if @action["transaction"] do %>
           <div>
-            <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Transaction</div>
+            <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="EVM transaction that submitted this action to the blockchain">Transaction</div>
             <div class="flex items-center gap-1">
               <a
                 href={"/transactions/#{@action["transaction"]["id"]}"}
                 class="hash-display text-sm hover:text-primary"
               >
-                {Formatting.truncate_hash(@action["transaction"]["txHash"])}
+                {Formatting.truncate_hash(@action["transaction"]["evmTransaction"]["txHash"])}
               </a>
-              <.copy_button text={@action["transaction"]["txHash"]} tooltip="Copy tx hash" />
+              <.copy_button text={@action["transaction"]["evmTransaction"]["txHash"]} tooltip="Copy tx hash" />
             </div>
           </div>
         <% end %>
@@ -180,7 +180,7 @@ defmodule AnomaExplorerWeb.ActionLive do
   defp compliance_units_section(assigns) do
     ~H"""
     <div class="stat-card mb-6">
-      <h2 class="text-lg font-semibold mb-4">
+      <h2 class="text-lg font-semibold mb-4" title="Pairs of consumed (input) and created (output) resources that balance each other">
         Compliance Units <span class="badge badge-ghost ml-2">{length(@units)}</span>
       </h2>
       <%= if @units == [] do %>
@@ -190,10 +190,10 @@ defmodule AnomaExplorerWeb.ActionLive do
           <table class="data-table w-full">
             <thead>
               <tr>
-                <th>Consumed Nullifier</th>
-                <th>Created Commitment</th>
-                <th>Consumed Logic Ref</th>
-                <th>Created Logic Ref</th>
+                <th title="Hash proving the input resource was consumed - prevents double-spending">Consumed Nullifier</th>
+                <th title="Hash representing the new output resource added to the commitment tree">Created Commitment</th>
+                <th title="Logic circuit reference validating the consumed resource">Consumed Logic Ref</th>
+                <th title="Logic circuit reference validating the created resource">Created Logic Ref</th>
               </tr>
             </thead>
             <tbody>
@@ -263,7 +263,7 @@ defmodule AnomaExplorerWeb.ActionLive do
   defp logic_inputs_section(assigns) do
     ~H"""
     <div class="stat-card">
-      <h2 class="text-lg font-semibold mb-4">
+      <h2 class="text-lg font-semibold mb-4" title="Resources with their logic circuit references and proofs for this action">
         Logic Inputs <span class="badge badge-ghost ml-2">{length(@inputs)}</span>
       </h2>
       <%= if @inputs == [] do %>
@@ -273,9 +273,9 @@ defmodule AnomaExplorerWeb.ActionLive do
           <table class="data-table w-full">
             <thead>
               <tr>
-                <th>Tag</th>
-                <th>Status</th>
-                <th>Verifying Key</th>
+                <th title="Unique identifier - nullifier hash (if consumed) or commitment hash (if created)">Resource ID</th>
+                <th title="Determined by index parity: even = Nullifier (consumed), odd = Commitment (created)">Type</th>
+                <th title="Reference to the logic circuit (verifying key) that validates this resource">Logic Ref</th>
               </tr>
             </thead>
             <tbody>
@@ -283,33 +283,43 @@ defmodule AnomaExplorerWeb.ActionLive do
                 <tr class="hover:bg-base-200/50">
                   <td>
                     <div class="flex items-center gap-1">
-                      <a
-                        href={"/logics/#{input["id"]}"}
-                        class="hash-display text-xs hover:text-primary"
-                      >
-                        {Formatting.truncate_hash(input["tag"])}
-                      </a>
-                      <.copy_button :if={input["tag"]} text={input["tag"]} tooltip="Copy tag" />
+                      <%= if input["resource"] do %>
+                        <a
+                          href={"/resources/#{input["resource"]["id"]}"}
+                          class="hash-display text-xs hover:text-primary"
+                        >
+                          {Formatting.truncate_hash(input["tag"])}
+                        </a>
+                      <% else %>
+                        <a
+                          href={"/logics/#{input["id"]}"}
+                          class="hash-display text-xs hover:text-primary"
+                          title="No linked resource - view logic input"
+                        >
+                          {Formatting.truncate_hash(input["tag"])}
+                        </a>
+                      <% end %>
+                      <.copy_button :if={input["tag"]} text={input["tag"]} tooltip="Copy resource ID" />
                     </div>
                   </td>
                   <td>
                     <%= if input["isConsumed"] do %>
-                      <span class="badge badge-outline badge-sm text-error border-error/50">
-                        Consumed
+                      <span class="badge badge-outline badge-sm text-error border-error/50" title="Nullifier - resource consumed as input">
+                        Nullifier
                       </span>
                     <% else %>
-                      <span class="badge badge-outline badge-sm text-success border-success/50">
-                        Created
+                      <span class="badge badge-outline badge-sm text-success border-success/50" title="Commitment - new resource created as output">
+                        Commitment
                       </span>
                     <% end %>
                   </td>
                   <td>
                     <div class="flex items-center gap-1">
-                      <code class="hash-display text-xs">{Formatting.truncate_hash(input["verifyingKey"])}</code>
+                      <code class="hash-display text-xs">{Formatting.truncate_hash(input["logicRef"])}</code>
                       <.copy_button
-                        :if={input["verifyingKey"]}
-                        text={input["verifyingKey"]}
-                        tooltip="Copy verifying key"
+                        :if={input["logicRef"]}
+                        text={input["logicRef"]}
+                        tooltip="Copy logic ref"
                       />
                     </div>
                   </td>

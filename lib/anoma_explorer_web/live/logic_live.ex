@@ -110,38 +110,38 @@ defmodule AnomaExplorerWeb.LogicLive do
       <h2 class="text-lg font-semibold mb-4">Overview</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="md:col-span-2">
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Tag</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Unique identifier - nullifier hash (if consumed) or commitment hash (if created)">Resource ID</div>
           <div class="flex items-center gap-2">
             <code class="hash-display text-sm break-all">{@logic["tag"]}</code>
-            <.copy_button text={@logic["tag"]} />
+            <.copy_button text={@logic["tag"]} tooltip="Copy resource ID" />
           </div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Status</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Determined by index parity: even indices are nullifiers (consumed), odd indices are commitments (created)">Resource Type</div>
           <div>
             <%= if @logic["isConsumed"] do %>
-              <span class="badge badge-outline badge-sm text-error border-error/50">Consumed</span>
+              <span class="badge badge-outline badge-sm text-error border-error/50" title="Nullifier - resource consumed as input">Nullifier</span>
             <% else %>
-              <span class="badge badge-outline badge-sm text-success border-success/50">Created</span>
+              <span class="badge badge-outline badge-sm text-success border-success/50" title="Commitment - new resource created as output">Commitment</span>
             <% end %>
           </div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Index</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Position of this logic input within the action's logic inputs array">Index</div>
           <div class="font-mono">{@logic["index"]}</div>
         </div>
-        <%= if @logic["verifyingKey"] do %>
+        <%= if @logic["logicRef"] do %>
           <div class="md:col-span-2">
-            <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Verifying Key</div>
+            <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Reference to the logic circuit (verifying key) that validates this resource's creation or consumption">Logic Ref</div>
             <div class="flex items-center gap-2">
-              <code class="hash-display text-sm break-all">{@logic["verifyingKey"]}</code>
-              <.copy_button text={@logic["verifyingKey"]} tooltip="Copy verifying key" />
+              <code class="hash-display text-sm break-all">{@logic["logicRef"]}</code>
+              <.copy_button text={@logic["logicRef"]} tooltip="Copy logic ref" />
             </div>
           </div>
         <% end %>
         <%= if @logic["action"] do %>
           <div>
-            <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Network</div>
+            <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Blockchain network where this logic input was recorded">Network</div>
             <div>
               <span class="badge badge-outline" title={"Chain ID: #{@logic["action"]["chainId"]}"}>
                 {Networks.name(@logic["action"]["chainId"])}
@@ -149,7 +149,7 @@ defmodule AnomaExplorerWeb.LogicLive do
             </div>
           </div>
           <div>
-            <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Block Number</div>
+            <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Blockchain block number where this logic input was included">Block Number</div>
             <div class="flex items-center gap-2">
               <span class="font-mono">{@logic["action"]["blockNumber"]}</span>
               <.copy_button
@@ -159,11 +159,11 @@ defmodule AnomaExplorerWeb.LogicLive do
             </div>
           </div>
           <div>
-            <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Timestamp</div>
+            <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="When this logic input was recorded on the blockchain">Timestamp</div>
             <div>{Formatting.format_timestamp_full(@logic["action"]["timestamp"])}</div>
           </div>
           <div>
-            <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Action</div>
+            <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Parent action containing this logic input - identified by action tree root">Action</div>
             <div class="flex items-center gap-1">
               <a
                 href={"/actions/#{@logic["action"]["id"]}"}
@@ -180,22 +180,22 @@ defmodule AnomaExplorerWeb.LogicLive do
           </div>
           <%= if @logic["action"]["transaction"] do %>
             <div>
-              <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Transaction</div>
+              <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="EVM transaction that submitted this action to the blockchain">Transaction</div>
               <div class="flex items-center gap-1">
                 <a
                   href={"/transactions/#{@logic["action"]["transaction"]["id"]}"}
                   class="hash-display text-sm hover:text-primary"
                 >
-                  {Formatting.truncate_hash(@logic["action"]["transaction"]["txHash"])}
+                  {Formatting.truncate_hash(@logic["action"]["transaction"]["evmTransaction"]["txHash"])}
                 </a>
-                <.copy_button text={@logic["action"]["transaction"]["txHash"]} tooltip="Copy tx hash" />
+                <.copy_button text={@logic["action"]["transaction"]["evmTransaction"]["txHash"]} tooltip="Copy tx hash" />
               </div>
             </div>
           <% end %>
         <% end %>
         <%= if @logic["resource"] do %>
           <div>
-            <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Resource</div>
+            <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Link to the associated resource record with full details">Resource</div>
             <div class="flex items-center gap-1">
               <a
                 href={"/resources/#{@logic["resource"]["id"]}"}
@@ -206,7 +206,7 @@ defmodule AnomaExplorerWeb.LogicLive do
               <.copy_button
                 :if={@logic["resource"]["tag"]}
                 text={@logic["resource"]["tag"]}
-                tooltip="Copy tag"
+                tooltip="Copy resource ID"
               />
             </div>
           </div>
@@ -219,21 +219,21 @@ defmodule AnomaExplorerWeb.LogicLive do
   defp payloads_section(assigns) do
     ~H"""
     <div class="stat-card mb-6">
-      <h2 class="text-lg font-semibold mb-4">Payload Counts</h2>
+      <h2 class="text-lg font-semibold mb-4" title="Count of different payload types associated with this logic input">Payload Counts</h2>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-base-200/50 rounded-lg p-4 text-center">
+        <div class="bg-base-200/50 rounded-lg p-4 text-center" title="App-specific data for the logic circuit to process">
           <div class="text-2xl font-bold">{@logic["applicationPayloadCount"] || 0}</div>
           <div class="text-xs text-base-content/60 uppercase">Application</div>
         </div>
-        <div class="bg-base-200/50 rounded-lg p-4 text-center">
+        <div class="bg-base-200/50 rounded-lg p-4 text-center" title="Data for resource indexing and discovery by other parties">
           <div class="text-2xl font-bold">{@logic["discoveryPayloadCount"] || 0}</div>
           <div class="text-xs text-base-content/60 uppercase">Discovery</div>
         </div>
-        <div class="bg-base-200/50 rounded-lg p-4 text-center">
+        <div class="bg-base-200/50 rounded-lg p-4 text-center" title="Data stored off-chain, referenced by this logic input">
           <div class="text-2xl font-bold">{@logic["externalPayloadCount"] || 0}</div>
           <div class="text-xs text-base-content/60 uppercase">External</div>
         </div>
-        <div class="bg-base-200/50 rounded-lg p-4 text-center">
+        <div class="bg-base-200/50 rounded-lg p-4 text-center" title="Encoded resource data blobs">
           <div class="text-2xl font-bold">{@logic["resourcePayloadCount"] || 0}</div>
           <div class="text-xs text-base-content/60 uppercase">Resource</div>
         </div>
@@ -247,7 +247,7 @@ defmodule AnomaExplorerWeb.LogicLive do
     <%= if @logic["proof"] do %>
       <div class="stat-card">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold">Proof</h2>
+          <h2 class="text-lg font-semibold" title="Zero-knowledge proof validating that this logic input satisfies the logic circuit constraints">Proof</h2>
           <.copy_button text={@logic["proof"]} tooltip="Copy proof" />
         </div>
         <div class="bg-base-200/50 p-4 rounded-lg overflow-x-auto">

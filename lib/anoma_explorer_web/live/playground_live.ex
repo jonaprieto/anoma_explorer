@@ -13,12 +13,16 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
 
   @default_query """
   query {
-    Transaction(limit: 10, order_by: {blockNumber: desc}) {
+    Transaction(limit: 10, order_by: {evmTransaction: {blockNumber: desc}}) {
       id
-      txHash
-      blockNumber
-      timestamp
-      chainId
+      tags
+      logicRefs
+      evmTransaction {
+        txHash
+        blockNumber
+        timestamp
+        chainId
+      }
     }
   }
   """
@@ -26,14 +30,16 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
   @query_templates %{
     "list_transactions" => """
     query {
-      Transaction(limit: 10, order_by: {blockNumber: desc}) {
+      Transaction(limit: 10, order_by: {evmTransaction: {blockNumber: desc}}) {
         id
-        txHash
-        blockNumber
-        timestamp
-        chainId
         tags
         logicRefs
+        evmTransaction {
+          txHash
+          blockNumber
+          timestamp
+          chainId
+        }
       }
     }
     """,
@@ -58,7 +64,10 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
         blockNumber
         logicRef
         transaction {
-          txHash
+          id
+          evmTransaction {
+            txHash
+          }
         }
       }
     }
@@ -71,7 +80,10 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
         blockNumber
         logicRef
         transaction {
-          txHash
+          id
+          evmTransaction {
+            txHash
+          }
         }
       }
     }
@@ -96,7 +108,10 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
         blockNumber
         timestamp
         transaction {
-          txHash
+          id
+          evmTransaction {
+            txHash
+          }
         }
       }
     }

@@ -94,6 +94,7 @@ defmodule AnomaExplorerWeb.ResourceLive do
         <%= if @resource do %>
           <.resource_header resource={@resource} />
           <.decoded_fields resource={@resource} />
+          <.payloads_section resource={@resource} />
           <.raw_blob_section resource={@resource} show={@show_raw_blob} />
           <.transaction_section resource={@resource} />
         <% end %>
@@ -121,25 +122,25 @@ defmodule AnomaExplorerWeb.ResourceLive do
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold">Overview</h2>
         <%= if @resource["isConsumed"] do %>
-          <span class="badge badge-outline text-error border-error/50">Consumed</span>
+          <span class="badge badge-outline text-error border-error/50" title="Nullifier - resource consumed as input">Nullifier</span>
         <% else %>
-          <span class="badge badge-outline text-success border-success/50">Created</span>
+          <span class="badge badge-outline text-success border-success/50" title="Commitment - new resource created as output">Commitment</span>
         <% end %>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="md:col-span-2">
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Tag</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Unique identifier - nullifier hash (if consumed) or commitment hash (if created)">Resource ID</div>
           <div class="flex items-center gap-2">
             <code class="hash-display text-sm break-all">{@resource["tag"]}</code>
-            <.copy_button text={@resource["tag"]} />
+            <.copy_button text={@resource["tag"]} tooltip="Copy resource ID" />
           </div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Index</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Position in the transaction's tags array (even = nullifier, odd = commitment)">Index</div>
           <div class="font-mono">{@resource["index"]}</div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Block Number</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Blockchain block where this resource was recorded">Block Number</div>
           <div class="flex items-center gap-2">
             <%= if @block_url do %>
               <a href={@block_url} target="_blank" class="font-mono hover:text-primary">
@@ -152,7 +153,7 @@ defmodule AnomaExplorerWeb.ResourceLive do
           </div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Network</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Blockchain network where this resource exists">Network</div>
           <div>
             <span class="badge badge-outline" title={"Chain ID: #{@resource["chainId"]}"}>
               {Networks.name(@resource["chainId"])}
@@ -160,7 +161,7 @@ defmodule AnomaExplorerWeb.ResourceLive do
           </div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Decoding Status</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Status of decoding the raw blob data into structured resource fields">Decoding Status</div>
           <.decoding_badge status={@resource["decodingStatus"]} error={@resource["decodingError"]} />
         </div>
       </div>
@@ -170,25 +171,71 @@ defmodule AnomaExplorerWeb.ResourceLive do
 
   defp decoded_fields(assigns) do
     ~H"""
-    <div class="stat-card mb-6">
-      <h2 class="text-lg font-semibold mb-4">Decoded Fields</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <.field_row label="Logic Ref" value={@resource["logicRef"]} copyable />
-        <.field_row label="Label Ref" value={@resource["labelRef"]} copyable />
-        <.field_row label="Value Ref" value={@resource["valueRef"]} copyable />
-        <.field_row
-          label="Nullifier Key Commitment"
-          value={@resource["nullifierKeyCommitment"]}
-          copyable
-        />
-        <.field_row label="Nonce" value={@resource["nonce"]} copyable />
-        <.field_row label="Rand Seed" value={@resource["randSeed"]} copyable />
-        <.field_row label="Quantity" value={@resource["quantity"]} />
-        <.field_row label="Ephemeral" value={Formatting.format_bool(@resource["ephemeral"])} />
+    <%= if @resource["logicRef"] do %>
+      <div class="stat-card mb-6">
+        <h2 class="text-lg font-semibold mb-4" title="Reference to the logic circuit that governs this resource's behavior">Logic Reference</h2>
+        <div class="flex items-center gap-2">
+          <code class="hash-display text-sm break-all">{@resource["logicRef"]}</code>
+          <.copy_button text={@resource["logicRef"]} tooltip="Copy logic ref" />
+        </div>
       </div>
-    </div>
+    <% end %>
     """
   end
+
+  defp payloads_section(assigns) do
+    ~H"""
+    <%= if @resource["payloads"] && length(@resource["payloads"]) > 0 do %>
+      <div class="stat-card mb-6">
+        <h2 class="text-lg font-semibold mb-4" title="Application data associated with this resource">
+          Payloads
+          <span class="badge badge-ghost badge-sm ml-2">{length(@resource["payloads"])}</span>
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="data-table w-full">
+            <thead>
+              <tr>
+                <th title="Type of payload: discovery (for indexing), application (app-specific), external (off-chain), or resource (resource data)">Kind</th>
+                <th title="Position in the payload array">Index</th>
+                <th title="Raw encoded payload data">Blob</th>
+              </tr>
+            </thead>
+            <tbody>
+              <%= for payload <- @resource["payloads"] do %>
+                <tr class="hover:bg-base-200/50">
+                  <td>
+                    <span class={"badge badge-outline badge-sm #{payload_kind_class(payload["kind"])}"} title={payload_kind_tooltip(payload["kind"])}>
+                      {payload["kind"]}
+                    </span>
+                  </td>
+                  <td class="font-mono">{payload["index"]}</td>
+                  <td>
+                    <div class="flex items-center gap-1">
+                      <code class="hash-display text-xs">{Formatting.truncate_hash(payload["blob"], max_length: 30, prefix_length: 15, suffix_length: 10)}</code>
+                      <.copy_button text={payload["blob"]} tooltip="Copy blob" />
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% end %>
+    """
+  end
+
+  defp payload_kind_class("discovery"), do: "text-info border-info/50"
+  defp payload_kind_class("application"), do: "text-primary border-primary/50"
+  defp payload_kind_class("external"), do: "text-warning border-warning/50"
+  defp payload_kind_class("resource"), do: "text-success border-success/50"
+  defp payload_kind_class(_), do: ""
+
+  defp payload_kind_tooltip("discovery"), do: "Discovery payload - data for resource indexing and discovery"
+  defp payload_kind_tooltip("application"), do: "Application payload - app-specific data for the logic circuit"
+  defp payload_kind_tooltip("external"), do: "External payload - data stored off-chain"
+  defp payload_kind_tooltip("resource"), do: "Resource payload - encoded resource data"
+  defp payload_kind_tooltip(_), do: ""
 
   defp field_row(assigns) do
     assigns = assign_new(assigns, :copyable, fn -> false end)
@@ -241,14 +288,17 @@ defmodule AnomaExplorerWeb.ResourceLive do
       if assigns.resource["transaction"] do
         chain_id = assigns.resource["chainId"]
         tx = assigns.resource["transaction"]
+        evm_tx = tx["evmTransaction"]
 
         assigns
-        |> assign(:tx_block_url, Networks.block_url(chain_id, tx["blockNumber"]))
-        |> assign(:tx_url, Networks.tx_url(chain_id, tx["txHash"]))
+        |> assign(:tx_block_url, Networks.block_url(chain_id, evm_tx["blockNumber"]))
+        |> assign(:tx_url, Networks.tx_url(chain_id, evm_tx["txHash"]))
+        |> assign(:evm_tx, evm_tx)
       else
         assigns
         |> assign(:tx_block_url, nil)
         |> assign(:tx_url, nil)
+        |> assign(:evm_tx, nil)
       end
 
     ~H"""
@@ -265,9 +315,9 @@ defmodule AnomaExplorerWeb.ResourceLive do
                 href={"/transactions/#{@resource["transaction"]["id"]}"}
                 class="hash-display text-sm hover:text-primary"
               >
-                {@resource["transaction"]["txHash"]}
+                {@evm_tx["txHash"]}
               </a>
-              <.copy_button text={@resource["transaction"]["txHash"]} tooltip="Copy tx hash" />
+              <.copy_button text={@evm_tx["txHash"]} tooltip="Copy tx hash" />
               <%= if @tx_url do %>
                 <a
                   href={@tx_url}
@@ -285,11 +335,11 @@ defmodule AnomaExplorerWeb.ResourceLive do
             <div class="flex items-center gap-2">
               <%= if @tx_block_url do %>
                 <a href={@tx_block_url} target="_blank" class="font-mono hover:text-primary">
-                  {@resource["transaction"]["blockNumber"]}
+                  {@evm_tx["blockNumber"]}
                   <.icon name="hero-arrow-top-right-on-square" class="w-3 h-3 inline ml-1" />
                 </a>
               <% else %>
-                <span class="font-mono">{@resource["transaction"]["blockNumber"]}</span>
+                <span class="font-mono">{@evm_tx["blockNumber"]}</span>
               <% end %>
             </div>
           </div>

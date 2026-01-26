@@ -374,11 +374,11 @@ defmodule AnomaExplorerWeb.CompliancesLive do
         <table class="data-table w-full">
           <thead>
             <tr>
-              <th>Consumed Nullifier</th>
-              <th>Created Commitment</th>
-              <th>Network</th>
-              <th>Block</th>
-              <th>Transaction</th>
+              <th title="Hash proving the input resource was consumed - prevents double-spending">Consumed Nullifier</th>
+              <th title="Hash representing the new output resource added to the commitment tree">Created Commitment</th>
+              <th title="Blockchain network where this compliance unit was recorded">Network</th>
+              <th title="Block number where this compliance unit was included">Block</th>
+              <th title="EVM transaction containing this compliance unit">Transaction</th>
             </tr>
           </thead>
           <tbody>
@@ -438,10 +438,10 @@ defmodule AnomaExplorerWeb.CompliancesLive do
                         href={"/transactions/#{unit["action"]["transaction"]["id"]}"}
                         class="hash-display text-xs hover:text-primary"
                       >
-                        {Formatting.truncate_hash(unit["action"]["transaction"]["txHash"])}
+                        {Formatting.truncate_hash(unit["action"]["transaction"]["evmTransaction"]["txHash"])}
                       </a>
                       <.copy_button
-                        text={unit["action"]["transaction"]["txHash"]}
+                        text={unit["action"]["transaction"]["evmTransaction"]["txHash"]}
                         tooltip="Copy tx hash"
                       />
                     </div>

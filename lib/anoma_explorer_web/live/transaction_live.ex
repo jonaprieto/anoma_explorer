@@ -31,7 +31,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
          socket
          |> assign(:transaction, transaction)
          |> assign(:loading, false)
-         |> assign(:page_title, "Transaction #{Formatting.truncate_hash(transaction["txHash"])}")}
+         |> assign(:page_title, "Transaction #{Formatting.truncate_hash(transaction["evmTransaction"]["txHash"])}")}
 
       {:error, :not_found} ->
         {:noreply,
@@ -80,7 +80,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
           <div>
             <h1 class="page-title">Transaction Details</h1>
             <p class="text-sm text-base-content/70 mt-1">
-              {if @transaction, do: Formatting.truncate_hash(@transaction["txHash"]), else: "Loading..."}
+              {if @transaction, do: Formatting.truncate_hash(@transaction["evmTransaction"]["txHash"]), else: "Loading..."}
             </p>
           </div>
         </div>
@@ -116,41 +116,45 @@ defmodule AnomaExplorerWeb.TransactionLive do
   end
 
   defp transaction_header(assigns) do
+    evm_tx = assigns.tx["evmTransaction"]
+
     assigns =
       assign(
         assigns,
         :block_url,
-        Networks.block_url(assigns.tx["chainId"], assigns.tx["blockNumber"])
+        Networks.block_url(evm_tx["chainId"], evm_tx["blockNumber"])
       )
 
     assigns =
-      assign(assigns, :tx_url, Networks.tx_url(assigns.tx["chainId"], assigns.tx["txHash"]))
+      assign(assigns, :tx_url, Networks.tx_url(evm_tx["chainId"], evm_tx["txHash"]))
 
     assigns =
       assign(
         assigns,
         :contract_url,
-        Networks.address_url(assigns.tx["chainId"], assigns.tx["contractAddress"])
+        Networks.address_url(evm_tx["chainId"], assigns.tx["contractAddress"])
       )
 
     assigns =
       assign(
         assigns,
         :from_url,
-        if(assigns.tx["from"], do: Networks.address_url(assigns.tx["chainId"], assigns.tx["from"]))
+        if(evm_tx["from"], do: Networks.address_url(evm_tx["chainId"], evm_tx["from"]))
       )
+
+    assigns = assign(assigns, :evm_tx, evm_tx)
 
     ~H"""
     <div class="stat-card mb-6">
       <h2 class="text-lg font-semibold mb-4">Overview</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="md:col-span-2">
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Unique identifier of this EVM transaction on the blockchain">
             Transaction Hash
           </div>
           <div class="flex items-center gap-2">
-            <code class="hash-display text-sm break-all">{@tx["txHash"]}</code>
-            <.copy_button text={@tx["txHash"]} />
+            <code class="hash-display text-sm break-all">{@evm_tx["txHash"]}</code>
+            <.copy_button text={@evm_tx["txHash"]} tooltip="Copy tx hash" />
             <%= if @tx_url do %>
               <a
                 href={@tx_url}
@@ -164,35 +168,35 @@ defmodule AnomaExplorerWeb.TransactionLive do
           </div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Timestamp</div>
-          <div class="font-mono">{Formatting.format_timestamp_full(@tx["timestamp"])}</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="When this transaction was included in a block">Timestamp</div>
+          <div class="font-mono">{Formatting.format_timestamp_full(@evm_tx["timestamp"])}</div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Network</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Blockchain network where this transaction was recorded">Network</div>
           <div>
-            <.network_button chain_id={@tx["chainId"]} />
+            <.network_button chain_id={@evm_tx["chainId"]} />
           </div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Block Number</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Block number where this transaction was included">Block Number</div>
           <div class="flex items-center gap-2">
             <%= if @block_url do %>
               <a href={@block_url} target="_blank" class="font-mono hover:text-primary">
-                {@tx["blockNumber"]}
+                {@evm_tx["blockNumber"]}
                 <.icon name="hero-arrow-top-right-on-square" class="w-3 h-3 inline ml-1" />
               </a>
             <% else %>
-              <span class="font-mono">{@tx["blockNumber"]}</span>
+              <span class="font-mono">{@evm_tx["blockNumber"]}</span>
             <% end %>
-            <.copy_button text={to_string(@tx["blockNumber"])} tooltip="Copy block number" />
+            <.copy_button text={to_string(@evm_tx["blockNumber"])} tooltip="Copy block number" />
           </div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">From</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Account address that sent and signed this transaction">From</div>
           <div class="flex items-center gap-2">
-            <%= if @tx["from"] do %>
-              <code class="hash-display text-sm">{Formatting.truncate_hash(@tx["from"])}</code>
-              <.copy_button text={@tx["from"]} tooltip="Copy address" />
+            <%= if @evm_tx["from"] do %>
+              <code class="hash-display text-sm">{Formatting.truncate_hash(@evm_tx["from"])}</code>
+              <.copy_button text={@evm_tx["from"]} tooltip="Copy address" />
               <%= if @from_url do %>
                 <a
                   href={@from_url}
@@ -209,20 +213,20 @@ defmodule AnomaExplorerWeb.TransactionLive do
           </div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Value</div>
-          <div class="font-mono">{Formatting.format_eth(@tx["value"])}</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Amount of ETH transferred with this transaction">Value</div>
+          <div class="font-mono">{Formatting.format_eth(@evm_tx["value"])}</div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Gas Price</div>
-          <div class="font-mono">{Formatting.format_gwei(@tx["gasPrice"])}</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Price per unit of gas paid for this transaction">Gas Price</div>
+          <div class="font-mono">{Formatting.format_gwei(@evm_tx["gasPrice"])}</div>
         </div>
         <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Transaction Fee</div>
-          <div class="font-mono">{Formatting.format_tx_fee(@tx["gasUsed"], @tx["gasPrice"])}</div>
+          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Total fee paid (gas used × gas price)">Transaction Fee</div>
+          <div class="font-mono">{Formatting.format_tx_fee(@evm_tx["gasUsed"], @evm_tx["gasPrice"])}</div>
         </div>
         <%= if @tx["contractAddress"] do %>
           <div>
-            <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">
+            <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Anoma resource machine contract that processed this transaction">
               Contract Address
             </div>
             <div class="flex items-center gap-2">
@@ -249,20 +253,20 @@ defmodule AnomaExplorerWeb.TransactionLive do
   defp tags_section(assigns) do
     ~H"""
     <div class="stat-card mb-6">
-      <h2 class="text-lg font-semibold mb-4">
-        Tags & Logic Refs <span class="badge badge-ghost ml-2">{length(@tags || [])}</span>
+      <h2 class="text-lg font-semibold mb-4" title="All resource identifiers and their logic references in this transaction">
+        Resource IDs & Logic Refs <span class="badge badge-ghost ml-2">{length(@tags || [])}</span>
       </h2>
       <%= if (@tags || []) == [] do %>
-        <div class="text-base-content/50 text-center py-4">No tags</div>
+        <div class="text-base-content/50 text-center py-4">No resource IDs</div>
       <% else %>
         <div class="overflow-x-auto">
           <table class="data-table w-full">
             <thead>
               <tr>
-                <th>Index</th>
-                <th>Type</th>
-                <th>Tag</th>
-                <th>Logic Ref</th>
+                <th title="Position in the array (even = nullifier, odd = commitment)">Index</th>
+                <th title="Determined by index parity: even = Nullifier, odd = Commitment">Type</th>
+                <th title="Resource identifier - nullifier hash or commitment hash">Resource ID</th>
+                <th title="Reference to the logic circuit that validates this resource">Logic Ref</th>
               </tr>
             </thead>
             <tbody>
@@ -275,19 +279,19 @@ defmodule AnomaExplorerWeb.TransactionLive do
                   </td>
                   <td>
                     <%= if is_consumed do %>
-                      <span class="badge badge-outline badge-sm text-error border-error/50">
-                        Consumed
+                      <span class="badge badge-outline badge-sm text-error border-error/50" title="Nullifier - resource consumed as input">
+                        Nullifier
                       </span>
                     <% else %>
-                      <span class="badge badge-outline badge-sm text-success border-success/50">
-                        Created
+                      <span class="badge badge-outline badge-sm text-success border-success/50" title="Commitment - new resource created as output">
+                        Commitment
                       </span>
                     <% end %>
                   </td>
                   <td>
                     <div class="flex items-center gap-1">
                       <code class="hash-display text-xs">{Formatting.truncate_hash(tag)}</code>
-                      <.copy_button :if={tag} text={tag} tooltip="Copy tag" />
+                      <.copy_button :if={tag} text={tag} tooltip="Copy resource ID" />
                     </div>
                   </td>
                   <td>
@@ -309,7 +313,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
   defp resources_section(assigns) do
     ~H"""
     <div class="stat-card mb-6">
-      <h2 class="text-lg font-semibold mb-4">
+      <h2 class="text-lg font-semibold mb-4" title="Resources consumed and created in this transaction">
         Resources <span class="badge badge-ghost ml-2">{length(@resources)}</span>
       </h2>
       <%= if @resources == [] do %>
@@ -319,11 +323,11 @@ defmodule AnomaExplorerWeb.TransactionLive do
           <table class="data-table w-full">
             <thead>
               <tr>
-                <th>Tag</th>
-                <th>Status</th>
-                <th>Logic Ref</th>
-                <th>Quantity</th>
-                <th>Decoding</th>
+                <th title="Unique identifier - nullifier hash (if consumed) or commitment hash (if created)">Resource ID</th>
+                <th title="Resource type: Nullifier (consumed input) or Commitment (created output)">Type</th>
+                <th title="Reference to the logic circuit that validates this resource">Logic Ref</th>
+                <th title="Decoded quantity value from the resource blob (if available)">Quantity</th>
+                <th title="Status of decoding the raw blob data into structured resource fields">Decoding</th>
               </tr>
             </thead>
             <tbody>
@@ -337,17 +341,17 @@ defmodule AnomaExplorerWeb.TransactionLive do
                       >
                         {Formatting.truncate_hash(resource["tag"])}
                       </a>
-                      <.copy_button :if={resource["tag"]} text={resource["tag"]} tooltip="Copy tag" />
+                      <.copy_button :if={resource["tag"]} text={resource["tag"]} tooltip="Copy resource ID" />
                     </div>
                   </td>
                   <td>
                     <%= if resource["isConsumed"] do %>
-                      <span class="badge badge-outline badge-sm text-error border-error/50">
-                        Consumed
+                      <span class="badge badge-outline badge-sm text-error border-error/50" title="Nullifier - resource consumed as input">
+                        Nullifier
                       </span>
                     <% else %>
-                      <span class="badge badge-outline badge-sm text-success border-success/50">
-                        Created
+                      <span class="badge badge-outline badge-sm text-success border-success/50" title="Commitment - new resource created as output">
+                        Commitment
                       </span>
                     <% end %>
                   </td>
@@ -380,7 +384,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
   defp actions_section(assigns) do
     ~H"""
     <div class="stat-card mb-6">
-      <h2 class="text-lg font-semibold mb-4">
+      <h2 class="text-lg font-semibold mb-4" title="Atomic units of computation in this transaction, each containing compliance units and logic inputs">
         Actions <span class="badge badge-ghost ml-2">{length(@actions)}</span>
       </h2>
       <%= if @actions == [] do %>
@@ -390,8 +394,8 @@ defmodule AnomaExplorerWeb.TransactionLive do
           <table class="data-table w-full">
             <thead>
               <tr>
-                <th>Action Tree Root</th>
-                <th>Tag Count</th>
+                <th title="Merkle root uniquely identifying the action and all its contents">Action Tree Root</th>
+                <th title="Total number of resource tags (nullifiers + commitments)">Tag Count</th>
               </tr>
             </thead>
             <tbody>

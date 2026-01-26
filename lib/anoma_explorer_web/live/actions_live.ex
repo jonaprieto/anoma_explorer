@@ -399,12 +399,12 @@ defmodule AnomaExplorerWeb.ActionsLive do
         <table class="data-table w-full">
           <thead>
             <tr>
-              <th>Action Tree Root</th>
-              <th>Network</th>
-              <th>Tag Count</th>
-              <th>Block</th>
-              <th class="hidden lg:table-cell">Time</th>
-              <th>Transaction</th>
+              <th title="Merkle root uniquely identifying the action and all its contents">Action Tree Root</th>
+              <th title="Blockchain network where this action was recorded">Network</th>
+              <th title="Total number of resource tags (nullifiers + commitments)">Tag Count</th>
+              <th title="Blockchain block number">Block</th>
+              <th class="hidden lg:table-cell" title="When the action was recorded">Time</th>
+              <th title="EVM transaction that submitted this action">Transaction</th>
             </tr>
           </thead>
           <tbody>
@@ -438,7 +438,7 @@ defmodule AnomaExplorerWeb.ActionsLive do
                   </div>
                 </td>
                 <td class="hidden lg:table-cell text-base-content/60 text-sm">
-                  {Formatting.format_timestamp_full(action["timestamp"])}
+                  {Formatting.format_timestamp(action["timestamp"])}
                 </td>
                 <td>
                   <%= if action["transaction"] do %>
@@ -447,9 +447,9 @@ defmodule AnomaExplorerWeb.ActionsLive do
                         href={"/transactions/#{action["transaction"]["id"]}"}
                         class="hash-display text-xs hover:text-primary"
                       >
-                        {Formatting.truncate_hash(action["transaction"]["txHash"])}
+                        {Formatting.truncate_hash(action["transaction"]["evmTransaction"]["txHash"])}
                       </a>
-                      <.copy_button text={action["transaction"]["txHash"]} tooltip="Copy tx hash" />
+                      <.copy_button text={action["transaction"]["evmTransaction"]["txHash"]} tooltip="Copy tx hash" />
                     </div>
                   <% else %>
                     -

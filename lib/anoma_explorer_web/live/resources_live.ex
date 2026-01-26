@@ -329,15 +329,17 @@ defmodule AnomaExplorerWeb.ResourcesLive do
           phx-click="quick_filter"
           phx-value-status="consumed"
           class={["btn btn-sm", (@filters["is_consumed"] == "true" && "btn-primary") || "btn-ghost"]}
+          title="Show only nullifiers (consumed resources)"
         >
-          <.icon name="hero-arrow-right-start-on-rectangle" class="w-4 h-4" /> Consumed
+          <.icon name="hero-arrow-right-start-on-rectangle" class="w-4 h-4" /> Nullifiers
         </button>
         <button
           phx-click="quick_filter"
           phx-value-status="created"
           class={["btn btn-sm", (@filters["is_consumed"] == "false" && "btn-primary") || "btn-ghost"]}
+          title="Show only commitments (created resources)"
         >
-          <.icon name="hero-plus-circle" class="w-4 h-4" /> Created
+          <.icon name="hero-plus-circle" class="w-4 h-4" /> Commitments
         </button>
       </div>
 
@@ -364,7 +366,7 @@ defmodule AnomaExplorerWeb.ResourcesLive do
     >
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div>
-          <label class="text-xs text-base-content/60 uppercase tracking-wide mb-1 block">Tag</label>
+          <label class="text-xs text-base-content/60 uppercase tracking-wide mb-1 block" title="Search by resource identifier (nullifier or commitment hash)">Resource ID</label>
           <input
             type="text"
             name="filters[tag]"
@@ -479,12 +481,12 @@ defmodule AnomaExplorerWeb.ResourcesLive do
         <table class="data-table w-full">
           <thead>
             <tr>
-              <th>Tag</th>
-              <th>Status</th>
-              <th>Network</th>
-              <th class="hidden md:table-cell">Logic Ref</th>
-              <th class="hidden lg:table-cell">Block</th>
-              <th>Transaction</th>
+              <th title="Unique identifier - nullifier hash (if consumed) or commitment hash (if created)">Resource ID</th>
+              <th title="Resource type: Nullifier (consumed input) or Commitment (created output)">Type</th>
+              <th title="Blockchain network where this resource exists">Network</th>
+              <th class="hidden md:table-cell" title="Reference to the logic circuit that validates this resource">Logic Ref</th>
+              <th class="hidden lg:table-cell" title="Block number where this resource was recorded">Block</th>
+              <th title="EVM transaction that created or consumed this resource">Transaction</th>
             </tr>
           </thead>
           <tbody>
@@ -498,17 +500,17 @@ defmodule AnomaExplorerWeb.ResourcesLive do
                     >
                       {Formatting.truncate_hash(resource["tag"])}
                     </a>
-                    <.copy_button :if={resource["tag"]} text={resource["tag"]} tooltip="Copy tag" />
+                    <.copy_button :if={resource["tag"]} text={resource["tag"]} tooltip="Copy resource ID" />
                   </div>
                 </td>
                 <td>
                   <%= if resource["isConsumed"] do %>
-                    <span class="badge badge-outline badge-sm text-error border-error/50">
-                      Consumed
+                    <span class="badge badge-outline badge-sm text-error border-error/50" title="Nullifier - resource consumed as input">
+                      Nullifier
                     </span>
                   <% else %>
-                    <span class="badge badge-outline badge-sm text-success border-success/50">
-                      Created
+                    <span class="badge badge-outline badge-sm text-success border-success/50" title="Commitment - new resource created as output">
+                      Commitment
                     </span>
                   <% end %>
                 </td>
@@ -541,9 +543,9 @@ defmodule AnomaExplorerWeb.ResourcesLive do
                         href={"/transactions/#{resource["transaction"]["id"]}"}
                         class="hash-display text-xs hover:text-primary"
                       >
-                        {Formatting.truncate_hash(resource["transaction"]["txHash"])}
+                        {Formatting.truncate_hash(resource["transaction"]["evmTransaction"]["txHash"])}
                       </a>
-                      <.copy_button text={resource["transaction"]["txHash"]} tooltip="Copy tx hash" />
+                      <.copy_button text={resource["transaction"]["evmTransaction"]["txHash"]} tooltip="Copy tx hash" />
                     </div>
                   <% else %>
                     -
