@@ -176,14 +176,27 @@ defmodule AnomaExplorer.Indexer.Networks do
   Returns a list of all known chains for dropdown selects.
   Returns a list of {chain_id, name} tuples sorted by name.
 
-  Fetches active networks from the database. Only networks with a chain_id are included.
+  Uses the ETS cache for fast lookups. Falls back to database if not cached.
   """
   @spec list_chains() :: [{integer(), String.t()}]
   def list_chains do
-    Settings.list_networks(active: true)
-    |> Enum.filter(fn network -> network.chain_id != nil end)
-    |> Enum.map(fn network -> {network.chain_id, network.display_name} end)
-    |> Enum.sort_by(fn {_id, name} -> name end)
+    case Cache.get_chains_list() do
+      {:ok, chains} ->
+        chains
+
+      :not_found ->
+        # Fallback to database query if cache not populated
+        chains =
+          Settings.list_networks(active: true)
+          |> Enum.filter(fn network -> network.chain_id != nil end)
+          |> Enum.map(fn network -> {network.chain_id, network.display_name} end)
+          |> Enum.sort_by(fn {_id, name} -> name end)
+
+        # Try to populate cache for next time
+        Cache.rebuild_chains_list()
+
+        chains
+    end
   end
 
   # Private helper to look up a network by chain_id from cache

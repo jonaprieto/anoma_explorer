@@ -123,7 +123,10 @@ defmodule AnomaExplorer.Settings do
     %Network{}
     |> Network.changeset(attrs)
     |> Repo.insert()
-    |> tap_ok(&Cache.put_network/1)
+    |> tap_ok(fn network ->
+      Cache.put_network(network)
+      Cache.rebuild_chains_list()
+    end)
     |> tap_ok(&broadcast_change({:network_created, &1}))
   end
 
@@ -145,6 +148,7 @@ defmodule AnomaExplorer.Settings do
       end
 
       Cache.put_network(updated)
+      Cache.rebuild_chains_list()
     end)
     |> tap_ok(&broadcast_change({:network_updated, &1}))
   end
@@ -156,7 +160,10 @@ defmodule AnomaExplorer.Settings do
   @spec delete_network(Network.t()) :: {:ok, Network.t()} | {:error, Ecto.Changeset.t()}
   def delete_network(%Network{} = network) do
     Repo.delete(network)
-    |> tap_ok(fn deleted -> Cache.delete_network(deleted.chain_id) end)
+    |> tap_ok(fn deleted ->
+      Cache.delete_network(deleted.chain_id)
+      Cache.rebuild_chains_list()
+    end)
     |> tap_ok(&broadcast_change({:network_deleted, &1}))
   end
 

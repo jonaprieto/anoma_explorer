@@ -197,6 +197,40 @@ defmodule AnomaExplorer.Settings.Cache do
   end
 
   @doc """
+  Gets the cached chains list for dropdown selects.
+  Returns {:ok, [{chain_id, display_name}, ...]} or :not_found.
+  """
+  @spec get_chains_list() :: {:ok, [{integer(), String.t()}]} | :not_found
+  def get_chains_list do
+    case :ets.lookup(@table_name, :chains_list) do
+      [{:chains_list, chains}] -> {:ok, chains}
+      [] -> :not_found
+    end
+  end
+
+  @doc """
+  Rebuilds and caches the chains list from the currently cached networks.
+  Call this after any network change to keep the list in sync.
+  """
+  @spec rebuild_chains_list() :: :ok
+  def rebuild_chains_list do
+    # Get all network entries from cache
+    chains =
+      :ets.tab2list(@table_name)
+      |> Enum.filter(fn
+        {{:network_chain_id, _}, %{active: true}} -> true
+        _ -> false
+      end)
+      |> Enum.map(fn {{:network_chain_id, chain_id}, network} ->
+        {chain_id, network.display_name}
+      end)
+      |> Enum.sort_by(fn {_id, name} -> name end)
+
+    :ets.insert(@table_name, {:chains_list, chains})
+    :ok
+  end
+
+  @doc """
   Deletes an entry from cache.
   """
   @spec delete(integer(), String.t(), String.t(), String.t()) :: :ok
@@ -359,6 +393,9 @@ defmodule AnomaExplorer.Settings.Cache do
     Enum.each(networks, fn network ->
       put_network(network)
     end)
+
+    # Build the chains list after loading all networks
+    rebuild_chains_list()
 
     length(networks)
   end
