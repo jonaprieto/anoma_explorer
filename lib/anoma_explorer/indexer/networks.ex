@@ -3,10 +3,11 @@ defmodule AnomaExplorer.Indexer.Networks do
   Network name mappings and block explorer URLs for chain IDs.
 
   This module provides functions to look up network information either from
-  the database (preferred) or from a hardcoded fallback map.
+  the cache/database (preferred) or from a hardcoded fallback map.
   """
 
   alias AnomaExplorer.Settings
+  alias AnomaExplorer.Settings.Cache
 
   # Fallback chain info for networks not in the database
   @chain_info %{
@@ -185,9 +186,11 @@ defmodule AnomaExplorer.Indexer.Networks do
     |> Enum.sort_by(fn {_id, name} -> name end)
   end
 
-  # Private helper to look up a network by chain_id from the database
+  # Private helper to look up a network by chain_id from cache
   defp get_network_by_chain_id(chain_id) do
-    Settings.list_networks()
-    |> Enum.find(fn network -> network.chain_id == chain_id end)
+    case Cache.get_network_by_chain_id(chain_id) do
+      {:ok, network} -> network
+      :not_found -> nil
+    end
   end
 end

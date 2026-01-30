@@ -1,14 +1,15 @@
 defmodule AnomaExplorer.Settings.Cache do
   @moduledoc """
-  ETS-based cache for contract addresses and app settings.
+  ETS-based cache for contract addresses, app settings, and networks.
 
-  Provides fast concurrent reads for address and setting lookups.
+  Provides fast concurrent reads for address, setting, and network lookups.
   The GenServer owns the ETS table and handles cache population.
 
   Cache key structures:
   - Contract addresses: {protocol_id, category, version, network} -> address
   - Protocol names: {:protocol_name, name} -> protocol_id
   - App settings: {:app_setting, key} -> value
+  - Networks: {:network_chain_id, chain_id} -> network_map
   """
   use GenServer
 
@@ -16,6 +17,7 @@ defmodule AnomaExplorer.Settings.Cache do
 
   alias AnomaExplorer.Settings.ContractAddress
   alias AnomaExplorer.Settings.AppSetting
+  alias AnomaExplorer.Settings.Network
 
   @table_name :contract_addresses_cache
 
@@ -144,6 +146,56 @@ defmodule AnomaExplorer.Settings.Cache do
     :ok
   end
 
+  # ============================================
+  # Network Cache
+  # ============================================
+
+  @doc """
+  Gets a network by chain_id from cache.
+  Returns {:ok, network_map} or :not_found.
+  """
+  @spec get_network_by_chain_id(integer()) :: {:ok, map()} | :not_found
+  def get_network_by_chain_id(chain_id) do
+    case :ets.lookup(@table_name, {:network_chain_id, chain_id}) do
+      [{_, network}] -> {:ok, network}
+      [] -> :not_found
+    end
+  end
+
+  @doc """
+  Puts a network into the cache, indexed by chain_id.
+  Only caches networks that have a chain_id.
+  """
+  @spec put_network(Network.t()) :: :ok
+  def put_network(%Network{chain_id: nil}), do: :ok
+
+  def put_network(%Network{} = network) do
+    network_map = %{
+      id: network.id,
+      name: network.name,
+      display_name: network.display_name,
+      chain_id: network.chain_id,
+      explorer_url: network.explorer_url,
+      rpc_url: network.rpc_url,
+      is_testnet: network.is_testnet,
+      active: network.active
+    }
+
+    :ets.insert(@table_name, {{:network_chain_id, network.chain_id}, network_map})
+    :ok
+  end
+
+  @doc """
+  Deletes a network from cache by chain_id.
+  """
+  @spec delete_network(integer() | nil) :: :ok
+  def delete_network(nil), do: :ok
+
+  def delete_network(chain_id) do
+    :ets.delete(@table_name, {:network_chain_id, chain_id})
+    :ok
+  end
+
   @doc """
   Deletes an entry from cache.
   """
@@ -194,7 +246,8 @@ defmodule AnomaExplorer.Settings.Cache do
         Logger.info("Settings cache initialized",
           protocols: counts.protocols,
           addresses: counts.addresses,
-          app_settings: counts.app_settings
+          app_settings: counts.app_settings,
+          networks: counts.networks
         )
 
       {:error, reason} ->
@@ -229,7 +282,15 @@ defmodule AnomaExplorer.Settings.Cache do
       protocol_count = load_protocols()
       address_count = load_contract_addresses()
       app_settings_count = load_app_settings()
-      {:ok, %{protocols: protocol_count, addresses: address_count, app_settings: app_settings_count}}
+      network_count = load_networks()
+
+      {:ok,
+       %{
+         protocols: protocol_count,
+         addresses: address_count,
+         app_settings: app_settings_count,
+         networks: network_count
+       }}
     rescue
       e -> {:error, e}
     end
@@ -284,5 +345,21 @@ defmodule AnomaExplorer.Settings.Cache do
     end)
 
     length(settings)
+  end
+
+  defp load_networks do
+    alias AnomaExplorer.Repo
+    import Ecto.Query
+
+    networks =
+      Network
+      |> where([n], n.active == true and not is_nil(n.chain_id))
+      |> Repo.all()
+
+    Enum.each(networks, fn network ->
+      put_network(network)
+    end)
+
+    length(networks)
   end
 end

@@ -116,32 +116,47 @@ defmodule AnomaExplorer.Settings do
 
   @doc """
   Creates a new network.
+  Updates the cache on success.
   """
   @spec create_network(map()) :: {:ok, Network.t()} | {:error, Ecto.Changeset.t()}
   def create_network(attrs) do
     %Network{}
     |> Network.changeset(attrs)
     |> Repo.insert()
+    |> tap_ok(&Cache.put_network/1)
     |> tap_ok(&broadcast_change({:network_created, &1}))
   end
 
   @doc """
   Updates an existing network.
+  Updates the cache on success.
   """
   @spec update_network(Network.t(), map()) :: {:ok, Network.t()} | {:error, Ecto.Changeset.t()}
   def update_network(%Network{} = network, attrs) do
+    old_chain_id = network.chain_id
+
     network
     |> Network.changeset(attrs)
     |> Repo.update()
+    |> tap_ok(fn updated ->
+      # If chain_id changed, remove old cache entry
+      if updated.chain_id != old_chain_id do
+        Cache.delete_network(old_chain_id)
+      end
+
+      Cache.put_network(updated)
+    end)
     |> tap_ok(&broadcast_change({:network_updated, &1}))
   end
 
   @doc """
   Deletes a network.
+  Removes from cache on success.
   """
   @spec delete_network(Network.t()) :: {:ok, Network.t()} | {:error, Ecto.Changeset.t()}
   def delete_network(%Network{} = network) do
     Repo.delete(network)
+    |> tap_ok(fn deleted -> Cache.delete_network(deleted.chain_id) end)
     |> tap_ok(&broadcast_change({:network_deleted, &1}))
   end
 
