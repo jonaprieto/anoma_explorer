@@ -26,15 +26,15 @@ defmodule AnomaExplorer.ChainVerifier do
     "eth-sepolia" => 11_155_111,
     # Base
     "base-mainnet" => 8453,
-    "base-sepolia" => 84532,
+    "base-sepolia" => 84_532,
     # Arbitrum
-    "arbitrum-mainnet" => 42161,
-    "arb-mainnet" => 42161,
+    "arbitrum-mainnet" => 42_161,
+    "arb-mainnet" => 42_161,
     "arbitrum-sepolia" => 421_614,
     "arb-sepolia" => 421_614,
     # Polygon
     "polygon-mainnet" => 137,
-    "polygon-amoy" => 80002,
+    "polygon-amoy" => 80_002,
     # Optimism
     "optimism-mainnet" => 10,
     "op-mainnet" => 10,
@@ -44,8 +44,8 @@ defmodule AnomaExplorer.ChainVerifier do
     "bsc-mainnet" => 56,
     "bsc-testnet" => 97,
     # Avalanche
-    "avalanche-mainnet" => 43114,
-    "avalanche-fuji" => 43113
+    "avalanche-mainnet" => 43_114,
+    "avalanche-fuji" => 43_113
   }
 
   @doc """

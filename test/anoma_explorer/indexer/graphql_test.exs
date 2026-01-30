@@ -157,7 +157,7 @@ defmodule AnomaExplorer.Indexer.GraphQLTest do
 
       AnomaExplorer.GraphQLHTTPClientMock
       |> expect(:post_graphql, fn _url, query, _timeout, _connect_timeout ->
-        assert query =~ "chainId: {_eq: 42161}"
+        assert query =~ "chainId: {_eq: 42_161}"
         {:ok, %{"Transaction" => []}}
       end)
 

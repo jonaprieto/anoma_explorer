@@ -194,13 +194,13 @@ defmodule AnomaExplorer.Utils.Formatting do
         minutes = div(diff, 60)
         seconds = rem(diff, 60)
         "#{minutes}m #{seconds}s ago"
-      diff < 86400 ->
+      diff < 86_400 ->
         hours = div(diff, 3600)
         minutes = div(rem(diff, 3600), 60)
         "#{hours}h #{minutes}m ago"
       true ->
-        days = div(diff, 86400)
-        hours = div(rem(diff, 86400), 3600)
+        days = div(diff, 86_400)
+        hours = div(rem(diff, 86_400), 3600)
         "#{days}d #{hours}h ago"
     end
   end

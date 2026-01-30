@@ -25,19 +25,19 @@ defmodule AnomaExplorer.Indexer.Networks do
       explorer: "https://goerli-optimism.etherscan.io"
     },
     8453 => %{name: "Base", short: "Base", explorer: "https://basescan.org"},
-    42150 => %{name: "Arbitrum One", short: "Arb", explorer: "https://arbiscan.io"},
-    42161 => %{name: "Arbitrum One", short: "Arb", explorer: "https://arbiscan.io"},
-    42170 => %{name: "Arbitrum Nova", short: "Arb Nova", explorer: "https://nova.arbiscan.io"},
-    43114 => %{name: "Avalanche", short: "AVAX", explorer: "https://snowtrace.io"},
-    59144 => %{name: "Linea", short: "Linea", explorer: "https://lineascan.build"},
-    80001 => %{
+    42_150 => %{name: "Arbitrum One", short: "Arb", explorer: "https://arbiscan.io"},
+    42_161 => %{name: "Arbitrum One", short: "Arb", explorer: "https://arbiscan.io"},
+    42_170 => %{name: "Arbitrum Nova", short: "Arb Nova", explorer: "https://nova.arbiscan.io"},
+    43_114 => %{name: "Avalanche", short: "AVAX", explorer: "https://snowtrace.io"},
+    59_144 => %{name: "Linea", short: "Linea", explorer: "https://lineascan.build"},
+    80_001 => %{
       name: "Polygon Mumbai",
       short: "Mumbai",
       explorer: "https://mumbai.polygonscan.com"
     },
-    80002 => %{name: "Polygon Amoy", short: "Amoy", explorer: "https://amoy.polygonscan.com"},
-    84531 => %{name: "Base Goerli", short: "Base Goerli", explorer: "https://goerli.basescan.org"},
-    84532 => %{name: "Base Sepolia", short: "Base Sep", explorer: "https://sepolia.basescan.org"},
+    80_002 => %{name: "Polygon Amoy", short: "Amoy", explorer: "https://amoy.polygonscan.com"},
+    84_531 => %{name: "Base Goerli", short: "Base Goerli", explorer: "https://goerli.basescan.org"},
+    84_532 => %{name: "Base Sepolia", short: "Base Sep", explorer: "https://sepolia.basescan.org"},
     421_613 => %{
       name: "Arbitrum Goerli",
       short: "Arb Goerli",

@@ -248,9 +248,9 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
   @block_explorers %{
     1 => "https://etherscan.io",
     8453 => "https://basescan.org",
-    84532 => "https://sepolia.basescan.org",
+    84_532 => "https://sepolia.basescan.org",
     11_155_111 => "https://sepolia.etherscan.io",
-    42161 => "https://arbiscan.io",
+    42_161 => "https://arbiscan.io",
     421_614 => "https://sepolia.arbiscan.io",
     10 => "https://optimistic.etherscan.io",
     11_155_420 => "https://sepolia-optimism.etherscan.io"
