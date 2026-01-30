@@ -196,7 +196,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
           <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Account address that sent and signed this transaction">From</div>
           <div class="flex items-center gap-2">
             <%= if @evm_tx["from"] do %>
-              <code class="hash-display text-sm">{Formatting.truncate_hash(@evm_tx["from"])}</code>
+              <code class="hash-display text-sm break-all">{@evm_tx["from"]}</code>
               <.copy_button text={@evm_tx["from"]} tooltip="Copy address" />
               <%= if @from_url do %>
                 <a
@@ -212,18 +212,6 @@ defmodule AnomaExplorerWeb.TransactionLive do
               <span class="text-base-content/50">-</span>
             <% end %>
           </div>
-        </div>
-        <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Amount of ETH transferred with this transaction">Value</div>
-          <div class="font-mono">{Formatting.format_eth(@evm_tx["value"])}</div>
-        </div>
-        <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Price per unit of gas paid for this transaction">Gas Price</div>
-          <div class="font-mono">{Formatting.format_gwei(@evm_tx["gasPrice"])}</div>
-        </div>
-        <div>
-          <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1" title="Total fee paid (gas used × gas price)">Transaction Fee</div>
-          <div class="font-mono">{Formatting.format_tx_fee(@evm_tx["gasUsed"], @evm_tx["gasPrice"])}</div>
         </div>
         <%= if @tx["contractAddress"] do %>
           <div>
@@ -260,23 +248,64 @@ defmodule AnomaExplorerWeb.TransactionLive do
       <%= if (@tags || []) == [] do %>
         <div class="text-base-content/50 text-center py-4">No resource IDs</div>
       <% else %>
-        <div class="overflow-x-auto">
+        <%!-- Mobile card layout --%>
+        <div class="space-y-3 lg:hidden">
+          <%= for {tag, idx} <- Enum.with_index(@tags || []) do %>
+            <% is_consumed = rem(idx, 2) == 0 %>
+            <% logic_ref = Enum.at(@logic_refs || [], idx) %>
+            <div class="p-3 rounded-lg bg-base-200/50 hover:bg-base-200 transition-colors">
+              <div class="flex flex-col gap-1">
+                <div class="flex items-start gap-1">
+                  <code class="font-mono text-sm break-all">{tag}</code>
+                  <.copy_button :if={tag} text={tag} tooltip="Copy resource ID" class="shrink-0" />
+                </div>
+                <div class="flex items-center gap-1 text-xs text-base-content/50">
+                  <span class="font-mono break-all">{logic_ref}</span>
+                  <.copy_button :if={logic_ref} text={logic_ref} tooltip="Copy logic ref" class="shrink-0" />
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="badge badge-ghost badge-xs">{idx}</span>
+                  <%= if is_consumed do %>
+                    <span class="badge badge-outline badge-xs text-error border-error/50">Nullifier</span>
+                  <% else %>
+                    <span class="badge badge-outline badge-xs text-success border-success/50">Commitment</span>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <%!-- Desktop table layout --%>
+        <div class="hidden lg:block overflow-x-auto">
           <table class="data-table w-full">
             <thead>
               <tr>
                 <th title="Position in the array (even = nullifier, odd = commitment)">Index</th>
-                <th title="Determined by index parity: even = Nullifier, odd = Commitment">Type</th>
                 <th title="Resource identifier - nullifier hash or commitment hash">Resource ID</th>
-                <th title="Reference to the logic circuit that validates this resource">Logic Ref</th>
+                <th title="Determined by index parity: even = Nullifier, odd = Commitment">Type</th>
               </tr>
             </thead>
             <tbody>
               <%= for {tag, idx} <- Enum.with_index(@tags || []) do %>
                 <% is_consumed = rem(idx, 2) == 0 %>
                 <% logic_ref = Enum.at(@logic_refs || [], idx) %>
-                <tr>
+                <tr class="hover:bg-base-200/50">
                   <td>
                     <span class="badge badge-ghost badge-sm">{idx}</span>
+                  </td>
+                  <td>
+                    <div class="flex flex-col gap-0.5">
+                      <div class="flex items-center gap-1">
+                        <code class="font-mono text-sm break-all">{tag}</code>
+                        <.copy_button :if={tag} text={tag} tooltip="Copy resource ID" />
+                      </div>
+                      <div class="flex items-center gap-1 text-xs text-base-content/50">
+                        <span>logic:</span>
+                        <code class="font-mono break-all">{logic_ref}</code>
+                        <.copy_button :if={logic_ref} text={logic_ref} tooltip="Copy logic ref" />
+                      </div>
+                    </div>
                   </td>
                   <td>
                     <%= if is_consumed do %>
@@ -288,18 +317,6 @@ defmodule AnomaExplorerWeb.TransactionLive do
                         Commitment
                       </span>
                     <% end %>
-                  </td>
-                  <td>
-                    <div class="flex items-center gap-1">
-                      <code class="hash-display text-xs">{Formatting.truncate_hash(tag)}</code>
-                      <.copy_button :if={tag} text={tag} tooltip="Copy resource ID" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="flex items-center gap-1">
-                      <code class="hash-display text-xs">{Formatting.truncate_hash(logic_ref)}</code>
-                      <.copy_button :if={logic_ref} text={logic_ref} tooltip="Copy logic ref" />
-                    </div>
                   </td>
                 </tr>
               <% end %>
@@ -320,29 +337,64 @@ defmodule AnomaExplorerWeb.TransactionLive do
       <%= if @resources == [] do %>
         <div class="text-base-content/50 text-center py-4">No resources</div>
       <% else %>
-        <div class="overflow-x-auto">
+        <%!-- Mobile card layout --%>
+        <div class="space-y-3 lg:hidden">
+          <%= for resource <- @resources do %>
+            <div class="p-3 rounded-lg bg-base-200/50 hover:bg-base-200 transition-colors">
+              <div class="flex flex-col gap-1">
+                <div class="flex items-start gap-1">
+                  <a
+                    href={"/resources/#{resource["id"]}"}
+                    class="font-mono text-sm hover:text-primary break-all"
+                  >
+                    {resource["tag"]}
+                  </a>
+                  <.copy_button :if={resource["tag"]} text={resource["tag"]} tooltip="Copy resource ID" class="shrink-0" />
+                </div>
+                <div class="flex items-center gap-1 text-xs text-base-content/50">
+                  <span class="font-mono break-all">{resource["logicRef"]}</span>
+                  <.copy_button :if={resource["logicRef"]} text={resource["logicRef"]} tooltip="Copy logic ref" class="shrink-0" />
+                </div>
+                <div class="flex items-center">
+                  <%= if resource["isConsumed"] do %>
+                    <span class="badge badge-outline badge-xs text-error border-error/50">Nullifier</span>
+                  <% else %>
+                    <span class="badge badge-outline badge-xs text-success border-success/50">Commitment</span>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <%!-- Desktop table layout --%>
+        <div class="hidden lg:block overflow-x-auto">
           <table class="data-table w-full">
             <thead>
               <tr>
                 <th title="Unique identifier - nullifier hash (if consumed) or commitment hash (if created)">Resource ID</th>
                 <th title="Resource type: Nullifier (consumed input) or Commitment (created output)">Type</th>
-                <th title="Reference to the logic circuit that validates this resource">Logic Ref</th>
-                <th title="Decoded quantity value from the resource blob (if available)">Quantity</th>
-                <th title="Status of decoding the raw blob data into structured resource fields">Decoding</th>
               </tr>
             </thead>
             <tbody>
               <%= for resource <- @resources do %>
                 <tr class="hover:bg-base-200/50">
                   <td>
-                    <div class="flex items-center gap-1">
-                      <a
-                        href={"/resources/#{resource["id"]}"}
-                        class="hash-display text-xs hover:text-primary"
-                      >
-                        {Formatting.truncate_hash(resource["tag"])}
-                      </a>
-                      <.copy_button :if={resource["tag"]} text={resource["tag"]} tooltip="Copy resource ID" />
+                    <div class="flex flex-col gap-0.5">
+                      <div class="flex items-center gap-1">
+                        <a
+                          href={"/resources/#{resource["id"]}"}
+                          class="font-mono text-sm hover:text-primary break-all"
+                        >
+                          {resource["tag"]}
+                        </a>
+                        <.copy_button :if={resource["tag"]} text={resource["tag"]} tooltip="Copy resource ID" />
+                      </div>
+                      <div class="flex items-center gap-1 text-xs text-base-content/50">
+                        <span>logic:</span>
+                        <code class="font-mono break-all">{resource["logicRef"]}</code>
+                        <.copy_button :if={resource["logicRef"]} text={resource["logicRef"]} tooltip="Copy logic ref" />
+                      </div>
                     </div>
                   </td>
                   <td>
@@ -355,22 +407,6 @@ defmodule AnomaExplorerWeb.TransactionLive do
                         Commitment
                       </span>
                     <% end %>
-                  </td>
-                  <td>
-                    <div class="flex items-center gap-1">
-                      <code class="hash-display text-xs">{Formatting.truncate_hash(resource["logicRef"])}</code>
-                      <.copy_button
-                        :if={resource["logicRef"]}
-                        text={resource["logicRef"]}
-                        tooltip="Copy logic ref"
-                      />
-                    </div>
-                  </td>
-                  <td>
-                    {resource["quantity"] || "-"}
-                  </td>
-                  <td>
-                    <.decoding_badge status={resource["decodingStatus"]} />
                   </td>
                 </tr>
               <% end %>
