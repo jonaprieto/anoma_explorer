@@ -7,7 +7,6 @@ defmodule AnomaExplorerWeb.LogicsLive do
   alias AnomaExplorer.Indexer.Client
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Networks
-  alias AnomaExplorer.Utils.Formatting
 
   alias AnomaExplorerWeb.IndexerSetupComponents
   alias AnomaExplorerWeb.Layouts
@@ -445,22 +444,20 @@ defmodule AnomaExplorerWeb.LogicsLive do
                 />
               </div>
               <%= if logic["logicRef"] do %>
-                <div class="flex items-center gap-1 text-xs text-base-content/60">
+                <div class="flex items-start gap-1 text-xs text-base-content/60">
                   <span>logic:</span>
-                  <code class="font-mono">{Formatting.truncate_hash(logic["logicRef"])}</code>
-                  <.copy_button text={logic["logicRef"]} tooltip="Copy logic ref" />
+                  <code class="font-mono break-all">{logic["logicRef"]}</code>
+                  <.copy_button text={logic["logicRef"]} tooltip="Copy logic ref" class="shrink-0" />
                 </div>
               <% end %>
               <%= if logic["action"] && logic["action"]["transaction"] do %>
-                <div class="flex items-center gap-1 text-xs text-base-content/60">
+                <div class="flex items-start gap-1 text-xs text-base-content/60">
                   <span>tx:</span>
                   <a
                     href={"/transactions/#{logic["action"]["transaction"]["id"]}"}
-                    class="font-mono hover:text-primary"
+                    class="font-mono hover:text-primary break-all"
                   >
-                    {Formatting.truncate_hash(
-                      logic["action"]["transaction"]["evmTransaction"]["txHash"]
-                    )}
+                    {logic["action"]["transaction"]["evmTransaction"]["txHash"]}
                   </a>
                   <.copy_button
                     text={logic["action"]["transaction"]["evmTransaction"]["txHash"]}

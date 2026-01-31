@@ -422,10 +422,10 @@ defmodule AnomaExplorerWeb.CommitmentsLive do
                 />
               </div>
               <%= if commitment["txHash"] do %>
-                <div class="flex items-center gap-1 text-xs text-base-content/60">
+                <div class="flex items-start gap-1 text-xs text-base-content/60">
                   <span>tx:</span>
-                  <code class="font-mono">{Formatting.truncate_hash(commitment["txHash"])}</code>
-                  <.copy_button text={commitment["txHash"]} tooltip="Copy tx hash" />
+                  <code class="font-mono break-all">{commitment["txHash"]}</code>
+                  <.copy_button text={commitment["txHash"]} tooltip="Copy tx hash" class="shrink-0" />
                 </div>
               <% end %>
               <div class="flex items-center gap-1.5 text-xs text-base-content/50 flex-wrap">

@@ -416,13 +416,13 @@ defmodule AnomaExplorerWeb.ActionsLive do
                 />
               </div>
               <%= if action["transaction"] do %>
-                <div class="flex items-center gap-1 text-xs text-base-content/60">
+                <div class="flex items-start gap-1 text-xs text-base-content/60">
                   <span>tx:</span>
                   <a
                     href={"/transactions/#{action["transaction"]["id"]}"}
-                    class="font-mono hover:text-primary"
+                    class="font-mono hover:text-primary break-all"
                   >
-                    {Formatting.truncate_hash(action["transaction"]["evmTransaction"]["txHash"])}
+                    {action["transaction"]["evmTransaction"]["txHash"]}
                   </a>
                   <.copy_button
                     text={action["transaction"]["evmTransaction"]["txHash"]}

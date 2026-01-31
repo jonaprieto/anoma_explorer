@@ -528,12 +528,12 @@ defmodule AnomaExplorerWeb.TransactionLive do
               <%= for action <- @actions do %>
                 <tr>
                   <td>
-                    <div class="flex items-center gap-1">
+                    <div class="flex items-start gap-1">
                       <a
                         href={"/actions/#{action["id"]}"}
-                        class="hash-display text-xs hover:text-primary"
+                        class="hash-display text-xs hover:text-primary break-all"
                       >
-                        {Formatting.truncate_hash(action["actionTreeRoot"])}
+                        {action["actionTreeRoot"]}
                       </a>
                       <.copy_button
                         :if={action["actionTreeRoot"]}

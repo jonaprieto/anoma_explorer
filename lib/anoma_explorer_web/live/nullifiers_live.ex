@@ -8,7 +8,6 @@ defmodule AnomaExplorerWeb.NullifiersLive do
   alias AnomaExplorer.Indexer.Client
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Networks
-  alias AnomaExplorer.Utils.Formatting
 
   alias AnomaExplorerWeb.IndexerSetupComponents
   alias AnomaExplorerWeb.Layouts
@@ -360,20 +359,20 @@ defmodule AnomaExplorerWeb.NullifiersLive do
                 />
               </div>
               <%= if unit["consumedLogicRef"] do %>
-                <div class="flex items-center gap-1 text-xs text-base-content/60">
+                <div class="flex items-start gap-1 text-xs text-base-content/60">
                   <span>logic:</span>
-                  <code class="font-mono">{Formatting.truncate_hash(unit["consumedLogicRef"])}</code>
-                  <.copy_button text={unit["consumedLogicRef"]} tooltip="Copy logic ref" />
+                  <code class="font-mono break-all">{unit["consumedLogicRef"]}</code>
+                  <.copy_button text={unit["consumedLogicRef"]} tooltip="Copy logic ref" class="shrink-0" />
                 </div>
               <% end %>
               <%= if unit["consumedResource"] do %>
-                <div class="flex items-center gap-1 text-xs text-base-content/60">
+                <div class="flex items-start gap-1 text-xs text-base-content/60">
                   <span>resource:</span>
                   <a
                     href={"/resources/#{unit["consumedResource"]["id"]}"}
-                    class="font-mono hover:text-primary"
+                    class="font-mono hover:text-primary break-all"
                   >
-                    {Formatting.truncate_hash(unit["consumedResource"]["tag"])}
+                    {unit["consumedResource"]["tag"]}
                   </a>
                   <.copy_button
                     :if={unit["consumedResource"]["tag"]}
@@ -383,15 +382,13 @@ defmodule AnomaExplorerWeb.NullifiersLive do
                 </div>
               <% end %>
               <%= if unit["action"] && unit["action"]["transaction"] do %>
-                <div class="flex items-center gap-1 text-xs text-base-content/60">
+                <div class="flex items-start gap-1 text-xs text-base-content/60">
                   <span>tx:</span>
                   <a
                     href={"/transactions/#{unit["action"]["transaction"]["id"]}"}
-                    class="font-mono hover:text-primary"
+                    class="font-mono hover:text-primary break-all"
                   >
-                    {Formatting.truncate_hash(
-                      unit["action"]["transaction"]["evmTransaction"]["txHash"]
-                    )}
+                    {unit["action"]["transaction"]["evmTransaction"]["txHash"]}
                   </a>
                   <.copy_button
                     text={unit["action"]["transaction"]["evmTransaction"]["txHash"]}

@@ -7,7 +7,6 @@ defmodule AnomaExplorerWeb.CompliancesLive do
   alias AnomaExplorer.Indexer.Client
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Networks
-  alias AnomaExplorer.Utils.Formatting
 
   alias AnomaExplorerWeb.IndexerSetupComponents
   alias AnomaExplorerWeb.Layouts
@@ -400,15 +399,13 @@ defmodule AnomaExplorerWeb.CompliancesLive do
                 />
               </div>
               <%= if unit["action"] && unit["action"]["transaction"] do %>
-                <div class="flex items-center gap-1 text-xs text-base-content/60">
+                <div class="flex items-start gap-1 text-xs text-base-content/60">
                   <span>tx:</span>
                   <a
                     href={"/transactions/#{unit["action"]["transaction"]["id"]}"}
-                    class="font-mono hover:text-primary"
+                    class="font-mono hover:text-primary break-all"
                   >
-                    {Formatting.truncate_hash(
-                      unit["action"]["transaction"]["evmTransaction"]["txHash"]
-                    )}
+                    {unit["action"]["transaction"]["evmTransaction"]["txHash"]}
                   </a>
                   <.copy_button
                     text={unit["action"]["transaction"]["evmTransaction"]["txHash"]}

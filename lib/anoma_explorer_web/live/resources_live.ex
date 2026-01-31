@@ -509,20 +509,20 @@ defmodule AnomaExplorerWeb.ResourcesLive do
                 />
               </div>
               <%= if resource["logicRef"] do %>
-                <div class="flex items-center gap-1 text-xs text-base-content/60">
+                <div class="flex items-start gap-1 text-xs text-base-content/60">
                   <span>logic:</span>
-                  <code class="font-mono">{Formatting.truncate_hash(resource["logicRef"])}</code>
-                  <.copy_button text={resource["logicRef"]} tooltip="Copy logic ref" />
+                  <code class="font-mono break-all">{resource["logicRef"]}</code>
+                  <.copy_button text={resource["logicRef"]} tooltip="Copy logic ref" class="shrink-0" />
                 </div>
               <% end %>
               <%= if resource["transaction"] do %>
-                <div class="flex items-center gap-1 text-xs text-base-content/60">
+                <div class="flex items-start gap-1 text-xs text-base-content/60">
                   <span>tx:</span>
                   <a
                     href={"/transactions/#{resource["transaction"]["id"]}"}
-                    class="font-mono hover:text-primary"
+                    class="font-mono hover:text-primary break-all"
                   >
-                    {Formatting.truncate_hash(resource["transaction"]["evmTransaction"]["txHash"])}
+                    {resource["transaction"]["evmTransaction"]["txHash"]}
                   </a>
                   <.copy_button
                     text={resource["transaction"]["evmTransaction"]["txHash"]}
