@@ -215,7 +215,7 @@ defmodule AnomaExplorerWeb.Layouts do
       </aside>
       
     <!-- Main content -->
-      <main id="main-content" class="main-content min-h-screen">
+      <main id="main-content" class="main-content">
         <!-- Search Header -->
         <div class="sticky top-0 z-10 bg-base-100/95 backdrop-blur-sm border-b border-base-200">
           <div class="px-4 sm:px-8 py-3 sm:py-4 flex items-center gap-3">
